@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { getTripState } from '$lib/trip.svelte';
+	import { getTripState, type ExpensePrefill } from '$lib/trip.svelte';
 	import type { Expense } from '$lib/db';
 	import { centsFromEuros } from '$lib/format';
 
-	let { expense = null, onDone }: { expense?: Expense | null; onDone: () => void } = $props();
+	let { expense = null, prefill = null, onDone }: {
+		expense?: Expense | null;
+		prefill?: ExpensePrefill | null;
+		onDone: () => void;
+	} = $props();
 
 	const tripState = getTripState();
 	const editing = $derived(expense != null);
@@ -13,19 +17,24 @@
 	// (Composant remonté via {#key} par la page -> init au montage suffit.)
 	function initSelected(): Record<string, boolean> {
 		const sel: Record<string, boolean> = {};
-		const benef = expense
-			? new Set((tripState.benefByExpense.get(expense.id) ?? []).map((b) => b.person_id))
-			: null;
-		for (const p of tripState.participants) sel[p.person_id] = benef ? benef.has(p.person_id) : true;
+		let allow: Set<string> | null = null;
+		if (expense) allow = new Set((tripState.benefByExpense.get(expense.id) ?? []).map((b) => b.person_id));
+		else if (prefill) allow = new Set(prefill.beneficiary_person_ids);
+		for (const p of tripState.participants) sel[p.person_id] = allow ? allow.has(p.person_id) : true;
 		return sel;
 	}
 
 	// Snapshot unique au montage (le composant est remonté via {#key} quand la
 	// dépense éditée change) -> figer les valeurs initiales est voulu.
 	const init = untrack(() => ({
-		amountStr: expense ? String(expense.amount_cents / 100) : '',
-		description: expense?.description ?? '',
-		payerId: expense?.paid_by_person_id ?? tripState.participants[0]?.person_id ?? '',
+		amountStr: expense
+			? String(expense.amount_cents / 100)
+			: prefill
+				? String(prefill.amount_cents / 100)
+				: '',
+		description: expense?.description ?? prefill?.description ?? '',
+		payerId:
+			expense?.paid_by_person_id ?? prefill?.paid_by_person_id ?? tripState.participants[0]?.person_id ?? '',
 		spentOn: expense?.spent_on ?? '',
 		selected: initSelected()
 	}));

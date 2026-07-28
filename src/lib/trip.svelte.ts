@@ -8,12 +8,22 @@ import { saveExpense, deleteExpense, type SaveExpenseInput } from './expenses';
 import { addParticipant } from './auth';
 import { simplifyDebts, recordSettlement, cancelSettlement, type Transfer } from './settlements';
 
+/** Valeurs de pré-remplissage du formulaire de dépense (ex. depuis un remboursement). */
+export type ExpensePrefill = {
+	amount_cents: number;
+	paid_by_person_id: string;
+	beneficiary_person_ids: string[];
+	description: string;
+};
+
 /**
  * État partagé d'un séjour : chargé une fois par le layout /t/[tripId] et
  * consommé par les onglets (Dépenses, Soldes, Participants) via le contexte.
  * Les mutations rechargent l'ensemble.
  */
 export class TripState {
+	/** pré-remplissage en attente pour le formulaire de dépense (onglet Dépenses) */
+	prefill = $state<ExpensePrefill | null>(null);
 	tripId = $state('');
 	loading = $state(true);
 	error = $state<string | null>(null);

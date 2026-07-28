@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { beforeNavigate } from '$app/navigation';
 	import { getTripState } from '$lib/trip.svelte';
 	import type { Expense } from '$lib/db';
 	import { euros } from '$lib/format';
@@ -6,6 +7,32 @@
 
 	const tripState = getTripState();
 	let editing = $state<Expense | null>(null);
+
+	function onDone() {
+		editing = null;
+		tripState.prefill = null; // consomme un éventuel pré-remplissage (remboursement)
+	}
+
+	// Un remboursement pré-rempli mais non validé ne doit pas être perdu en silence.
+	beforeNavigate((nav) => {
+		if (tripState.prefill) {
+			if (confirm('Un remboursement est pré-rempli mais pas encore enregistré. Quitter sans l’enregistrer ?')) {
+				tripState.prefill = null;
+			} else {
+				nav.cancel();
+			}
+		}
+	});
+	$effect(() => {
+		function onUnload(e: BeforeUnloadEvent) {
+			if (tripState.prefill) {
+				e.preventDefault();
+				e.returnValue = '';
+			}
+		}
+		window.addEventListener('beforeunload', onUnload);
+		return () => window.removeEventListener('beforeunload', onUnload);
+	});
 
 	async function onDelete(exp: Expense) {
 		if (!confirm('Supprimer cette dépense ?')) return;
@@ -19,8 +46,8 @@
 </script>
 
 <section class="space-y-2">
-	{#key editing?.id ?? 'new'}
-		<ExpenseForm expense={editing} onDone={() => (editing = null)} />
+	{#key editing?.id ?? (tripState.prefill ? 'prefill' : 'new')}
+		<ExpenseForm expense={editing} prefill={editing ? null : tripState.prefill} onDone={onDone} />
 	{/key}
 
 	<ul class="space-y-2">

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { getTripState } from '$lib/trip.svelte';
 	import type { Settlement } from '$lib/db';
 	import type { Transfer } from '$lib/settlements';
@@ -6,12 +8,20 @@
 
 	const tripState = getTripState();
 
-	async function onRecord(t: Transfer) {
-		try {
-			await tripState.settle(t);
-		} catch (err) {
-			tripState.error = err instanceof Error ? err.message : String(err);
-		}
+	// Un remboursement = une dépense : le débiteur « paie » le créditeur.
+	// On préremplit le formulaire de dépense et on bascule sur l'onglet Dépenses,
+	// où l'utilisateur peut ajuster puis valider.
+	function onReimburse(t: Transfer) {
+		const from = tripState.participants.find((p) => p.household_id === t.from_household_id)?.person_id;
+		const to = tripState.participants.find((p) => p.household_id === t.to_household_id)?.person_id;
+		if (!from || !to) return;
+		tripState.prefill = {
+			amount_cents: t.amount_cents,
+			paid_by_person_id: from,
+			beneficiary_person_ids: [to],
+			description: 'Remboursement'
+		};
+		goto(`/t/${$page.params.tripId}`);
 	}
 	async function onCancel(s: Settlement) {
 		try {
@@ -46,18 +56,21 @@
 	</section>
 
 	<section class="space-y-2">
-		<h2 class="text-sm font-medium text-slate-500">Remboursements</h2>
+		<h2 class="text-sm font-medium text-slate-500">Remboursements possibles</h2>
+		<p class="text-xs text-slate-400">
+			Les boutons permettent d'enregistrer une dépense de remboursement entre participants.
+		</p>
 		{#if tripState.transfers.length}
 			<ul class="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white">
 				{#each tripState.transfers as t (t.from_household_id + t.to_household_id)}
-					<li class="flex items-center justify-between px-4 py-3 text-sm">
+					<li class="flex items-center justify-between gap-2 px-4 py-3 text-sm">
 						<span>
 							<span class="font-medium">{tripState.householdName.get(t.from_household_id) ?? '?'}</span>
 							→ <span class="font-medium">{tripState.householdName.get(t.to_household_id) ?? '?'}</span>
 							: {euros(t.amount_cents)}
 						</span>
-						<button class="rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white" onclick={() => onRecord(t)}>
-							enregistrer
+						<button class="shrink-0 whitespace-nowrap rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white" onclick={() => onReimburse(t)}>
+							Noter le remboursement
 						</button>
 					</li>
 				{/each}
