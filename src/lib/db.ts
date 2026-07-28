@@ -9,6 +9,7 @@ export type Participant = {
 	household_id: string;
 	household_name: string;
 	default_weight: number;
+	active: boolean;
 	invite_token: string;
 };
 
@@ -53,7 +54,7 @@ export async function getTrip(tripId: string): Promise<Trip | null> {
 export async function listParticipants(tripId: string): Promise<Participant[]> {
 	const { data, error } = await supabase
 		.from('trip_participants')
-		.select('id, person_id, household_id, default_weight, invite_token, persons(name), households(name)')
+		.select('id, person_id, household_id, default_weight, active, invite_token, persons(name), households(name)')
 		.eq('trip_id', tripId);
 	if (error) throw error;
 	// persons/households sont des embeds (FK directes) ; numeric revient en string.
@@ -64,6 +65,7 @@ export async function listParticipants(tripId: string): Promise<Participant[]> {
 		household_id: r.household_id,
 		household_name: r.households?.name ?? '?',
 		default_weight: Number(r.default_weight),
+		active: r.active,
 		invite_token: r.invite_token
 	}));
 }
@@ -110,6 +112,11 @@ export async function updatePersonName(personId: string, name: string): Promise<
 
 export async function updateHouseholdName(householdId: string, name: string): Promise<void> {
 	const { error } = await supabase.from('households').update({ name }).eq('id', householdId);
+	if (error) throw error;
+}
+
+export async function setParticipantActive(participantId: string, active: boolean): Promise<void> {
+	const { error } = await supabase.from('trip_participants').update({ active }).eq('id', participantId);
 	if (error) throw error;
 }
 

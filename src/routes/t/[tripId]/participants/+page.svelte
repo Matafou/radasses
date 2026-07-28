@@ -11,6 +11,7 @@
 	let newHousehold = $state('__new__');
 	let adding = $state(false);
 	let addError = $state<string | null>(null);
+	let addNotice = $state<string | null>(null);
 	let copied = $state<string | null>(null);
 
 	// édition
@@ -37,20 +38,33 @@
 	async function onAdd(e: SubmitEvent) {
 		e.preventDefault();
 		addError = null;
-		if (!newName.trim()) return void (addError = 'Nom requis.');
+		const name = newName.trim();
+		if (!name) return void (addError = 'Nom requis.');
 		adding = true;
 		try {
+			const hadExpenses = tripState.expenses.length > 0;
 			await tripState.newParticipant({
-				person_name: newName.trim(),
+				person_name: name,
 				household_id: newHousehold === '__new__' ? null : newHousehold
 			});
 			newName = '';
 			newHousehold = '__new__';
 			showAdd = false;
+			addNotice = hadExpenses
+				? `Attention : les dépenses déjà enregistrées ne concernent pas ${name}.`
+				: null;
 		} catch (err) {
 			addError = err instanceof Error ? err.message : String(err);
 		} finally {
 			adding = false;
+		}
+	}
+
+	async function onToggleActive(p: Participant) {
+		try {
+			await tripState.setActive(p.participant_id, !p.active);
+		} catch (err) {
+			tripState.error = err instanceof Error ? err.message : String(err);
 		}
 	}
 
@@ -109,6 +123,10 @@
 		</form>
 	{/if}
 
+	{#if addNotice}
+		<p class="rounded-lg bg-amber-50 p-2 text-xs text-amber-700">{addNotice}</p>
+	{/if}
+
 	<ul class="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white">
 		{#each tripState.participants as p (p.participant_id)}
 			<li class="px-4 py-3">
@@ -133,12 +151,19 @@
 						</div>
 					</div>
 				{:else}
-					<div class="flex items-center justify-between">
-						<span>{p.person_name} <span class="text-xs text-slate-400">· {p.household_name}</span></span>
-						<div class="flex gap-2">
+					<div class="flex items-center justify-between gap-2">
+						<span class:text-slate-400={!p.active}>
+							{p.person_name}
+							{#if !p.active}<span class="text-xs text-slate-400">(parti)</span>{/if}
+							<span class="text-xs text-slate-400">· {p.household_name}</span>
+						</span>
+						<div class="flex shrink-0 gap-2">
+							<button class="text-xs text-slate-500 underline" onclick={() => onToggleActive(p)}>
+								{p.active ? 'parti' : 'présent'}
+							</button>
 							<button class="text-xs text-slate-500 underline" onclick={() => startEdit(p)}>modifier</button>
 							<button class="text-xs text-slate-500 underline" onclick={() => copyLink(p.invite_token)}>
-								{copied === p.invite_token ? 'copié ✓' : 'lien'}
+								{copied === p.invite_token ? '✓' : 'lien'}
 							</button>
 						</div>
 					</div>

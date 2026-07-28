@@ -29,14 +29,19 @@
 		}
 		return Array.from(m.values());
 	});
-	const foyerAll = (g: Group) => g.members.every((p) => selected[p.person_id]);
+	// Auto-sélection : on ne considère QUE les participants actifs (« présents »).
+	const foyerAll = (g: Group) => {
+		const a = g.members.filter((p) => p.active);
+		return a.length > 0 && a.every((p) => selected[p.person_id]);
+	};
 	const foyerSome = (g: Group) => {
-		const n = g.members.filter((p) => selected[p.person_id]).length;
-		return n > 0 && n < g.members.length;
+		const a = g.members.filter((p) => p.active);
+		const n = a.filter((p) => selected[p.person_id]).length;
+		return n > 0 && n < a.length;
 	};
 	function toggleFoyer(g: Group) {
 		const all = foyerAll(g);
-		for (const p of g.members) selected[p.person_id] = !all;
+		for (const p of g.members) if (p.active) selected[p.person_id] = !all;
 	}
 
 	// --- Instantané initial (composant remonté via {#key}) ---
@@ -45,7 +50,8 @@
 		let allow: Set<string> | null = null;
 		if (expense) allow = new Set((tripState.benefByExpense.get(expense.id) ?? []).map((b) => b.person_id));
 		else if (prefill) allow = new Set(prefill.beneficiary_person_ids);
-		for (const p of tripState.participants) sel[p.person_id] = allow ? allow.has(p.person_id) : true;
+		// nouvelle dépense : cocher par défaut les participants actifs seulement
+		for (const p of tripState.participants) sel[p.person_id] = allow ? allow.has(p.person_id) : p.active;
 		return sel;
 	}
 	function initDetail() {
@@ -133,13 +139,14 @@
 	});
 
 	// Sélection globale
+	const activeParticipants = $derived(tripState.participants.filter((p) => p.active));
 	const allSelected = $derived(
-		tripState.participants.length > 0 && tripState.participants.every((p) => selected[p.person_id])
+		activeParticipants.length > 0 && activeParticipants.every((p) => selected[p.person_id])
 	);
-	const someSelected = $derived(tripState.participants.some((p) => selected[p.person_id]));
+	const someSelected = $derived(activeParticipants.some((p) => selected[p.person_id]));
 	function toggleAll() {
 		const all = allSelected;
-		for (const p of tripState.participants) selected[p.person_id] = !all;
+		for (const p of activeParticipants) selected[p.person_id] = !all;
 	}
 
 	async function onSubmit(e: SubmitEvent) {
@@ -176,7 +183,7 @@
 	<div class="flex items-center gap-2 text-sm">
 		<label class="flex items-center gap-1">
 			<input type="checkbox" bind:checked={selected[p.person_id]} />
-			{p.person_name}
+			{p.person_name}{#if !p.active}<span class="ml-1 text-xs text-slate-400">(parti)</span>{/if}
 		</label>
 		{#if detailed && selected[p.person_id]}
 			<select

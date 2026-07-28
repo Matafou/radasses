@@ -1,7 +1,7 @@
 import { getContext, setContext } from 'svelte';
 import {
 	getTrip, listParticipants, listExpenses, listBeneficiaries, getBalances, listSettlements,
-	updatePersonName, updateHouseholdName,
+	updatePersonName, updateHouseholdName, setParticipantActive,
 	type Trip, type Participant, type Expense, type Beneficiary, type Balance, type Settlement
 } from './db';
 import { saveExpense, deleteExpense, type SaveExpenseInput } from './expenses';
@@ -98,6 +98,11 @@ export class TripState {
 	}) {
 		await updatePersonName(params.person_id, params.person_name);
 		await updateHouseholdName(params.household_id, params.household_name);
+		await this.load();
+	}
+	/** Marque un participant présent (active=true) ou parti (false). */
+	async setActive(participantId: string, active: boolean) {
+		await setParticipantActive(participantId, active);
 		await this.load();
 	}
 	async settle(t: Transfer) {
