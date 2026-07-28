@@ -1,0 +1,90 @@
+<script lang="ts">
+	import { getTripState } from '$lib/trip.svelte';
+	import type { Settlement } from '$lib/db';
+	import type { Transfer } from '$lib/settlements';
+	import { euros } from '$lib/format';
+
+	const tripState = getTripState();
+
+	async function onRecord(t: Transfer) {
+		try {
+			await tripState.settle(t);
+		} catch (err) {
+			tripState.error = err instanceof Error ? err.message : String(err);
+		}
+	}
+	async function onCancel(s: Settlement) {
+		try {
+			await tripState.unsettle(s);
+		} catch (err) {
+			tripState.error = err instanceof Error ? err.message : String(err);
+		}
+	}
+</script>
+
+<div class="space-y-6">
+	<section class="space-y-2">
+		<h2 class="text-sm font-medium text-slate-500">Soldes par foyer</h2>
+		<ul class="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white">
+			{#each tripState.balances as b (b.household_id)}
+				<li class="flex items-center justify-between px-4 py-3">
+					<span>{tripState.householdName.get(b.household_id) ?? '?'}</span>
+					<span
+						class={b.net_cents > 0 ? 'font-medium text-emerald-600'
+							: b.net_cents < 0 ? 'font-medium text-red-600' : 'text-slate-400'}
+					>
+						{b.net_cents > 0 ? '+' : ''}{euros(b.net_cents)}
+						<span class="ml-1 text-xs text-slate-400">
+							{b.net_cents > 0 ? 'on lui doit' : b.net_cents < 0 ? 'doit' : ''}
+						</span>
+					</span>
+				</li>
+			{:else}
+				<li class="px-4 py-3 text-sm text-slate-400">Aucun solde.</li>
+			{/each}
+		</ul>
+	</section>
+
+	<section class="space-y-2">
+		<h2 class="text-sm font-medium text-slate-500">Remboursements</h2>
+		{#if tripState.transfers.length}
+			<ul class="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white">
+				{#each tripState.transfers as t (t.from_household_id + t.to_household_id)}
+					<li class="flex items-center justify-between px-4 py-3 text-sm">
+						<span>
+							<span class="font-medium">{tripState.householdName.get(t.from_household_id) ?? '?'}</span>
+							→ <span class="font-medium">{tripState.householdName.get(t.to_household_id) ?? '?'}</span>
+							: {euros(t.amount_cents)}
+						</span>
+						<button class="rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white" onclick={() => onRecord(t)}>
+							enregistrer
+						</button>
+					</li>
+				{/each}
+			</ul>
+		{:else}
+			<p class="rounded-lg border border-dashed border-slate-200 p-3 text-center text-sm text-slate-400">
+				Tout est équilibré 🎉
+			</p>
+		{/if}
+
+		{#if tripState.settlements.length}
+			<details class="rounded-lg border border-slate-200 bg-white p-3">
+				<summary class="cursor-pointer text-sm text-slate-500">
+					Remboursements enregistrés ({tripState.settlements.length})
+				</summary>
+				<ul class="mt-2 space-y-1">
+					{#each tripState.settlements as s (s.id)}
+						<li class="flex items-center justify-between text-sm">
+							<span class="text-slate-600">
+								{s.settled_on} · {tripState.householdName.get(s.from_household_id) ?? '?'} →
+								{tripState.householdName.get(s.to_household_id) ?? '?'} : {euros(s.amount_cents)}
+							</span>
+							<button class="text-xs text-red-500 underline" onclick={() => onCancel(s)}>annuler</button>
+						</li>
+					{/each}
+				</ul>
+			</details>
+		{/if}
+	</section>
+</div>
