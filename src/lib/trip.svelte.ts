@@ -65,7 +65,8 @@ export class TripState {
 		}
 	}
 
-	async addExpense(input: Omit<SaveExpenseInput, 'trip_id'>) {
+	/** Crée (sans expense_id) ou met à jour (avec expense_id + expected_version). */
+	async upsertExpense(input: Omit<SaveExpenseInput, 'trip_id'>) {
 		await saveExpense({ trip_id: this.tripId, ...input });
 		await this.load();
 	}
