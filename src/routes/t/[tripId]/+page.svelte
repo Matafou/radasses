@@ -2,10 +2,11 @@
 	import { page } from '$app/stores';
 	import { base } from '$app/paths';
 	import {
-		getTrip, listParticipants, listExpenses, listBeneficiaries, getBalances,
-		type Trip, type Participant, type Expense, type Beneficiary, type Balance
+		getTrip, listParticipants, listExpenses, listBeneficiaries, getBalances, listSettlements,
+		type Trip, type Participant, type Expense, type Beneficiary, type Balance, type Settlement
 	} from '$lib/db';
 	import { saveExpense, deleteExpense } from '$lib/expenses';
+	import { simplifyDebts, recordSettlement, cancelSettlement } from '$lib/settlements';
 	import { addParticipant } from '$lib/auth';
 	import { euros, centsFromEuros } from '$lib/format';
 
@@ -18,6 +19,8 @@
 	let expenses = $state<Expense[]>([]);
 	let beneficiaries = $state<Beneficiary[]>([]);
 	let balances = $state<Balance[]>([]);
+	let settlements = $state<Settlement[]>([]);
+	let transfers = $derived(simplifyDebts(balances));
 
 	let personName = $derived(new Map(participants.map((p) => [p.person_id, p.person_name])));
 	let householdName = $derived(new Map(participants.map((p) => [p.household_id, p.household_name])));
@@ -56,8 +59,9 @@
 		loading = true;
 		error = null;
 		try {
-			[trip, participants, expenses, beneficiaries, balances] = await Promise.all([
-				getTrip(id), listParticipants(id), listExpenses(id), listBeneficiaries(id), getBalances(id)
+			[trip, participants, expenses, beneficiaries, balances, settlements] = await Promise.all([
+				getTrip(id), listParticipants(id), listExpenses(id), listBeneficiaries(id),
+				getBalances(id), listSettlements(id)
 			]);
 			const sel = { ...selected };
 			for (const p of participants) if (!(p.person_id in sel)) sel[p.person_id] = true;
@@ -137,6 +141,26 @@
 			addingP = false;
 		}
 	}
+
+	async function onRecord(t: { from_household_id: string; to_household_id: string; amount_cents: number }) {
+		error = null;
+		try {
+			await recordSettlement({ trip_id: tripId, ...t });
+			await load(tripId);
+		} catch (e) {
+			error = e instanceof Error ? e.message : String(e);
+		}
+	}
+
+	async function onCancelSettlement(s: Settlement) {
+		error = null;
+		try {
+			await cancelSettlement(s.id);
+			await load(tripId);
+		} catch (e) {
+			error = e instanceof Error ? e.message : String(e);
+		}
+	}
 </script>
 
 {#if loading && !trip}
@@ -173,6 +197,55 @@
 					<li class="px-4 py-3 text-sm text-slate-400">Aucun solde.</li>
 				{/each}
 			</ul>
+		</section>
+
+		<!-- Remboursements -->
+		<section class="space-y-2">
+			<h2 class="text-sm font-medium text-slate-500">Remboursements</h2>
+			{#if transfers.length}
+				<ul class="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white">
+					{#each transfers as t (t.from_household_id + t.to_household_id)}
+						<li class="flex items-center justify-between px-4 py-3 text-sm">
+							<span>
+								<span class="font-medium">{householdName.get(t.from_household_id) ?? '?'}</span>
+								→ <span class="font-medium">{householdName.get(t.to_household_id) ?? '?'}</span>
+								: {euros(t.amount_cents)}
+							</span>
+							<button
+								class="rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white"
+								onclick={() => onRecord(t)}
+							>
+								enregistrer
+							</button>
+						</li>
+					{/each}
+				</ul>
+			{:else}
+				<p class="rounded-lg border border-dashed border-slate-200 p-3 text-center text-sm text-slate-400">
+					Tout est équilibré 🎉
+				</p>
+			{/if}
+
+			{#if settlements.length}
+				<details class="rounded-lg border border-slate-200 bg-white p-3">
+					<summary class="cursor-pointer text-sm text-slate-500">
+						Remboursements enregistrés ({settlements.length})
+					</summary>
+					<ul class="mt-2 space-y-1">
+						{#each settlements as s (s.id)}
+							<li class="flex items-center justify-between text-sm">
+								<span class="text-slate-600">
+									{s.settled_on} · {householdName.get(s.from_household_id) ?? '?'} →
+									{householdName.get(s.to_household_id) ?? '?'} : {euros(s.amount_cents)}
+								</span>
+								<button class="text-xs text-red-500 underline" onclick={() => onCancelSettlement(s)}>
+									annuler
+								</button>
+							</li>
+						{/each}
+					</ul>
+				</details>
+			{/if}
 		</section>
 
 		<!-- Participants -->

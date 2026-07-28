@@ -32,6 +32,14 @@ export type Beneficiary = {
 
 export type Balance = { household_id: string; net_cents: number };
 
+export type Settlement = {
+	id: string;
+	from_household_id: string;
+	to_household_id: string;
+	amount_cents: number;
+	settled_on: string;
+};
+
 export async function getTrip(tripId: string): Promise<Trip | null> {
 	const { data, error } = await supabase
 		.from('trips')
@@ -93,4 +101,15 @@ export async function getBalances(tripId: string): Promise<Balance[]> {
 		.eq('trip_id', tripId);
 	if (error) throw error;
 	return (data ?? []) as Balance[];
+}
+
+export async function listSettlements(tripId: string): Promise<Settlement[]> {
+	const { data, error } = await supabase
+		.from('settlements')
+		.select('id, from_household_id, to_household_id, amount_cents, settled_on')
+		.eq('trip_id', tripId)
+		.is('deleted_at', null)
+		.order('settled_on', { ascending: false });
+	if (error) throw error;
+	return (data ?? []) as Settlement[];
 }
