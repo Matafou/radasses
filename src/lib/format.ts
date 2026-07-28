@@ -1,8 +1,11 @@
-/** Centimes -> "12,34 €" (format français). */
+/** Centimes -> montant formaté (français) dans la devise donnée. */
+export function money(cents: number, currency = 'EUR'): string {
+	return new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format((cents ?? 0) / 100);
+}
+
+/** Raccourci euros (compat). */
 export function euros(cents: number): string {
-	return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(
-		(cents ?? 0) / 100
-	);
+	return money(cents, 'EUR');
 }
 
 /** "12,34" ou "12.34" -> 1234 centimes. NaN si invalide. */

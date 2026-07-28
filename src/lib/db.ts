@@ -105,6 +105,14 @@ export async function getBalances(tripId: string): Promise<Balance[]> {
 	return (data ?? []) as Balance[];
 }
 
+export async function updateTrip(
+	tripId: string,
+	patch: { name?: string; currency?: string }
+): Promise<void> {
+	const { error } = await supabase.from('trips').update(patch).eq('id', tripId);
+	if (error) throw error;
+}
+
 export async function updatePersonName(personId: string, name: string): Promise<void> {
 	const { error } = await supabase.from('persons').update({ name }).eq('id', personId);
 	if (error) throw error;
@@ -118,6 +126,44 @@ export async function updateHouseholdName(householdId: string, name: string): Pr
 export async function setParticipantActive(participantId: string, active: boolean): Promise<void> {
 	const { error } = await supabase.from('trip_participants').update({ active }).eq('id', participantId);
 	if (error) throw error;
+}
+
+export type Operation = {
+	id: number;
+	actor_auth_user_id: string | null;
+	entity_type: string;
+	entity_id: string | null;
+	action: string;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	before: any;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	after: any;
+	created_at: string;
+};
+
+export async function listOperations(tripId: string): Promise<Operation[]> {
+	const { data, error } = await supabase
+		.from('operations')
+		.select('id, actor_auth_user_id, entity_type, entity_id, action, before, after, created_at')
+		.eq('trip_id', tripId)
+		.order('id', { ascending: false });
+	if (error) throw error;
+	return (data ?? []) as Operation[];
+}
+
+/** Table auth_user_id -> nom de la personne (pour afficher « qui » a agi). */
+export async function listActors(tripId: string): Promise<Record<string, string>> {
+	const { data, error } = await supabase
+		.from('participant_access')
+		.select('auth_user_id, trip_participants!inner(trip_id, persons(name))')
+		.eq('trip_participants.trip_id', tripId);
+	if (error) throw error;
+	const map: Record<string, string> = {};
+	for (const r of (data ?? []) as any[]) {
+		const name = r.trip_participants?.persons?.name;
+		if (name) map[r.auth_user_id] = name;
+	}
+	return map;
 }
 
 export async function listSettlements(tripId: string): Promise<Settlement[]> {

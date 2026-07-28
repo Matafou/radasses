@@ -1,7 +1,7 @@
 import { getContext, setContext } from 'svelte';
 import {
 	getTrip, listParticipants, listExpenses, listBeneficiaries, getBalances, listSettlements,
-	updatePersonName, updateHouseholdName, setParticipantActive,
+	updateTrip, updatePersonName, updateHouseholdName, setParticipantActive,
 	type Trip, type Participant, type Expense, type Beneficiary, type Balance, type Settlement
 } from './db';
 import { saveExpense, deleteExpense, type SaveExpenseInput } from './expenses';
@@ -34,6 +34,7 @@ export class TripState {
 	balances = $state<Balance[]>([]);
 	settlements = $state<Settlement[]>([]);
 
+	currency = $derived(this.trip?.currency ?? 'EUR');
 	personName = $derived(new Map(this.participants.map((p) => [p.person_id, p.person_name])));
 	householdName = $derived(new Map(this.participants.map((p) => [p.household_id, p.household_name])));
 	households = $derived(Array.from(this.householdName, ([id, name]) => ({ id, name })));
@@ -103,6 +104,11 @@ export class TripState {
 	/** Marque un participant présent (active=true) ou parti (false). */
 	async setActive(participantId: string, active: boolean) {
 		await setParticipantActive(participantId, active);
+		await this.load();
+	}
+	/** Réglages du séjour (nom, devise). */
+	async updateSettings(patch: { name?: string; currency?: string }) {
+		await updateTrip(this.tripId, patch);
 		await this.load();
 	}
 	async settle(t: Transfer) {

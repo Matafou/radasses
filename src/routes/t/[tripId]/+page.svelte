@@ -2,10 +2,11 @@
 	import { beforeNavigate } from '$app/navigation';
 	import { getTripState } from '$lib/trip.svelte';
 	import type { Expense } from '$lib/db';
-	import { euros } from '$lib/format';
+	import { money } from '$lib/format';
 	import ExpenseForm from '$lib/components/ExpenseForm.svelte';
 
 	const tripState = getTripState();
+	const fmt = (c: number) => money(c, tripState.currency);
 	let editing = $state<Expense | null>(null);
 
 	function onDone() {
@@ -61,7 +62,7 @@
 						</p>
 					</div>
 					<div class="text-right">
-						<p class="font-semibold">{euros(e.amount_cents)}</p>
+						<p class="font-semibold">{fmt(e.amount_cents)}</p>
 						<div class="flex justify-end gap-2">
 							<button class="text-xs text-slate-500 underline" onclick={() => (editing = e)}>modifier</button>
 							<button class="text-xs text-red-500 underline" onclick={() => onDelete(e)}>supprimer</button>
@@ -70,7 +71,7 @@
 				</div>
 				<ul class="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500">
 					{#each tripState.benefByExpense.get(e.id) ?? [] as b (b.person_id)}
-						<li>{tripState.personName.get(b.person_id) ?? '?'} : {euros(b.amount_cents)}{b.is_locked ? ' 🔒' : ''}</li>
+						<li>{tripState.personName.get(b.person_id) ?? '?'} : {fmt(b.amount_cents)}{b.is_locked ? ' 🔒' : ''}</li>
 					{/each}
 				</ul>
 			</li>

@@ -4,9 +4,10 @@
 	import { getTripState } from '$lib/trip.svelte';
 	import type { Settlement } from '$lib/db';
 	import type { Transfer } from '$lib/settlements';
-	import { euros } from '$lib/format';
+	import { money } from '$lib/format';
 
 	const tripState = getTripState();
+	const fmt = (c: number) => money(c, tripState.currency);
 
 	// Un remboursement = une dépense : le débiteur « paie » le créditeur.
 	// On préremplit le formulaire de dépense et on bascule sur l'onglet Dépenses,
@@ -43,7 +44,7 @@
 						class={b.net_cents > 0 ? 'font-medium text-emerald-600'
 							: b.net_cents < 0 ? 'font-medium text-red-600' : 'text-slate-400'}
 					>
-						{b.net_cents > 0 ? '+' : ''}{euros(b.net_cents)}
+						{b.net_cents > 0 ? '+' : ''}{fmt(b.net_cents)}
 						<span class="ml-1 text-xs text-slate-400">
 							{b.net_cents > 0 ? 'on lui doit' : b.net_cents < 0 ? 'doit' : ''}
 						</span>
@@ -67,7 +68,7 @@
 						<span>
 							<span class="font-medium">{tripState.householdName.get(t.from_household_id) ?? '?'}</span>
 							→ <span class="font-medium">{tripState.householdName.get(t.to_household_id) ?? '?'}</span>
-							: {euros(t.amount_cents)}
+							: {fmt(t.amount_cents)}
 						</span>
 						<button class="shrink-0 whitespace-nowrap rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white" onclick={() => onReimburse(t)}>
 							Noter le remboursement
@@ -91,7 +92,7 @@
 						<li class="flex items-center justify-between text-sm">
 							<span class="text-slate-600">
 								{s.settled_on} · {tripState.householdName.get(s.from_household_id) ?? '?'} →
-								{tripState.householdName.get(s.to_household_id) ?? '?'} : {euros(s.amount_cents)}
+								{tripState.householdName.get(s.to_household_id) ?? '?'} : {fmt(s.amount_cents)}
 							</span>
 							<button class="text-xs text-red-500 underline" onclick={() => onCancel(s)}>annuler</button>
 						</li>

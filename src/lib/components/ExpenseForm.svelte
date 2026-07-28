@@ -4,7 +4,7 @@
 	import type { Expense, Participant } from '$lib/db';
 	import type { BeneficiaryInput } from '$lib/expenses';
 	import { previewSplit } from '$lib/split';
-	import { centsFromEuros, euros } from '$lib/format';
+	import { centsFromEuros, money } from '$lib/format';
 
 	let { expense = null, prefill = null, onDone }: {
 		expense?: Expense | null;
@@ -128,7 +128,9 @@
 		Number.isFinite(totalCents) && totalCents > 0 ? previewSplit(totalCents, beneficiaries) : {}
 	);
 	const amountOf = (pid: string) =>
-		preview.amounts && preview.amounts[pid] != null ? euros(preview.amounts[pid]) : '—';
+		preview.amounts && preview.amounts[pid] != null
+			? money(preview.amounts[pid], tripState.currency)
+			: '—';
 
 	// Le seul bénéficiaire non-figé (mode poids) est « forcé » : son montant = le reste,
 	// quel que soit son poids -> on grise sa saisie et on l'indique.
