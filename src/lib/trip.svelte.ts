@@ -1,7 +1,7 @@
 import { getContext, setContext } from 'svelte';
 import {
 	getTrip, listParticipants, listExpenses, listBeneficiaries, getBalances, listSettlements,
-	updateTrip, updatePersonName, updateHouseholdName, setParticipantActive,
+	getMyPersonId, updateTrip, updatePersonName, updateHouseholdName, setParticipantActive,
 	type Trip, type Participant, type Expense, type Beneficiary, type Balance, type Settlement
 } from './db';
 import { saveExpense, deleteExpense, type SaveExpenseInput } from './expenses';
@@ -24,6 +24,8 @@ export type ExpensePrefill = {
 export class TripState {
 	/** pré-remplissage en attente pour le formulaire de dépense (onglet Dépenses) */
 	prefill = $state<ExpensePrefill | null>(null);
+	/** dépense en cours d'édition — persiste au changement d'onglet */
+	editingExpense = $state<Expense | null>(null);
 	tripId = $state('');
 	loading = $state(true);
 	error = $state<string | null>(null);
@@ -33,6 +35,7 @@ export class TripState {
 	beneficiaries = $state<Beneficiary[]>([]);
 	balances = $state<Balance[]>([]);
 	settlements = $state<Settlement[]>([]);
+	myPersonId = $state<string | null>(null);
 
 	currency = $derived(this.trip?.currency ?? 'EUR');
 	personName = $derived(new Map(this.participants.map((p) => [p.person_id, p.person_name])));
@@ -60,16 +63,18 @@ export class TripState {
 		this.loading = true;
 		this.error = null;
 		try {
-			const [trip, participants, expenses, beneficiaries, balances, settlements] = await Promise.all([
-				getTrip(id), listParticipants(id), listExpenses(id), listBeneficiaries(id),
-				getBalances(id), listSettlements(id)
-			]);
+			const [trip, participants, expenses, beneficiaries, balances, settlements, myPersonId] =
+				await Promise.all([
+					getTrip(id), listParticipants(id), listExpenses(id), listBeneficiaries(id),
+					getBalances(id), listSettlements(id), getMyPersonId(id)
+				]);
 			this.trip = trip;
 			this.participants = participants;
 			this.expenses = expenses;
 			this.beneficiaries = beneficiaries;
 			this.balances = balances;
 			this.settlements = settlements;
+			this.myPersonId = myPersonId;
 		} catch (e) {
 			this.error = e instanceof Error ? e.message : String(e);
 		} finally {

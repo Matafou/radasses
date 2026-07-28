@@ -85,7 +85,11 @@
 					: '',
 			description: expense?.description ?? prefill?.description ?? '',
 			payerId:
-				expense?.paid_by_person_id ?? prefill?.paid_by_person_id ?? tripState.participants[0]?.person_id ?? '',
+				expense?.paid_by_person_id ??
+				prefill?.paid_by_person_id ??
+				tripState.myPersonId ??
+				tripState.participants[0]?.person_id ??
+				'',
 			spentOn: expense?.spent_on ?? today,
 			selected: initSelected(),
 			detailed: d.detailed,

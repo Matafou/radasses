@@ -7,10 +7,11 @@
 
 	const tripState = getTripState();
 	const fmt = (c: number) => money(c, tripState.currency);
-	let editing = $state<Expense | null>(null);
+	// `editingExpense` vit dans TripState -> l'édition survit au changement d'onglet
+	// (et le défaut « payé par = moi » ne s'applique donc qu'à une nouvelle dépense).
 
 	function onDone() {
-		editing = null;
+		tripState.editingExpense = null;
 		tripState.prefill = null; // consomme un éventuel pré-remplissage (remboursement)
 	}
 
@@ -39,7 +40,7 @@
 		if (!confirm('Supprimer cette dépense ?')) return;
 		try {
 			await tripState.removeExpense(exp);
-			if (editing?.id === exp.id) editing = null;
+			if (tripState.editingExpense?.id === exp.id) tripState.editingExpense = null;
 		} catch (err) {
 			tripState.error = err instanceof Error ? err.message : String(err);
 		}
@@ -47,13 +48,17 @@
 </script>
 
 <section class="space-y-2">
-	{#key editing?.id ?? (tripState.prefill ? 'prefill' : 'new')}
-		<ExpenseForm expense={editing} prefill={editing ? null : tripState.prefill} onDone={onDone} />
+	{#key tripState.editingExpense?.id ?? (tripState.prefill ? 'prefill' : 'new')}
+		<ExpenseForm
+			expense={tripState.editingExpense}
+			prefill={tripState.editingExpense ? null : tripState.prefill}
+			onDone={onDone}
+		/>
 	{/key}
 
 	<ul class="space-y-2">
 		{#each tripState.expenses as e (e.id)}
-			<li class="rounded-lg border bg-white p-3 {editing?.id === e.id ? 'border-slate-900' : 'border-slate-200'}">
+			<li class="rounded-lg border bg-white p-3 {tripState.editingExpense?.id === e.id ? 'border-slate-900' : 'border-slate-200'}">
 				<div class="flex items-start justify-between">
 					<div>
 						<p class="font-medium">{e.description || 'Dépense'}</p>
@@ -64,7 +69,7 @@
 					<div class="text-right">
 						<p class="font-semibold">{fmt(e.amount_cents)}</p>
 						<div class="flex justify-end gap-2">
-							<button class="text-xs text-slate-500 underline" onclick={() => (editing = e)}>modifier</button>
+							<button class="text-xs text-slate-500 underline" onclick={() => (tripState.editingExpense = e)}>modifier</button>
 							<button class="text-xs text-red-500 underline" onclick={() => onDelete(e)}>supprimer</button>
 						</div>
 					</div>

@@ -128,6 +128,22 @@ export async function setParticipantActive(participantId: string, active: boolea
 	if (error) throw error;
 }
 
+/** person_id de l'utilisateur courant dans ce séjour (via sa session), ou null. */
+export async function getMyPersonId(tripId: string): Promise<string | null> {
+	const { data: u } = await supabase.auth.getUser();
+	const uid = u.user?.id;
+	if (!uid) return null;
+	const { data, error } = await supabase
+		.from('participant_access')
+		.select('trip_participants!inner(trip_id, person_id)')
+		.eq('auth_user_id', uid)
+		.eq('trip_participants.trip_id', tripId)
+		.limit(1);
+	if (error) throw error;
+	const row = (data ?? [])[0] as any;
+	return row?.trip_participants?.person_id ?? null;
+}
+
 export type Operation = {
 	id: number;
 	actor_auth_user_id: string | null;
