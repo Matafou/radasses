@@ -24,6 +24,9 @@ as $$
 	);
 $$;
 
+-- Visible si la personne participe à un séjour dont je suis membre
+-- (et NON « seulement si je suis rattaché à cette personne » : sinon un
+--  participant fraîchement ajouté, sans accès encore, serait invisible).
 create or replace function public.can_see_person(p_person_id uuid)
 returns boolean
 language sql stable security definer set search_path = public
@@ -31,9 +34,8 @@ as $$
 	select exists (
 		select 1
 		from trip_participants tp
-		join participant_access pa on pa.trip_participant_id = tp.id
 		where tp.person_id = p_person_id
-		  and pa.auth_user_id = auth.uid()
+		  and is_trip_member(tp.trip_id)
 	);
 $$;
 
@@ -44,9 +46,8 @@ as $$
 	select exists (
 		select 1
 		from trip_participants tp
-		join participant_access pa on pa.trip_participant_id = tp.id
 		where tp.household_id = p_household_id
-		  and pa.auth_user_id = auth.uid()
+		  and is_trip_member(tp.trip_id)
 	);
 $$;
 
