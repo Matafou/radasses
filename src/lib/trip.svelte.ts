@@ -1,6 +1,7 @@
 import { getContext, setContext } from 'svelte';
 import {
 	getTrip, listParticipants, listExpenses, listBeneficiaries, getBalances, listSettlements,
+	updatePersonName, updateHouseholdName,
 	type Trip, type Participant, type Expense, type Beneficiary, type Balance, type Settlement
 } from './db';
 import { saveExpense, deleteExpense, type SaveExpenseInput } from './expenses';
@@ -76,6 +77,17 @@ export class TripState {
 	}
 	async newParticipant(params: { person_name: string; household_id?: string | null }) {
 		await addParticipant({ trip_id: this.tripId, ...params });
+		await this.load();
+	}
+	/** Renomme la personne et son foyer (le foyer est partagé -> renommé pour tous ses membres). */
+	async renameParticipant(params: {
+		person_id: string;
+		person_name: string;
+		household_id: string;
+		household_name: string;
+	}) {
+		await updatePersonName(params.person_id, params.person_name);
+		await updateHouseholdName(params.household_id, params.household_name);
 		await this.load();
 	}
 	async settle(t: Transfer) {

@@ -103,6 +103,16 @@ export async function getBalances(tripId: string): Promise<Balance[]> {
 	return (data ?? []) as Balance[];
 }
 
+export async function updatePersonName(personId: string, name: string): Promise<void> {
+	const { error } = await supabase.from('persons').update({ name }).eq('id', personId);
+	if (error) throw error;
+}
+
+export async function updateHouseholdName(householdId: string, name: string): Promise<void> {
+	const { error } = await supabase.from('households').update({ name }).eq('id', householdId);
+	if (error) throw error;
+}
+
 export async function listSettlements(tripId: string): Promise<Settlement[]> {
 	const { data, error } = await supabase
 		.from('settlements')

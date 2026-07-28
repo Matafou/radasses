@@ -1,15 +1,24 @@
 <script lang="ts">
 	import { base } from '$app/paths';
 	import { getTripState } from '$lib/trip.svelte';
+	import type { Participant } from '$lib/db';
 
 	const tripState = getTripState();
 
+	// ajout
 	let showAdd = $state(false);
 	let newName = $state('');
 	let newHousehold = $state('__new__');
 	let adding = $state(false);
-	let formError = $state<string | null>(null);
+	let addError = $state<string | null>(null);
 	let copied = $state<string | null>(null);
+
+	// édition
+	let editingId = $state<string | null>(null);
+	let editName = $state('');
+	let editHousehold = $state('');
+	let saving = $state(false);
+	let editError = $state<string | null>(null);
 
 	function inviteLink(token: string): string {
 		const origin = typeof location !== 'undefined' ? location.origin : '';
@@ -27,8 +36,8 @@
 
 	async function onAdd(e: SubmitEvent) {
 		e.preventDefault();
-		formError = null;
-		if (!newName.trim()) return void (formError = 'Nom requis.');
+		addError = null;
+		if (!newName.trim()) return void (addError = 'Nom requis.');
 		adding = true;
 		try {
 			await tripState.newParticipant({
@@ -39,9 +48,34 @@
 			newHousehold = '__new__';
 			showAdd = false;
 		} catch (err) {
-			formError = err instanceof Error ? err.message : String(err);
+			addError = err instanceof Error ? err.message : String(err);
 		} finally {
 			adding = false;
+		}
+	}
+
+	function startEdit(p: Participant) {
+		editingId = p.participant_id;
+		editName = p.person_name;
+		editHousehold = p.household_name;
+		editError = null;
+	}
+	async function onSaveEdit(p: Participant) {
+		editError = null;
+		if (!editName.trim() || !editHousehold.trim()) return void (editError = 'Nom et foyer requis.');
+		saving = true;
+		try {
+			await tripState.renameParticipant({
+				person_id: p.person_id,
+				person_name: editName.trim(),
+				household_id: p.household_id,
+				household_name: editHousehold.trim()
+			});
+			editingId = null;
+		} catch (err) {
+			editError = err instanceof Error ? err.message : String(err);
+		} finally {
+			saving = false;
 		}
 	}
 </script>
@@ -66,8 +100,8 @@
 					{/each}
 				</select>
 			</label>
-			{#if formError}
-				<p class="text-sm text-red-600">{formError}</p>
+			{#if addError}
+				<p class="text-sm text-red-600">{addError}</p>
 			{/if}
 			<button class="w-full rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50" disabled={adding}>
 				{adding ? 'Ajout…' : 'Ajouter'}
@@ -77,11 +111,38 @@
 
 	<ul class="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white">
 		{#each tripState.participants as p (p.participant_id)}
-			<li class="flex items-center justify-between px-4 py-3">
-				<span>{p.person_name} <span class="text-xs text-slate-400">· {p.household_name}</span></span>
-				<button class="text-xs text-slate-500 underline" onclick={() => copyLink(p.invite_token)}>
-					{copied === p.invite_token ? 'copié ✓' : 'copier le lien'}
-				</button>
+			<li class="px-4 py-3">
+				{#if editingId === p.participant_id}
+					<div class="space-y-2">
+						<label class="block text-xs text-slate-500">
+							Prénom
+							<input class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" bind:value={editName} />
+						</label>
+						<label class="block text-xs text-slate-500">
+							Foyer <span class="text-slate-400">(partagé : renomme pour tous ses membres)</span>
+							<input class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" bind:value={editHousehold} />
+						</label>
+						{#if editError}
+							<p class="text-sm text-red-600">{editError}</p>
+						{/if}
+						<div class="flex gap-2">
+							<button class="rounded-md bg-slate-900 px-3 py-1 text-sm text-white disabled:opacity-50" disabled={saving} onclick={() => onSaveEdit(p)}>
+								{saving ? '…' : 'Enregistrer'}
+							</button>
+							<button class="rounded-md border border-slate-300 px-3 py-1 text-sm text-slate-600" onclick={() => (editingId = null)}>Annuler</button>
+						</div>
+					</div>
+				{:else}
+					<div class="flex items-center justify-between">
+						<span>{p.person_name} <span class="text-xs text-slate-400">· {p.household_name}</span></span>
+						<div class="flex gap-2">
+							<button class="text-xs text-slate-500 underline" onclick={() => startEdit(p)}>modifier</button>
+							<button class="text-xs text-slate-500 underline" onclick={() => copyLink(p.invite_token)}>
+								{copied === p.invite_token ? 'copié ✓' : 'lien'}
+							</button>
+						</div>
+					</div>
+				{/if}
 			</li>
 		{/each}
 	</ul>
