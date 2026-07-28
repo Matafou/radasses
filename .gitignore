@@ -21,3 +21,8 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Le gitignore global (~/.gitignore) ignore *.sql ; on veut versionner le SQL du projet.
+!supabase/migrations/*.sql
+!supabase/tests/*.sql
+!supabase/seed.sql
