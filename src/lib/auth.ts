@@ -47,3 +47,26 @@ export async function createTrip(params: {
 	if (error) throw error;
 	return data as { trip_id: string; participant_id: string; token: string };
 }
+
+/**
+ * Ajoute un participant au séjour : nouveau foyer, ou rattaché à un foyer
+ * existant si `household_id` est fourni. Renvoie le jeton (lien à partager).
+ */
+export async function addParticipant(params: {
+	trip_id: string;
+	person_name: string;
+	household_name?: string | null;
+	household_id?: string | null;
+	default_weight?: number;
+}): Promise<{ participant_id: string; person_id: string; household_id: string; token: string }> {
+	await ensureSession();
+	const { data, error } = await supabase.rpc('add_participant', {
+		p_trip_id: params.trip_id,
+		p_person_name: params.person_name,
+		p_household_name: params.household_name ?? null,
+		p_household_id: params.household_id ?? null,
+		p_default_weight: params.default_weight ?? 1
+	});
+	if (error) throw error;
+	return data as { participant_id: string; person_id: string; household_id: string; token: string };
+}

@@ -109,8 +109,8 @@ begin
 
 	insert into persons (name) values (p_my_name) returning id into v_person;
 
-	insert into trip_participants (trip_id, person_id, household_id, default_percent)
-	values (v_trip, v_person, v_household, 0)
+	insert into trip_participants (trip_id, person_id, household_id, default_weight)
+	values (v_trip, v_person, v_household, 1)
 	returning * into v_tp;
 
 	insert into participant_access (trip_participant_id, auth_user_id)
