@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { getTripState, type ExpensePrefill } from '$lib/trip.svelte';
-	import type { Expense } from '$lib/db';
+	import type { Expense, Participant } from '$lib/db';
 	import { centsFromEuros } from '$lib/format';
 
 	let { expense = null, prefill = null, onDone }: {
@@ -45,6 +45,30 @@
 	let selected = $state<Record<string, boolean>>(init.selected);
 	let saving = $state(false);
 	let formError = $state<string | null>(null);
+
+	// Bénéficiaires regroupés par foyer, pour cocher tout un foyer d'un coup.
+	type Group = { id: string; name: string; members: Participant[] };
+	const groups = $derived.by((): Group[] => {
+		const m = new Map<string, Group>();
+		for (const p of tripState.participants) {
+			let g = m.get(p.household_id);
+			if (!g) {
+				g = { id: p.household_id, name: p.household_name, members: [] };
+				m.set(p.household_id, g);
+			}
+			g.members.push(p);
+		}
+		return Array.from(m.values());
+	});
+	const foyerAll = (g: Group) => g.members.every((p) => selected[p.person_id]);
+	const foyerSome = (g: Group) => {
+		const n = g.members.filter((p) => selected[p.person_id]).length;
+		return n > 0 && n < g.members.length;
+	};
+	function toggleFoyer(g: Group) {
+		const all = foyerAll(g);
+		for (const p of g.members) selected[p.person_id] = !all;
+	}
 
 	async function onSubmit(e: SubmitEvent) {
 		e.preventDefault();
@@ -98,16 +122,36 @@
 			<input type="date" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" bind:value={spentOn} />
 		</label>
 	</div>
-	<fieldset class="rounded-lg border border-slate-200 p-2">
+	<fieldset class="space-y-2 rounded-lg border border-slate-200 p-2">
 		<legend class="px-1 text-xs text-slate-400">Bénéficiaires (parts égales)</legend>
-		<div class="flex flex-wrap gap-x-4 gap-y-1">
-			{#each tripState.participants as p (p.person_id)}
-				<label class="flex items-center gap-1 text-sm">
-					<input type="checkbox" bind:checked={selected[p.person_id]} />
-					{p.person_name}
+		{#each groups as g (g.id)}
+			{#if g.members.length === 1}
+				<label class="flex items-center gap-2 text-sm">
+					<input type="checkbox" bind:checked={selected[g.members[0].person_id]} />
+					{g.members[0].person_name}
 				</label>
-			{/each}
-		</div>
+			{:else}
+				<div>
+					<label class="flex items-center gap-2 text-sm font-medium">
+						<input
+							type="checkbox"
+							checked={foyerAll(g)}
+							indeterminate={foyerSome(g)}
+							onchange={() => toggleFoyer(g)}
+						/>
+						{g.name} <span class="text-xs font-normal text-slate-400">— tout le foyer</span>
+					</label>
+					<div class="ml-6 flex flex-wrap gap-x-4 gap-y-1">
+						{#each g.members as p (p.person_id)}
+							<label class="flex items-center gap-1 text-sm">
+								<input type="checkbox" bind:checked={selected[p.person_id]} />
+								{p.person_name}
+							</label>
+						{/each}
+					</div>
+				</div>
+			{/if}
+		{/each}
 	</fieldset>
 	{#if formError}
 		<p class="text-sm text-red-600">{formError}</p>
