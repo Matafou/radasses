@@ -69,6 +69,8 @@
 
 	const init = untrack(() => {
 		const d = initDetail();
+		const now = new Date();
+		const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 		return {
 			amountStr: expense
 				? String(expense.amount_cents / 100)
@@ -78,7 +80,7 @@
 			description: expense?.description ?? prefill?.description ?? '',
 			payerId:
 				expense?.paid_by_person_id ?? prefill?.paid_by_person_id ?? tripState.participants[0]?.person_id ?? '',
-			spentOn: expense?.spent_on ?? '',
+			spentOn: expense?.spent_on ?? today,
 			selected: initSelected(),
 			detailed: d.detailed,
 			benefMode: d.mode,
@@ -129,6 +131,16 @@
 		const u = beneficiaries.filter((b) => !b.is_locked);
 		return u.length === 1 ? u[0].person_id : null;
 	});
+
+	// Sélection globale
+	const allSelected = $derived(
+		tripState.participants.length > 0 && tripState.participants.every((p) => selected[p.person_id])
+	);
+	const someSelected = $derived(tripState.participants.some((p) => selected[p.person_id]));
+	function toggleAll() {
+		const all = allSelected;
+		for (const p of tripState.participants) selected[p.person_id] = !all;
+	}
 
 	async function onSubmit(e: SubmitEvent) {
 		e.preventDefault();
@@ -221,8 +233,32 @@
 
 	<fieldset class="space-y-2 rounded-lg border border-slate-200 p-2">
 		<legend class="px-1 text-xs text-slate-400">Bénéficiaires</legend>
+		<label class="flex items-center gap-2 text-sm font-medium">
+			<input
+				type="checkbox"
+				checked={allSelected}
+				indeterminate={someSelected && !allSelected}
+				onchange={toggleAll}
+			/>
+			Tout le monde
+		</label>
 		<label class="flex items-center gap-2 text-xs text-slate-500">
-			<input type="checkbox" bind:checked={detailed} />
+			<button
+				type="button"
+				role="switch"
+				aria-checked={detailed}
+				aria-label="Répartition détaillée"
+				onclick={() => (detailed = !detailed)}
+				class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors {detailed
+					? 'bg-slate-900'
+					: 'bg-slate-300'}"
+			>
+				<span
+					class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform {detailed
+						? 'translate-x-4'
+						: 'translate-x-0.5'}"
+				></span>
+			</button>
 			Répartition détaillée (poids ou montants fixes)
 		</label>
 		{#each groups as g (g.id)}
