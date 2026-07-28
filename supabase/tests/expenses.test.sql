@@ -1,10 +1,10 @@
--- Tests pgTAP : compute_split, save_expense et la vue balances.
+-- Tests pgTAP : compute_split, save_expense (verrou optimiste) et vue balances.
 -- Lancé par `supabase test db`. Chaque fichier tourne dans une transaction
 -- annulée à la fin -> aucune donnée persistée.
 
 begin;
 create extension if not exists pgtap;
-select plan(10);
+select plan(13);
 
 -- Personnes fictives pour les tests PURS de compute_split (aucune table touchée)
 \set A '00000000-0000-0000-0000-00000000000a'
@@ -26,10 +26,10 @@ select is(
 	10::bigint, '10c/3 : somme = total'
 );
 
--- 3) Pourcentages 50/30/20 sur 100,00 €.
+-- 3) Poids 50/30/20 sur 100,00 €.
 select is(
-	(compute_split(10000, format('[{"person_id":"%s","percent":50},{"person_id":"%s","percent":30},{"person_id":"%s","percent":20}]', :'A', :'B', :'C')::jsonb) -> 0 ->> 'amount_cents')::int,
-	5000, 'pourcentage 50%% -> 5000'
+	(compute_split(10000, format('[{"person_id":"%s","weight":50},{"person_id":"%s","weight":30},{"person_id":"%s","weight":20}]', :'A', :'B', :'C')::jsonb) -> 0 ->> 'amount_cents')::int,
+	5000, 'poids 50 -> 5000'
 );
 
 -- 4) Montant verrouillé conservé + reste partagé sur les non-verrouillés.
@@ -50,6 +50,12 @@ select throws_ok(
 	'P0001'
 );
 
+-- 7) Rejet : mélange de poids (un avec poids, un sans) -> tout ou rien.
+select throws_ok(
+	format($$ select compute_split(10000, '[{"person_id":"%s","weight":50},{"person_id":"%s"}]'::jsonb) $$, :'A', :'B'),
+	'P0001'
+);
+
 -- ---------------------------------------------------------------------
 --  Scénario complet pour la vue balances (uuids distincts du seed)
 --  Foyer Dupont = Alice, Bob, Chloé ; Foyer Zoé = Zoé.
@@ -65,11 +71,11 @@ select throws_ok(
 insert into households (id, name) values (:'HD', 'Dupont'), (:'HZ', 'Zoé');
 insert into persons (id, name) values (:'AL','Alice'),(:'BO','Bob'),(:'CH','Chloé'),(:'ZO','Zoé');
 insert into trips (id, name) values (:'TR', 'Été test');
-insert into trip_participants (trip_id, person_id, household_id, default_percent) values
-	(:'TR', :'AL', :'HD', 25), (:'TR', :'BO', :'HD', 25),
-	(:'TR', :'CH', :'HD', 25), (:'TR', :'ZO', :'HZ', 25);
+insert into trip_participants (trip_id, person_id, household_id, default_weight) values
+	(:'TR', :'AL', :'HD', 1), (:'TR', :'BO', :'HD', 1),
+	(:'TR', :'CH', :'HD', 1), (:'TR', :'ZO', :'HZ', 1);
 
--- mêmes 4 dépenses que l'exemple
+-- mêmes 4 dépenses que l'exemple (parts égales)
 select save_expense(:'TR', 6000, :'AL',
 	format('[{"person_id":"%s"},{"person_id":"%s"},{"person_id":"%s"},{"person_id":"%s"}]', :'AL',:'BO',:'CH',:'ZO')::jsonb);
 select save_expense(:'TR', 10000, :'ZO',
@@ -79,7 +85,7 @@ select save_expense(:'TR', 3000, :'BO',
 select save_expense(:'TR', 5000, :'AL',
 	format('[{"person_id":"%s","is_locked":true,"amount_cents":2000},{"person_id":"%s"},{"person_id":"%s"}]', :'ZO',:'AL',:'BO')::jsonb);
 
--- 7-8) Soldes attendus : Dupont -3167, Zoé +3167.
+-- 8-9) Soldes attendus : Dupont -3167, Zoé +3167.
 select is((select net_cents from balances where trip_id = :'TR' and household_id = :'HD'),
 	-3167::bigint, 'solde Foyer Dupont = -3167');
 select is((select net_cents from balances where trip_id = :'TR' and household_id = :'HZ'),
@@ -89,11 +95,33 @@ select is((select net_cents from balances where trip_id = :'TR' and household_id
 insert into settlements (trip_id, from_household_id, to_household_id, amount_cents)
 	values (:'TR', :'HD', :'HZ', 3167);
 
--- 9-10)
+-- 10-11)
 select is((select net_cents from balances where trip_id = :'TR' and household_id = :'HD'),
 	0::bigint, 'après règlement : Dupont = 0');
 select is((select net_cents from balances where trip_id = :'TR' and household_id = :'HZ'),
 	0::bigint, 'après règlement : Zoé = 0');
+
+-- ---------------------------------------------------------------------
+--  Verrou optimiste
+-- ---------------------------------------------------------------------
+-- crée une dépense (version 1) et récupère son id
+select (save_expense(:'TR', 1000, :'AL',
+	format('[{"person_id":"%s"},{"person_id":"%s"}]', :'AL', :'BO')::jsonb) ->> 'expense_id') as eid \gset
+
+-- 12) mise à jour avec une mauvaise version -> conflit (errcode 40001)
+select throws_ok(
+	format($$ select save_expense('%s', 1000, '%s', '[{"person_id":"%s"},{"person_id":"%s"}]'::jsonb, '', null, null, '%s', 999) $$,
+		:'TR', :'AL', :'AL', :'BO', :'eid'),
+	'40001'
+);
+
+-- 13) mise à jour avec la bonne version -> OK, version passe à 2
+select is(
+	(save_expense(:'TR', 1000, :'AL',
+		format('[{"person_id":"%s"},{"person_id":"%s"}]', :'AL', :'BO')::jsonb,
+		'', null, null, :'eid', 1) ->> 'version')::int,
+	2, 'verrou optimiste : bonne version -> version 2'
+);
 
 select * from finish();
 rollback;

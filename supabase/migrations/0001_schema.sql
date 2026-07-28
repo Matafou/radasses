@@ -42,15 +42,16 @@ create table trips (
 -- C'est ici que se joue le rattachement à un foyer POUR CE séjour
 -- (la composition d'un foyer peut donc varier d'un séjour à l'autre).
 -- `invite_token` : secret présent dans l'URL, identifie ce participant.
--- `default_percent` : part par défaut de ce participant dans les dépenses.
+-- `default_weight` : poids par défaut de ce participant dans les dépenses
+--   (parts relatives ; 1 = part égale). Renormalisé selon les bénéficiaires.
 create table trip_participants (
-	id              uuid primary key default gen_random_uuid(),
-	trip_id         uuid not null references trips(id) on delete cascade,
-	person_id       uuid not null references persons(id) on delete restrict,
-	household_id    uuid not null references households(id) on delete restrict,
-	default_percent numeric(6,3) not null default 0 check (default_percent >= 0),
-	invite_token    text not null unique default encode(gen_random_bytes(16), 'hex'),
-	created_at      timestamptz not null default now(),
+	id             uuid primary key default gen_random_uuid(),
+	trip_id        uuid not null references trips(id) on delete cascade,
+	person_id      uuid not null references persons(id) on delete restrict,
+	household_id   uuid not null references households(id) on delete restrict,
+	default_weight numeric(8,3) not null default 1 check (default_weight >= 0),
+	invite_token   text not null unique default encode(gen_random_bytes(16), 'hex'),
+	created_at     timestamptz not null default now(),
 	unique (trip_id, person_id)
 );
 
@@ -77,7 +78,10 @@ create table expenses (
 	amount_cents      bigint not null check (amount_cents >= 0),
 	spent_on          date not null default current_date,
 	paid_by_person_id uuid not null,
+	-- verrou optimiste : version incrémentée à chaque écriture via save_expense
+	version           int not null default 1,
 	created_at        timestamptz not null default now(),
+	updated_at        timestamptz not null default now(),
 	created_by        uuid references auth.users(id),
 	deleted_at        timestamptz,
 	-- garantit que le payeur participe bien à ce séjour
@@ -88,7 +92,7 @@ create table expenses (
 -- Répartition d'une dépense entre bénéficiaires (des participants).
 --  - is_locked = true  : montant fixé manuellement, invariable tant qu'on
 --                        ne le « relâche » pas ;
---  - is_locked = false : part proportionnelle (`percent`), absorbe le reste.
+--  - is_locked = false : part proportionnelle (`weight`), absorbe le reste.
 -- Règle applicative : il doit toujours rester >= 1 bénéficiaire non verrouillé
 -- (le « tampon » qui garantit que la somme fait le total de la dépense).
 -- `trip_id` est rempli automatiquement (trigger) pour la FK composite + RLS.
@@ -98,7 +102,7 @@ create table expense_beneficiaries (
 	trip_id      uuid not null,
 	person_id    uuid not null,
 	is_locked    boolean not null default false,
-	percent      numeric(6,3) check (percent is null or percent >= 0),
+	weight       numeric(8,3) check (weight is null or weight >= 0),
 	amount_cents bigint not null default 0 check (amount_cents >= 0),
 	unique (expense_id, person_id),
 	-- garantit que le bénéficiaire participe bien à ce séjour

@@ -166,9 +166,9 @@ begin
 end;
 $$;
 
-create trigger trg_log_expenses
-	after insert or update or delete on expenses
-	for each row execute function log_operation('expense');
+-- NB : pas de trigger de journal sur `expenses` : la journalisation des
+-- dépenses est faite sémantiquement par save_expense (dépense + bénéficiaires
+-- dans une seule opération). Voir 0003.
 
 create trigger trg_log_settlements
 	after insert or update or delete on settlements
@@ -211,6 +211,27 @@ alter table expense_beneficiaries enable row level security;
 alter table settlements          enable row level security;
 alter table operations           enable row level security;
 
+-- ---------------------------------------------------------------------
+--  Privilèges de rôle — NÉCESSAIRES EN PLUS des RLS.
+--  (La RLS filtre les lignes ; encore faut-il que le rôle ait le droit de
+--   base sur la table. Non fournis automatiquement en local.)
+--  Les sessions (anonymes ou non) ont le rôle `authenticated`.
+-- ---------------------------------------------------------------------
+grant usage on schema public to authenticated;
+
+-- Lecture : toutes les tables (bornée par les policies SELECT).
+grant select on all tables in schema public to authenticated;
+
+-- Écritures directes autorisées aux membres (bornées par les policies) :
+grant insert, update, delete on trip_participants to authenticated;
+grant insert, update          on households        to authenticated;
+grant insert, update          on persons           to authenticated;
+grant update                  on trips             to authenticated;
+grant insert, update          on settlements       to authenticated;
+-- expenses / expense_beneficiaries / participant_access / operations :
+-- lecture seule pour `authenticated` ; toute écriture passe par les RPC
+-- (create_trip, redeem_token, save_expense) en SECURITY DEFINER.
+
 -- --- trips : lecture/écriture réservées aux membres. Création via RPC. ---
 create policy trips_select on trips for select to authenticated
 	using (is_trip_member(id));
@@ -250,22 +271,14 @@ create policy pers_insert on persons for insert to authenticated
 create policy pers_update on persons for update to authenticated
 	using (can_see_person(id)) with check (can_see_person(id));
 
--- --- expenses ---
+-- --- expenses / expense_beneficiaries ---
+-- Lecture par les membres. AUCUNE écriture directe : toute création/modification
+-- passe par la RPC save_expense (SECURITY DEFINER) qui garantit le calcul du
+-- split, le verrou optimiste et la journalisation sémantique.
 create policy exp_select on expenses for select to authenticated
 	using (is_trip_member(trip_id));
-create policy exp_insert on expenses for insert to authenticated
-	with check (is_trip_member(trip_id));
-create policy exp_update on expenses for update to authenticated
-	using (is_trip_member(trip_id)) with check (is_trip_member(trip_id));
 
--- --- expense_beneficiaries ---
 create policy eb_select on expense_beneficiaries for select to authenticated
-	using (is_trip_member(trip_id));
-create policy eb_insert on expense_beneficiaries for insert to authenticated
-	with check (is_trip_member(trip_id));
-create policy eb_update on expense_beneficiaries for update to authenticated
-	using (is_trip_member(trip_id)) with check (is_trip_member(trip_id));
-create policy eb_delete on expense_beneficiaries for delete to authenticated
 	using (is_trip_member(trip_id));
 
 -- --- settlements ---
