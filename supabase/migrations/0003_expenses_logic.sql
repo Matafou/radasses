@@ -264,6 +264,70 @@ grant execute on function public.save_expense(uuid, bigint, uuid, jsonb, text, t
 	to authenticated;
 
 -- ---------------------------------------------------------------------
+--  delete_expense : suppression LOGIQUE (deleted_at) d'une dépense.
+--  On conserve la ligne et ses bénéficiaires (historique, dé-suppression
+--  future) ; la vue balances les exclut déjà (deleted_at is null).
+--  Même garanties que save_expense : membre requis, verrou optimiste,
+--  journal sémantique (action 'delete', état complet en `before`).
+-- ---------------------------------------------------------------------
+
+create or replace function public.delete_expense(
+	p_trip_id uuid,
+	p_expense_id uuid,
+	p_expected_version int default null
+)
+returns jsonb
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+	v_expense jsonb;
+	v_before  jsonb;
+begin
+	if auth.uid() is not null and not is_trip_member(p_trip_id) then
+		raise exception 'Accès refusé à ce séjour.' using errcode = '42501';
+	end if;
+
+	select to_jsonb(e.*) into v_expense from expenses e
+		where e.id = p_expense_id and e.trip_id = p_trip_id;
+	if v_expense is null then
+		raise exception 'Dépense introuvable dans ce séjour.';
+	end if;
+	if (v_expense->>'deleted_at') is not null then
+		raise exception 'Dépense déjà supprimée.';
+	end if;
+	if p_expected_version is not null
+	   and (v_expense->>'version')::int <> p_expected_version then
+		raise exception
+			'Conflit : la dépense a été modifiée entre-temps (version attendue %, actuelle %).',
+			p_expected_version, (v_expense->>'version')::int
+			using errcode = '40001';
+	end if;
+
+	v_before := jsonb_build_object(
+		'expense', v_expense,
+		'beneficiaries', coalesce(
+			(select jsonb_agg(to_jsonb(x.*)) from expense_beneficiaries x
+			 where x.expense_id = p_expense_id), '[]'::jsonb)
+	);
+
+	update expenses set
+		deleted_at = now(),
+		version    = version + 1,
+		updated_at = now()
+	where id = p_expense_id and trip_id = p_trip_id;
+
+	insert into operations (trip_id, actor_auth_user_id, entity_type, entity_id,
+	                        action, before, after)
+	values (p_trip_id, auth.uid(), 'expense', p_expense_id, 'delete', v_before, null);
+
+	return jsonb_build_object('expense_id', p_expense_id, 'deleted', true);
+end;
+$$;
+
+grant execute on function public.delete_expense(uuid, uuid, int) to authenticated;
+
+-- ---------------------------------------------------------------------
 --  Vue balances : solde net par foyer et par séjour.
 --   net = payé (dépenses) - dû (parts) + remboursements versés - reçus
 --   net > 0  -> le foyer a avancé / on lui doit

@@ -6,7 +6,7 @@
 
 begin;
 create extension if not exists pgtap;
-select plan(7);
+select plan(8);
 
 -- Deux utilisateurs d'auth (uuids hex valides)
 \set MEMBER   '11111111-1111-1111-1111-111111111111'
@@ -60,6 +60,12 @@ select is((select count(*) from trips where id = :'TR')::int, 0, 'non-membre : n
 -- 7) save_expense refuse le non-membre (errcode 42501)
 select throws_ok(
 	format($$ select save_expense('%s', 1000, '%s', '[{"person_id":"%s"}]'::jsonb) $$, :'TR', :'AL', :'AL'),
+	'42501'
+);
+
+-- 8) delete_expense refuse aussi le non-membre (contrôle avant existence)
+select throws_ok(
+	format($$ select delete_expense('%s', '%s') $$, :'TR', :'TR'),
 	'42501'
 );
 

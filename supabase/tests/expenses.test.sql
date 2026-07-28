@@ -4,7 +4,7 @@
 
 begin;
 create extension if not exists pgtap;
-select plan(13);
+select plan(17);
 
 -- Personnes fictives pour les tests PURS de compute_split (aucune table touchée)
 \set A '00000000-0000-0000-0000-00000000000a'
@@ -121,6 +121,36 @@ select is(
 		format('[{"person_id":"%s"},{"person_id":"%s"}]', :'AL', :'BO')::jsonb,
 		'', null, null, :'eid', 1) ->> 'version')::int,
 	2, 'verrou optimiste : bonne version -> version 2'
+);
+
+-- ---------------------------------------------------------------------
+--  Suppression logique (delete_expense) — la dépense eid est en version 2
+-- ---------------------------------------------------------------------
+
+-- 14) suppression avec mauvaise version -> conflit (40001)
+select throws_ok(
+	format($$ select delete_expense('%s', '%s', 999) $$, :'TR', :'eid'),
+	'40001'
+);
+
+-- 15) suppression avec la bonne version -> deleted = true
+select is(
+	(delete_expense(:'TR', :'eid', 2) ->> 'deleted')::boolean,
+	true, 'delete_expense : suppression OK'
+);
+
+-- 16) l'opération de suppression est journalisée (avec état complet en before)
+select is(
+	(select count(*) from operations
+	 where entity_type = 'expense' and action = 'delete' and entity_id = :'eid'
+	   and before is not null)::int,
+	1, 'delete_expense : opération journalisée'
+);
+
+-- 17) re-supprimer -> rejeté (déjà supprimée)
+select throws_ok(
+	format($$ select delete_expense('%s', '%s') $$, :'TR', :'eid'),
+	'P0001'
 );
 
 select * from finish();
