@@ -5,8 +5,17 @@
 	import type { BeneficiaryInput } from '$lib/expenses';
 	import { previewSplit } from '$lib/split';
 	import { centsFromEuros, money } from '$lib/format';
+	import Button from '$lib/components/ui/Button.svelte';
+	import Card from '$lib/components/ui/Card.svelte';
+	import Select from '$lib/components/ui/Select.svelte';
+	import Switch from '$lib/components/ui/Switch.svelte';
+	import TextInput from '$lib/components/ui/TextInput.svelte';
 
-	let { expense = null, onDone, onCancel }: {
+	let {
+		expense = null,
+		onDone,
+		onCancel
+	}: {
 		expense?: Expense | null;
 		onDone: () => void;
 		onCancel?: () => void;
@@ -48,9 +57,11 @@
 	function initSelected(): Record<string, boolean> {
 		const sel: Record<string, boolean> = {};
 		let allow: Set<string> | null = null;
-		if (expense) allow = new Set((tripState.benefByExpense.get(expense.id) ?? []).map((b) => b.person_id));
+		if (expense)
+			allow = new Set((tripState.benefByExpense.get(expense.id) ?? []).map((b) => b.person_id));
 		// nouvelle dépense : cocher par défaut les participants actifs seulement
-		for (const p of tripState.participants) sel[p.person_id] = allow ? allow.has(p.person_id) : p.active;
+		for (const p of tripState.participants)
+			sel[p.person_id] = allow ? allow.has(p.person_id) : p.active;
 		return sel;
 	}
 	function initDetail() {
@@ -118,10 +129,18 @@
 				out.push({ person_id: p.person_id }); // parts égales
 			} else if ((benefMode[p.person_id] ?? 'weight') === 'amount') {
 				const c = centsFromEuros(benefValue[p.person_id] ?? '');
-				out.push({ person_id: p.person_id, is_locked: true, amount_cents: Number.isFinite(c) && c >= 0 ? c : 0 });
+				out.push({
+					person_id: p.person_id,
+					is_locked: true,
+					amount_cents: Number.isFinite(c) && c >= 0 ? c : 0
+				});
 			} else {
 				const wv = Number(String(benefValue[p.person_id] ?? '1').replace(',', '.'));
-				out.push({ person_id: p.person_id, is_locked: false, weight: Number.isFinite(wv) && wv > 0 ? wv : 1 });
+				out.push({
+					person_id: p.person_id,
+					is_locked: false,
+					weight: Number.isFinite(wv) && wv > 0 ? wv : 1
+				});
 			}
 		}
 		return out;
@@ -193,20 +212,16 @@
 			{p.person_name}{#if !p.active}<span class="ml-1 text-xs text-slate-400">(parti)</span>{/if}
 		</label>
 		{#if detailed && selected[p.person_id]}
-			<select
-				class="rounded border border-slate-300 px-1 py-0.5 text-xs {p.person_id === forcedId
-					? 'bg-slate-100 text-slate-400'
-					: ''}"
+			<Select
+				class="px-1 py-0.5 text-xs"
 				disabled={p.person_id === forcedId}
 				bind:value={benefMode[p.person_id]}
 			>
 				<option value="weight">poids</option>
 				<option value="amount">€ fixe</option>
-			</select>
-			<input
-				class="w-16 rounded border border-slate-300 px-2 py-0.5 text-sm {p.person_id === forcedId
-					? 'bg-slate-100 text-slate-400'
-					: ''}"
+			</Select>
+			<TextInput
+				class="w-16 px-2 py-0.5 text-sm"
 				inputmode="decimal"
 				disabled={p.person_id === forcedId}
 				placeholder={benefMode[p.person_id] === 'amount' ? '€' : '1'}
@@ -214,114 +229,104 @@
 			/>
 		{/if}
 		{#if selected[p.person_id]}
-			<span class="ml-auto flex items-center gap-1 whitespace-nowrap text-xs">
+			<span class="ml-auto flex items-center gap-1 text-xs whitespace-nowrap">
 				{#if p.person_id === forcedId}<span class="font-medium text-red-600">forcé</span>{/if}
-				<span class="tabular-nums text-slate-500">{amountOf(p.person_id)}</span>
+				<span class="text-slate-500 tabular-nums">{amountOf(p.person_id)}</span>
 			</span>
 		{/if}
 	</div>
 {/snippet}
 
-<form class="space-y-2 rounded-lg border border-slate-200 bg-white p-3" onsubmit={onSubmit}>
-	{#if editing}
-		<p class="text-sm font-medium text-slate-600">Modifier la dépense</p>
-	{/if}
-	<div class="flex gap-2">
-		<input class="w-28 rounded-lg border border-slate-300 px-3 py-2" placeholder="Montant €" inputmode="decimal" bind:value={amountStr} />
-		<input class="flex-1 rounded-lg border border-slate-300 px-3 py-2" placeholder="Description" bind:value={description} />
-	</div>
-	<div class="flex gap-2">
-		<label class="flex-1 text-sm text-slate-600">
-			Payé par
-			<select class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" bind:value={payerId}>
-				{#each tripState.participants as p (p.person_id)}
-					<option value={p.person_id}>{p.person_name}</option>
-				{/each}
-			</select>
-		</label>
-		<label class="text-sm text-slate-600">
-			Date
-			<input type="date" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" bind:value={spentOn} />
-		</label>
-	</div>
+<Card>
+	<form class="space-y-2" onsubmit={onSubmit}>
+		{#if editing}
+			<p class="text-sm font-medium text-slate-600">Modifier la dépense</p>
+		{/if}
+		<div class="flex gap-2">
+			<TextInput class="w-28" placeholder="Montant €" inputmode="decimal" bind:value={amountStr} />
+			<TextInput class="min-w-0 flex-1" placeholder="Description" bind:value={description} />
+		</div>
+		<div class="flex gap-2">
+			<label class="flex-1 text-sm text-slate-600">
+				Payé par
+				<Select class="mt-1 w-full" bind:value={payerId}>
+					{#each tripState.participants as p (p.person_id)}
+						<option value={p.person_id}>{p.person_name}</option>
+					{/each}
+				</Select>
+			</label>
+			<label class="text-sm text-slate-600">
+				Date
+				<TextInput type="date" class="mt-1 w-full" bind:value={spentOn} />
+			</label>
+		</div>
 
-	<fieldset class="space-y-2 rounded-lg border border-slate-200 p-2">
-		<legend class="px-1 text-xs text-slate-400">Bénéficiaires</legend>
-		<label class="flex items-center gap-2 text-sm font-medium">
-			<input
-				type="checkbox"
-				checked={allSelected}
-				indeterminate={someSelected && !allSelected}
-				onchange={toggleAll}
-			/>
-			Tout le monde
-		</label>
-		<label class="flex items-center gap-2 text-xs text-slate-500">
-			<button
-				type="button"
-				role="switch"
-				aria-checked={detailed}
-				aria-label="Répartition détaillée"
-				onclick={() => (detailed = !detailed)}
-				class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors {detailed
-					? 'bg-slate-900'
-					: 'bg-slate-300'}"
-			>
-				<span
-					class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform {detailed
-						? 'translate-x-4'
-						: 'translate-x-0.5'}"
-				></span>
-			</button>
-			Répartition détaillée (poids ou montants fixes)
-		</label>
-		{#each groups as g (g.id)}
-			{#if g.members.length === 1}
-				{@render memberRow(g.members[0])}
-			{:else}
-				<div>
-					<label class="flex items-center gap-2 text-sm font-medium">
-						<input
-							type="checkbox"
-							checked={foyerAll(g)}
-							indeterminate={foyerSome(g)}
-							onchange={() => toggleFoyer(g)}
-						/>
-						{g.name} <span class="text-xs font-normal text-slate-400">— tout le foyer</span>
-					</label>
-					<div class="ml-6 space-y-1">
-						{#each g.members as p (p.person_id)}
-							{@render memberRow(p)}
-						{/each}
+		<fieldset class="space-y-2 rounded-lg border border-slate-200 p-2">
+			<legend class="px-1 text-xs text-slate-400">Bénéficiaires</legend>
+			<label class="flex items-center gap-2 text-sm font-medium">
+				<input
+					type="checkbox"
+					checked={allSelected}
+					indeterminate={someSelected && !allSelected}
+					onchange={toggleAll}
+				/>
+				Tout le monde
+			</label>
+			<label class="flex items-center gap-2 text-xs text-slate-500">
+				<Switch
+					bind:checked={detailed}
+					label="Répartition détaillée"
+					onclick={() => (detailed = !detailed)}
+					class={detailed ? 'bg-slate-900' : ''}
+				/>
+				Répartition détaillée (poids ou montants fixes)
+			</label>
+			{#each groups as g (g.id)}
+				{#if g.members.length === 1}
+					{@render memberRow(g.members[0])}
+				{:else}
+					<div>
+						<label class="flex items-center gap-2 text-sm font-medium">
+							<input
+								type="checkbox"
+								checked={foyerAll(g)}
+								indeterminate={foyerSome(g)}
+								onchange={() => toggleFoyer(g)}
+							/>
+							{g.name} <span class="text-xs font-normal text-slate-400">— tout le foyer</span>
+						</label>
+						<div class="ml-6 space-y-1">
+							{#each g.members as p (p.person_id)}
+								{@render memberRow(p)}
+							{/each}
+						</div>
 					</div>
-				</div>
+				{/if}
+			{/each}
+			{#if detailed}
+				<p class="px-1 text-xs text-slate-400">
+					Poids = parts relatives (1 par défaut). « € fixe » verrouille un montant ; il doit rester
+					au moins un bénéficiaire en poids pour absorber le reste.
+				</p>
 			{/if}
-		{/each}
-		{#if detailed}
-			<p class="px-1 text-xs text-slate-400">
-				Poids = parts relatives (1 par défaut). « € fixe » verrouille un montant ; il doit
-				rester au moins un bénéficiaire en poids pour absorber le reste.
-			</p>
-		{/if}
-		{#if preview.error}
-			<p class="px-1 text-xs text-amber-600">{preview.error}</p>
-		{/if}
-	</fieldset>
+			{#if preview.error}
+				<p class="px-1 text-xs text-amber-600">{preview.error}</p>
+			{/if}
+		</fieldset>
 
-	{#if formError}
-		<p class="text-sm text-red-600">{formError}</p>
-	{/if}
-	<div class="flex gap-2">
-		<button
-			class="flex-1 rounded-lg px-4 py-2 font-medium text-white disabled:opacity-50 {editing
-				? 'bg-amber-600'
-				: 'bg-green-600'}"
-			disabled={saving}
-		>
-			{saving ? (editing ? 'Modification…' : 'Création…') : editing ? 'Modifier' : 'Créer'}
-		</button>
-		<button type="button" class="rounded-lg border border-slate-300 px-4 py-2 text-slate-600" onclick={() => (onCancel ?? onDone)()}>
-			Annuler
-		</button>
-	</div>
-</form>
+		{#if formError}
+			<p class="text-sm text-red-600">{formError}</p>
+		{/if}
+		<div class="flex gap-2">
+			<Button
+				type="submit"
+				class="flex-1"
+				variant={editing ? 'warning' : 'success'}
+				disabled={saving}
+			>
+				{saving ? (editing ? 'Modification…' : 'Création…') : editing ? 'Modifier' : 'Créer'}
+			</Button>
+			<Button variant="secondary" onclick={() => (onCancel ?? onDone)()}>Annuler</Button>
+		</div>
+	</form>
+</Card>

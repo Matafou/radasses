@@ -1,5 +1,9 @@
 <script lang="ts">
 	import { getTripState } from '$lib/trip.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import Card from '$lib/components/ui/Card.svelte';
+	import Select from '$lib/components/ui/Select.svelte';
+	import TextInput from '$lib/components/ui/TextInput.svelte';
 
 	const tripState = getTripState();
 
@@ -32,27 +36,26 @@
 
 <section class="space-y-3">
 	<h2 class="text-sm font-medium text-slate-500">Réglages du séjour</h2>
-	<form class="space-y-3 rounded-lg border border-slate-200 bg-white p-3" onsubmit={onSave}>
-		<label class="block text-sm text-slate-600">
-			Nom du séjour
-			<input class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" bind:value={name} />
-		</label>
-		<label class="block text-sm text-slate-600">
-			Devise
-			<select class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" bind:value={currency}>
-				{#each currencies as c (c)}
-					<option value={c}>{c}</option>
-				{/each}
-			</select>
-		</label>
-		{#if error}
-			<p class="text-sm text-red-600">{error}</p>
-		{/if}
-		<button
-			class="w-full rounded-lg bg-slate-900 px-4 py-2 font-medium text-white disabled:opacity-50"
-			disabled={saving}
-		>
-			{saving ? 'Enregistrement…' : saved ? 'Enregistré ✓' : 'Enregistrer'}
-		</button>
-	</form>
+	<Card>
+		<form class="space-y-3" onsubmit={onSave}>
+			<label class="block text-sm text-slate-600">
+				Nom du séjour
+				<TextInput class="mt-1 w-full" bind:value={name} />
+			</label>
+			<label class="block text-sm text-slate-600">
+				Devise
+				<Select class="mt-1 w-full" bind:value={currency}>
+					{#each currencies as c (c)}
+						<option value={c}>{c}</option>
+					{/each}
+				</Select>
+			</label>
+			{#if error}
+				<p class="text-sm text-red-600">{error}</p>
+			{/if}
+			<Button type="submit" class="w-full" disabled={saving}>
+				{saving ? 'Enregistrement…' : saved ? 'Enregistré ✓' : 'Enregistrer'}
+			</Button>
+		</form>
+	</Card>
 </section>

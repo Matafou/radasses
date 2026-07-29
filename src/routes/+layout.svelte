@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { ensureSession } from '$lib/auth';
+	import Alert from '$lib/components/ui/Alert.svelte';
 
 	let { children } = $props();
 	let ready = $state(false);
@@ -35,7 +36,7 @@
 
 	<main class="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col">
 		{#if error}
-			<p class="m-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">Erreur : {error}</p>
+			<Alert class="m-4">Erreur : {error}</Alert>
 		{:else if !ready}
 			<p class="p-4 text-slate-400">Chargement…</p>
 		{:else}

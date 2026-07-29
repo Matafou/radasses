@@ -1,7 +1,11 @@
 <script lang="ts">
+	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
+	import { ChevronDown, ChevronRight, Lock } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
 	import { listOperations, listActors, type Operation } from '$lib/db';
 	import { money } from '$lib/format';
+	import Alert from '$lib/components/ui/Alert.svelte';
+	import PanelList from '$lib/components/ui/PanelList.svelte';
 
 	const tripState = getTripState();
 
@@ -62,8 +66,16 @@
 
 	// Détail générique d'une ligne (règlement / participant), bruit filtré + ids -> noms.
 	const HIDE = new Set([
-		'id', 'trip_id', 'created_at', 'updated_at', 'version', 'invite_token', 'expense_id',
-		'deleted_at', 'created_by', 'actor_auth_user_id'
+		'id',
+		'trip_id',
+		'created_at',
+		'updated_at',
+		'version',
+		'invite_token',
+		'expense_id',
+		'deleted_at',
+		'created_by',
+		'actor_auth_user_id'
 	]);
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function rowEntries(row: any): [string, string][] {
@@ -96,7 +108,10 @@
 				</p>
 				<ul class="ml-4 list-disc">
 					{#each s.beneficiaries ?? [] as b (b.person_id)}
-						<li>{pname(b.person_id)} : {money(b.amount_cents, cur())}{b.is_locked ? ' 🔒' : ''}</li>
+						<li class="inline-flex items-center gap-0.5">
+							{pname(b.person_id)} : {money(b.amount_cents, cur())}
+							{#if b.is_locked}<Lock size={12} aria-label="montant verrouillé" />{/if}
+						</li>
 					{/each}
 				</ul>
 			{:else}
@@ -113,12 +128,12 @@
 <section class="space-y-2">
 	<h2 class="text-sm font-medium text-slate-500">Journal</h2>
 	{#if error}
-		<p class="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>
+		<Alert>{error}</Alert>
 	{/if}
 	{#if loading}
 		<p class="text-slate-400">Chargement…</p>
 	{:else}
-		<ul class="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white">
+		<PanelList>
 			{#each ops as op (op.id)}
 				<li class="text-sm">
 					<button
@@ -134,11 +149,17 @@
 						</span>
 						<span class="shrink-0 text-xs text-slate-400">
 							{when(op.created_at)}
-							{expandedId === op.id ? '▾' : '▸'}
+							{#if expandedId === op.id}
+								<ChevronDown size={14} class="inline" aria-hidden="true" />
+							{:else}
+								<ChevronRight size={14} class="inline" aria-hidden="true" />
+							{/if}
 						</span>
 					</button>
 					{#if expandedId === op.id}
-						<div class="space-y-2 border-t border-slate-100 bg-slate-50 px-4 py-2 text-xs text-slate-600">
+						<div
+							class="space-y-2 border-t border-slate-100 bg-slate-50 px-4 py-2 text-xs text-slate-600"
+						>
 							{@render snap('Avant', op.before)}
 							{@render snap('Après', op.after)}
 							{#if !op.before && !op.after}
@@ -150,6 +171,6 @@
 			{:else}
 				<li class="px-4 py-3 text-sm text-slate-400">Aucune opération.</li>
 			{/each}
-		</ul>
+		</PanelList>
 	{/if}
 </section>

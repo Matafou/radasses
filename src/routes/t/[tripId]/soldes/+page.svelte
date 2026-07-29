@@ -1,8 +1,13 @@
 <script lang="ts">
+	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
+	import { ArrowRight, Check, Plus } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
 	import type { Settlement } from '$lib/db';
 	import type { Transfer } from '$lib/settlements';
 	import { money } from '$lib/format';
+	import Button from '$lib/components/ui/Button.svelte';
+	import EmptyState from '$lib/components/ui/EmptyState.svelte';
+	import PanelList from '$lib/components/ui/PanelList.svelte';
 
 	const tripState = getTripState();
 	const fmt = (c: number) => money(c, tripState.currency);
@@ -10,7 +15,9 @@
 	// Un remboursement = une dépense : le débiteur « paie » le créditeur.
 	// On préremplit le formulaire de dépense (bottom-sheet du layout) pour ajuster/valider.
 	function onReimburse(t: Transfer) {
-		const from = tripState.participants.find((p) => p.household_id === t.from_household_id)?.person_id;
+		const from = tripState.participants.find(
+			(p) => p.household_id === t.from_household_id
+		)?.person_id;
 		const to = tripState.participants.find((p) => p.household_id === t.to_household_id)?.person_id;
 		if (!from || !to) return;
 		tripState.openReimbursement({
@@ -32,13 +39,16 @@
 	<!-- Soldes par foyer : moitié haute, liste scrollable -->
 	<section class="flex min-h-0 flex-1 flex-col">
 		<h2 class="mb-2 text-sm font-medium text-slate-500">Soldes par foyer</h2>
-		<ul class="flex-1 divide-y divide-slate-200 overflow-y-auto rounded-lg border border-slate-200 bg-white">
+		<PanelList class="flex-1 overflow-y-auto">
 			{#each tripState.balances as b (b.household_id)}
 				<li class="flex items-center justify-between px-4 py-3">
 					<span>{tripState.householdName.get(b.household_id) ?? '?'}</span>
 					<span
-						class={b.net_cents > 0 ? 'font-medium text-emerald-600'
-							: b.net_cents < 0 ? 'font-medium text-red-600' : 'text-slate-400'}
+						class={b.net_cents > 0
+							? 'font-medium text-emerald-600'
+							: b.net_cents < 0
+								? 'font-medium text-red-600'
+								: 'text-slate-400'}
 					>
 						{b.net_cents > 0 ? '+' : ''}{fmt(b.net_cents)}
 						<span class="ml-1 text-xs text-slate-400">
@@ -49,40 +59,54 @@
 			{:else}
 				<li class="px-4 py-3 text-sm text-slate-400">Aucun solde.</li>
 			{/each}
-		</ul>
+		</PanelList>
 	</section>
 
 	<!-- Remboursements : moitié basse ; bouton manuel en tête, le reste scrollable -->
 	<section class="flex min-h-0 flex-1 flex-col">
-		<button
+		<Button
 			type="button"
-			class="mb-2 w-full rounded-lg border border-dashed border-emerald-500 px-4 py-2 text-center text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+			variant="outline"
+			class="mb-2 w-full flex-col border-2 border-dashed border-emerald-500 bg-white text-center text-emerald-700 hover:bg-emerald-50"
 			onclick={() => tripState.openReimbursement()}
 		>
-			+ signaler un remboursement
-			<span class="block text-xs font-normal text-emerald-600">en l'ajoutant aux dépenses enregistrées</span>
-		</button>
+			<span class="inline-flex items-center gap-1">
+				<Plus size={16} aria-hidden="true" />
+				signaler un remboursement
+			</span>
+			<span class="block text-xs font-normal text-emerald-600"
+				>en l'ajoutant aux dépenses enregistrées</span
+			>
+		</Button>
 		<div class="min-h-0 flex-1 space-y-2 overflow-y-auto">
 			<h3 class="text-xs font-medium text-slate-400">Suggestions</h3>
 			{#if tripState.transfers.length}
-				<ul class="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white">
+				<PanelList>
 					{#each tripState.transfers as t (t.from_household_id + t.to_household_id)}
 						<li class="flex items-center justify-between gap-2 px-4 py-3 text-sm">
-							<span>
-								<span class="font-medium">{tripState.householdName.get(t.from_household_id) ?? '?'}</span>
-								→ <span class="font-medium">{tripState.householdName.get(t.to_household_id) ?? '?'}</span>
+							<span class="inline-flex min-w-0 flex-wrap items-center gap-1">
+								<span class="font-medium"
+									>{tripState.householdName.get(t.from_household_id) ?? '?'}</span
+								>
+								<ArrowRight size={14} class="text-slate-400" aria-hidden="true" />
+								<span class="font-medium"
+									>{tripState.householdName.get(t.to_household_id) ?? '?'}</span
+								>
 								: {fmt(t.amount_cents)}
 							</span>
-							<button class="shrink-0 whitespace-nowrap rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white" onclick={() => onReimburse(t)}>
-								<span aria-hidden="true">✓</span> Remboursé !
-							</button>
+							<Button
+								size="sm"
+								variant="success"
+								class="shrink-0 px-2 py-1 text-xs whitespace-nowrap"
+								onclick={() => onReimburse(t)}
+							>
+								<Check size={14} aria-hidden="true" /> Remboursé !
+							</Button>
 						</li>
 					{/each}
-				</ul>
+				</PanelList>
 			{:else}
-				<p class="rounded-lg border border-dashed border-slate-200 p-3 text-center text-sm text-slate-400">
-					Tout est équilibré 🎉
-				</p>
+				<EmptyState class="p-3">Tout est équilibré 🎉</EmptyState>
 			{/if}
 
 			{#if tripState.settlements.length}
@@ -97,7 +121,9 @@
 									{s.settled_on} · {tripState.householdName.get(s.from_household_id) ?? '?'} →
 									{tripState.householdName.get(s.to_household_id) ?? '?'} : {fmt(s.amount_cents)}
 								</span>
-								<button class="text-xs text-red-500 underline" onclick={() => onCancel(s)}>annuler</button>
+								<button class="text-xs text-red-500 underline" onclick={() => onCancel(s)}
+									>annuler</button
+								>
 							</li>
 						{/each}
 					</ul>
