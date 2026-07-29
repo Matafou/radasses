@@ -311,13 +311,16 @@
 		<p class="text-sm text-red-600">{formError}</p>
 	{/if}
 	<div class="flex gap-2">
-		<button class="flex-1 rounded-lg bg-slate-900 px-4 py-2 font-medium text-white disabled:opacity-50" disabled={saving}>
-			{saving ? 'Enregistrement…' : editing ? 'Enregistrer' : 'Ajouter la dépense'}
+		<button
+			class="flex-1 rounded-lg px-4 py-2 font-medium text-white disabled:opacity-50 {editing
+				? 'bg-amber-600'
+				: 'bg-green-600'}"
+			disabled={saving}
+		>
+			{saving ? (editing ? 'Modification…' : 'Création…') : editing ? 'Modifier' : 'Créer'}
 		</button>
-		{#if editing}
-			<button type="button" class="rounded-lg border border-slate-300 px-4 py-2 text-slate-600" onclick={onDone}>
-				Annuler
-			</button>
-		{/if}
+		<button type="button" class="rounded-lg border border-slate-300 px-4 py-2 text-slate-600" onclick={onDone}>
+			Annuler
+		</button>
 	</div>
 </form>
