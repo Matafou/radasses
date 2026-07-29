@@ -5,11 +5,16 @@
 	import type { BeneficiaryInput } from '$lib/expenses';
 	import { previewSplit } from '$lib/split';
 	import { centsFromEuros, money } from '$lib/format';
-	import Button from '$lib/components/ui/Button.svelte';
-	import Card from '$lib/components/ui/Card.svelte';
-	import Select from '$lib/components/ui/Select.svelte';
-	import Switch from '$lib/components/ui/Switch.svelte';
-	import TextInput from '$lib/components/ui/TextInput.svelte';
+	import { todayISO } from '$lib/date';
+	import {
+		Button,
+		Card,
+		FieldError,
+		MetaText,
+		Select,
+		Switch,
+		TextInput
+	} from '$lib/components/ui';
 
 	let {
 		expense = null,
@@ -85,8 +90,6 @@
 
 	const init = untrack(() => {
 		const d = initDetail();
-		const now = new Date();
-		const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 		return {
 			amountStr: expense ? String(expense.amount_cents / 100) : '',
 			description: expense?.description ?? '',
@@ -95,7 +98,7 @@
 				tripState.myPersonId ??
 				tripState.participants[0]?.person_id ??
 				'',
-			spentOn: expense?.spent_on ?? today,
+			spentOn: expense?.spent_on ?? todayISO(),
 			selected: initSelected(),
 			detailed: d.detailed,
 			benefMode: d.mode,
@@ -209,7 +212,7 @@
 	<div class="flex items-center gap-2 text-sm">
 		<label class="flex items-center gap-1">
 			<input type="checkbox" bind:checked={selected[p.person_id]} />
-			{p.person_name}{#if !p.active}<span class="ml-1 text-xs text-slate-400">(parti)</span>{/if}
+			{p.person_name}{#if !p.active}<MetaText class="ml-1">(parti)</MetaText>{/if}
 		</label>
 		{#if detailed && selected[p.person_id]}
 			<Select
@@ -231,7 +234,7 @@
 		{#if selected[p.person_id]}
 			<span class="ml-auto flex items-center gap-1 text-xs whitespace-nowrap">
 				{#if p.person_id === forcedId}<span class="font-medium text-red-600">forcé</span>{/if}
-				<span class="text-slate-500 tabular-nums">{amountOf(p.person_id)}</span>
+				<MetaText class="text-slate-500 tabular-nums">{amountOf(p.person_id)}</MetaText>
 			</span>
 		{/if}
 	</div>
@@ -315,7 +318,7 @@
 		</fieldset>
 
 		{#if formError}
-			<p class="text-sm text-red-600">{formError}</p>
+			<FieldError>{formError}</FieldError>
 		{/if}
 		<div class="flex gap-2">
 			<Button

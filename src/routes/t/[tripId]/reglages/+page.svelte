@@ -1,9 +1,6 @@
 <script lang="ts">
 	import { getTripState } from '$lib/trip.svelte';
-	import Button from '$lib/components/ui/Button.svelte';
-	import Card from '$lib/components/ui/Card.svelte';
-	import Select from '$lib/components/ui/Select.svelte';
-	import TextInput from '$lib/components/ui/TextInput.svelte';
+	import { Button, Card, FieldError, SectionHeader, Select, TextInput } from '$lib/components/ui';
 
 	const tripState = getTripState();
 
@@ -35,7 +32,7 @@
 </script>
 
 <section class="space-y-3">
-	<h2 class="text-sm font-medium text-slate-500">Réglages du séjour</h2>
+	<SectionHeader title="Réglages du séjour" />
 	<Card>
 		<form class="space-y-3" onsubmit={onSave}>
 			<label class="block text-sm text-slate-600">
@@ -51,7 +48,7 @@
 				</Select>
 			</label>
 			{#if error}
-				<p class="text-sm text-red-600">{error}</p>
+				<FieldError>{error}</FieldError>
 			{/if}
 			<Button type="submit" class="w-full" disabled={saving}>
 				{saving ? 'Enregistrement…' : saved ? 'Enregistré ✓' : 'Enregistrer'}

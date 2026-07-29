@@ -5,9 +5,15 @@
 	import { createTrip, redeemToken } from '$lib/auth';
 	import { getTrip } from '$lib/db';
 	import { getKnownTrips, rememberTrip, type KnownTrip } from '$lib/trips-store';
-	import Button from '$lib/components/ui/Button.svelte';
-	import PanelList from '$lib/components/ui/PanelList.svelte';
-	import TextInput from '$lib/components/ui/TextInput.svelte';
+	import {
+		Button,
+		FieldError,
+		LoadingText,
+		ListRow,
+		PanelList,
+		SectionHeader,
+		TextInput
+	} from '$lib/components/ui';
 
 	let tripName = $state('');
 	let myName = $state('');
@@ -55,7 +61,7 @@
 
 <div class="min-h-0 flex-1 overflow-y-auto p-4">
 	{#if joining}
-		<p class="text-slate-500">Connexion au séjour…</p>
+		<LoadingText text="Connexion au séjour…" class="text-slate-500" />
 	{:else}
 		<section class="space-y-4">
 			<h1 class="text-xl font-semibold">Nouveau séjour</h1>
@@ -69,7 +75,7 @@
 					<TextInput class="mt-1 w-full" bind:value={myName} placeholder="Alice" />
 				</label>
 				{#if error}
-					<p class="text-sm text-red-600">{error}</p>
+					<FieldError>{error}</FieldError>
 				{/if}
 				<Button type="submit" class="w-full" disabled={busy}>
 					{busy ? 'Création…' : 'Créer le séjour'}
@@ -79,12 +85,12 @@
 
 		{#if known.length}
 			<section class="mt-8 space-y-2">
-				<h2 class="text-sm font-medium text-slate-500">Mes séjours</h2>
+				<SectionHeader title="Mes séjours" />
 				<PanelList>
 					{#each known as t (t.id)}
-						<li>
+						<ListRow class="p-0">
 							<a class="block px-4 py-3 hover:bg-slate-50" href={`/t/${t.id}`}>{t.name}</a>
-						</li>
+						</ListRow>
 					{/each}
 				</PanelList>
 			</section>

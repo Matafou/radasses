@@ -4,10 +4,8 @@
 	import { ArrowRight, Check } from '@lucide/svelte';
 	import { getTripState, type ReimbursePrefill } from '$lib/trip.svelte';
 	import { centsFromEuros } from '$lib/format';
-	import Button from '$lib/components/ui/Button.svelte';
-	import Card from '$lib/components/ui/Card.svelte';
-	import Select from '$lib/components/ui/Select.svelte';
-	import TextInput from '$lib/components/ui/TextInput.svelte';
+	import { todayISO } from '$lib/date';
+	import { Button, Card, FieldError, Select, TextInput } from '$lib/components/ui';
 
 	let {
 		prefill = {},
@@ -24,8 +22,6 @@
 	// Un remboursement = une dépense à UN bénéficiaire non-figé : le débiteur paie,
 	// le créancier est l'unique bénéficiaire (il « reçoit » donc tout le montant).
 	const init = untrack(() => {
-		const now = new Date();
-		const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 		return {
 			fromId:
 				prefill.from_person_id ??
@@ -34,7 +30,7 @@
 				'',
 			toId: prefill.to_person_id ?? '',
 			amountStr: prefill.amount_cents != null ? String(prefill.amount_cents / 100) : '',
-			spentOn: today
+			spentOn: todayISO()
 		};
 	});
 
@@ -105,7 +101,7 @@
 		</div>
 
 		{#if formError}
-			<p class="text-sm text-red-600">{formError}</p>
+			<FieldError>{formError}</FieldError>
 		{/if}
 
 		<div class="flex gap-2">

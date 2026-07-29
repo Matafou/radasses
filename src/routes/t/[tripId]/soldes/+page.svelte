@@ -5,9 +5,14 @@
 	import type { Settlement } from '$lib/db';
 	import type { Transfer } from '$lib/settlements';
 	import { money } from '$lib/format';
-	import Button from '$lib/components/ui/Button.svelte';
-	import EmptyState from '$lib/components/ui/EmptyState.svelte';
-	import PanelList from '$lib/components/ui/PanelList.svelte';
+	import {
+		Button,
+		EmptyState,
+		ListRow,
+		MetaText,
+		PanelList,
+		SectionHeader
+	} from '$lib/components/ui';
 
 	const tripState = getTripState();
 	const fmt = (c: number) => money(c, tripState.currency);
@@ -38,10 +43,12 @@
 <div class="flex h-full flex-col gap-4">
 	<!-- Soldes par foyer : moitié haute, liste scrollable -->
 	<section class="flex min-h-0 flex-1 flex-col">
-		<h2 class="mb-2 text-sm font-medium text-slate-500">Soldes par foyer</h2>
+		<div class="mb-2">
+			<SectionHeader title="Soldes par foyer" />
+		</div>
 		<PanelList class="flex-1 overflow-y-auto">
 			{#each tripState.balances as b (b.household_id)}
-				<li class="flex items-center justify-between px-4 py-3">
+				<ListRow class="flex items-center justify-between">
 					<span>{tripState.householdName.get(b.household_id) ?? '?'}</span>
 					<span
 						class={b.net_cents > 0
@@ -51,13 +58,13 @@
 								: 'text-slate-400'}
 					>
 						{b.net_cents > 0 ? '+' : ''}{fmt(b.net_cents)}
-						<span class="ml-1 text-xs text-slate-400">
+						<MetaText class="ml-1">
 							{b.net_cents > 0 ? 'on lui doit' : b.net_cents < 0 ? 'doit' : ''}
-						</span>
+						</MetaText>
 					</span>
-				</li>
+				</ListRow>
 			{:else}
-				<li class="px-4 py-3 text-sm text-slate-400">Aucun solde.</li>
+				<ListRow class="text-sm text-slate-400">Aucun solde.</ListRow>
 			{/each}
 		</PanelList>
 	</section>
@@ -79,11 +86,11 @@
 			>
 		</Button>
 		<div class="min-h-0 flex-1 space-y-2 overflow-y-auto">
-			<h3 class="text-xs font-medium text-slate-400">Suggestions</h3>
+			<MetaText class="block font-medium">Suggestions</MetaText>
 			{#if tripState.transfers.length}
 				<PanelList>
 					{#each tripState.transfers as t (t.from_household_id + t.to_household_id)}
-						<li class="flex items-center justify-between gap-2 px-4 py-3 text-sm">
+						<ListRow class="flex items-center justify-between gap-2 text-sm">
 							<span class="inline-flex min-w-0 flex-wrap items-center gap-1">
 								<span class="font-medium"
 									>{tripState.householdName.get(t.from_household_id) ?? '?'}</span
@@ -102,7 +109,7 @@
 							>
 								<Check size={14} aria-hidden="true" /> Remboursé !
 							</Button>
-						</li>
+						</ListRow>
 					{/each}
 				</PanelList>
 			{:else}

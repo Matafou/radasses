@@ -4,9 +4,7 @@
 	import { getTripState } from '$lib/trip.svelte';
 	import type { Expense } from '$lib/db';
 	import { money } from '$lib/format';
-	import Card from '$lib/components/ui/Card.svelte';
-	import EmptyState from '$lib/components/ui/EmptyState.svelte';
-	import IconButton from '$lib/components/ui/IconButton.svelte';
+	import { Card, EmptyState, IconButton, MetaText } from '$lib/components/ui';
 
 	const tripState = getTripState();
 	const fmt = (c: number) => money(c, tripState.currency);
@@ -32,9 +30,9 @@
 					<div class="flex items-start justify-between">
 						<div>
 							<p class="font-medium">{e.description || 'Dépense'}</p>
-							<p class="text-xs text-slate-400">
+							<MetaText class="block">
 								{e.spent_on} · payé par {tripState.personName.get(e.paid_by_person_id) ?? '?'}
-							</p>
+							</MetaText>
 						</div>
 						<div class="text-right">
 							<p class="font-semibold">{fmt(e.amount_cents)}</p>

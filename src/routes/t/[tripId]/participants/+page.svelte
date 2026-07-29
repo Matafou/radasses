@@ -4,15 +4,21 @@
 	import { Check, Link, Pencil, Plus, X } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
 	import type { Participant } from '$lib/db';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import Button from '$lib/components/ui/Button.svelte';
-	import Card from '$lib/components/ui/Card.svelte';
-	import Fab from '$lib/components/ui/Fab.svelte';
-	import IconButton from '$lib/components/ui/IconButton.svelte';
-	import PanelList from '$lib/components/ui/PanelList.svelte';
-	import Select from '$lib/components/ui/Select.svelte';
-	import Switch from '$lib/components/ui/Switch.svelte';
-	import TextInput from '$lib/components/ui/TextInput.svelte';
+	import {
+		Alert,
+		Button,
+		Card,
+		Fab,
+		FieldError,
+		IconButton,
+		ListRow,
+		MetaText,
+		PanelList,
+		SectionHeader,
+		Select,
+		Switch,
+		TextInput
+	} from '$lib/components/ui';
 
 	const tripState = getTripState();
 
@@ -105,22 +111,21 @@
 	}
 </script>
 
+{#snippet addParticipantAction()}
+	<Fab
+		icon={showAdd ? X : Plus}
+		label={showAdd ? 'Annuler l’ajout' : 'Ajouter un participant'}
+		class="h-9 w-9 shadow"
+		onclick={() => (showAdd = !showAdd)}
+	/>
+{/snippet}
+
 <section class="space-y-2">
-	<div class="flex items-start justify-between gap-2">
-		<div class="space-y-1">
-			<h2 class="text-sm font-medium text-slate-500">Participants</h2>
-			<p class="text-xs text-slate-400">
-				Un membre « parti » reste dans le séjour, mais n'est plus coché par défaut dans les
-				nouvelles dépenses.
-			</p>
-		</div>
-		<Fab
-			icon={showAdd ? X : Plus}
-			label={showAdd ? 'Annuler l’ajout' : 'Ajouter un participant'}
-			class="h-9 w-9 shadow"
-			onclick={() => (showAdd = !showAdd)}
-		/>
-	</div>
+	<SectionHeader
+		title="Participants"
+		description="Un membre « parti » reste dans le séjour, mais n'est plus coché par défaut dans les nouvelles dépenses."
+		actions={addParticipantAction}
+	/>
 
 	{#if showAdd}
 		<Card>
@@ -136,7 +141,7 @@
 					</Select>
 				</label>
 				{#if addError}
-					<p class="text-sm text-red-600">{addError}</p>
+					<FieldError>{addError}</FieldError>
 				{/if}
 				<Button type="submit" class="w-full" disabled={adding}>
 					{adding ? 'Ajout…' : 'Ajouter'}
@@ -151,7 +156,7 @@
 
 	<PanelList>
 		{#each tripState.participants as p (p.participant_id)}
-			<li class="px-4 py-3">
+			<ListRow>
 				{#if editingId === p.participant_id}
 					<div class="space-y-2">
 						<label class="block text-xs text-slate-500">
@@ -163,7 +168,7 @@
 							<TextInput class="mt-1 w-full text-sm" bind:value={editHousehold} />
 						</label>
 						{#if editError}
-							<p class="text-sm text-red-600">{editError}</p>
+							<FieldError>{editError}</FieldError>
 						{/if}
 						<div class="flex gap-2">
 							<Button size="sm" disabled={saving} onclick={() => onSaveEdit(p)}>
@@ -178,8 +183,8 @@
 					<div class="flex items-center justify-between gap-2">
 						<span class:text-slate-400={!p.active}>
 							{p.person_name}
-							{#if !p.active}<span class="text-xs text-slate-400">(parti)</span>{/if}
-							<span class="text-xs text-slate-400">· {p.household_name}</span>
+							{#if !p.active}<MetaText>(parti)</MetaText>{/if}
+							<MetaText>· {p.household_name}</MetaText>
 						</span>
 						<div class="flex shrink-0 items-center gap-2">
 							<span
@@ -210,7 +215,7 @@
 						</div>
 					</div>
 				{/if}
-			</li>
+			</ListRow>
 		{/each}
 	</PanelList>
 </section>

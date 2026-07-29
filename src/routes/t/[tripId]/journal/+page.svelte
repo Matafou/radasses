@@ -4,8 +4,14 @@
 	import { getTripState } from '$lib/trip.svelte';
 	import { listOperations, listActors, type Operation } from '$lib/db';
 	import { money } from '$lib/format';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import PanelList from '$lib/components/ui/PanelList.svelte';
+	import {
+		Alert,
+		ListRow,
+		LoadingText,
+		MetaText,
+		PanelList,
+		SectionHeader
+	} from '$lib/components/ui';
 
 	const tripState = getTripState();
 
@@ -126,12 +132,12 @@
 {/snippet}
 
 <section class="space-y-2">
-	<h2 class="text-sm font-medium text-slate-500">Journal</h2>
+	<SectionHeader title="Journal" />
 	{#if error}
 		<Alert>{error}</Alert>
 	{/if}
 	{#if loading}
-		<p class="text-slate-400">Chargement…</p>
+		<LoadingText />
 	{:else}
 		<PanelList>
 			{#each ops as op (op.id)}
@@ -141,20 +147,20 @@
 						onclick={() => toggle(op.id)}
 					>
 						<span>
-							<span class="text-slate-400">{actionLabel[op.action] ?? op.action}</span>
+							<MetaText>{actionLabel[op.action] ?? op.action}</MetaText>
 							· {summary(op)}
 							{#if op.actor_auth_user_id && actors[op.actor_auth_user_id]}
-								<span class="text-xs text-slate-400">— par {actors[op.actor_auth_user_id]}</span>
+								<MetaText>— par {actors[op.actor_auth_user_id]}</MetaText>
 							{/if}
 						</span>
-						<span class="shrink-0 text-xs text-slate-400">
+						<MetaText class="shrink-0">
 							{when(op.created_at)}
 							{#if expandedId === op.id}
 								<ChevronDown size={14} class="inline" aria-hidden="true" />
 							{:else}
 								<ChevronRight size={14} class="inline" aria-hidden="true" />
 							{/if}
-						</span>
+						</MetaText>
 					</button>
 					{#if expandedId === op.id}
 						<div
@@ -169,7 +175,7 @@
 					{/if}
 				</li>
 			{:else}
-				<li class="px-4 py-3 text-sm text-slate-400">Aucune opération.</li>
+				<ListRow class="text-sm text-slate-400">Aucune opération.</ListRow>
 			{/each}
 		</PanelList>
 	{/if}
