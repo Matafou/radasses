@@ -95,15 +95,23 @@
 </script>
 
 <section class="space-y-2">
-	<div class="flex items-center justify-between">
-		<h2 class="text-sm font-medium text-slate-500">Participants</h2>
-		<button class="text-sm text-slate-700 underline" onclick={() => (showAdd = !showAdd)}>
-			{showAdd ? 'annuler' : '+ ajouter'}
+	<div class="flex items-start justify-between gap-2">
+		<div class="space-y-1">
+			<h2 class="text-sm font-medium text-slate-500">Participants</h2>
+			<p class="text-xs text-slate-400">
+				Un membre « parti » reste dans le séjour, mais n'est plus coché par défaut dans les nouvelles dépenses.
+			</p>
+		</div>
+		<button
+			type="button"
+			aria-label={showAdd ? 'Annuler l’ajout' : 'Ajouter un participant'}
+			title={showAdd ? 'Annuler' : 'Ajouter un participant'}
+			onclick={() => (showAdd = !showAdd)}
+			class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-600 text-xl leading-none text-white shadow hover:bg-green-700"
+		>
+			{showAdd ? '×' : '+'}
 		</button>
 	</div>
-	<p class="text-xs text-slate-400">
-		Un membre « parti » reste dans le séjour, mais n'est plus coché par défaut dans les nouvelles dépenses.
-	</p>
 
 	{#if showAdd}
 		<form class="space-y-2 rounded-lg border border-slate-200 bg-white p-3" onsubmit={onAdd}>

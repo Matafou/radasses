@@ -50,6 +50,7 @@
 	}
 </script>
 
+<div class="min-h-0 flex-1 overflow-y-auto p-4">
 {#if joining}
 	<p class="text-slate-500">Connexion au séjour…</p>
 {:else}
@@ -97,3 +98,4 @@
 		</section>
 	{/if}
 {/if}
+</div>

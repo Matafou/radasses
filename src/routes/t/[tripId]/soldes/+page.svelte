@@ -28,7 +28,7 @@
 	}
 </script>
 
-<div class="flex h-[calc(100dvh-13rem)] flex-col gap-4">
+<div class="flex h-full flex-col gap-4">
 	<!-- Soldes par foyer : moitié haute, liste scrollable -->
 	<section class="flex min-h-0 flex-1 flex-col">
 		<h2 class="mb-2 text-sm font-medium text-slate-500">Soldes par foyer</h2>
@@ -54,19 +54,16 @@
 
 	<!-- Remboursements : moitié basse ; bouton manuel en tête, le reste scrollable -->
 	<section class="flex min-h-0 flex-1 flex-col">
-		<h2 class="mb-2 text-sm font-medium text-slate-500">Remboursements</h2>
 		<button
 			type="button"
-			class="mb-2 w-full rounded-lg border border-dashed border-emerald-500 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+			class="mb-2 w-full rounded-lg border border-dashed border-emerald-500 px-4 py-2 text-center text-sm font-medium text-emerald-700 hover:bg-emerald-50"
 			onclick={() => tripState.openReimbursement()}
 		>
 			+ signaler un remboursement
+			<span class="block text-xs font-normal text-emerald-600">en l'ajoutant aux dépenses enregistrées</span>
 		</button>
 		<div class="min-h-0 flex-1 space-y-2 overflow-y-auto">
-			<p class="text-xs text-slate-400">
-				Le bouton <span class="inline-flex items-center rounded bg-emerald-600 px-1 font-medium text-white" aria-hidden="true">✓</span>
-				confirme un remboursement en créant la dépense correspondante.
-			</p>
+			<h3 class="text-xs font-medium text-slate-400">Suggestions</h3>
 			{#if tripState.transfers.length}
 				<ul class="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white">
 					{#each tripState.transfers as t (t.from_household_id + t.to_household_id)}
