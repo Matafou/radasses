@@ -1,52 +1,18 @@
 <script lang="ts">
-	import { beforeNavigate } from '$app/navigation';
 	import { getTripState } from '$lib/trip.svelte';
 	import type { Expense } from '$lib/db';
 	import { money } from '$lib/format';
-	import ExpenseForm from '$lib/components/ExpenseForm.svelte';
 
 	const tripState = getTripState();
 	const fmt = (c: number) => money(c, tripState.currency);
-	// `editingExpense` vit dans TripState -> l'édition survit au changement d'onglet
-	// (et le défaut « payé par = moi » ne s'applique donc qu'à une nouvelle dépense).
-
-	// Le formulaire de création est replié par défaut ; une édition ou un
-	// remboursement pré-rempli le déploie automatiquement.
-	let showForm = $state(false);
-	const formOpen = $derived(showForm || !!tripState.editingExpense || !!tripState.prefill);
-
-	function onDone() {
-		tripState.editingExpense = null;
-		tripState.prefill = null; // consomme un éventuel pré-remplissage (remboursement)
-		showForm = false; // repli après création / édition
-	}
-
-	// Un remboursement pré-rempli mais non validé ne doit pas être perdu en silence.
-	beforeNavigate((nav) => {
-		if (tripState.prefill) {
-			if (confirm('Un remboursement est pré-rempli mais pas encore enregistré. Quitter sans l’enregistrer ?')) {
-				tripState.prefill = null;
-			} else {
-				nav.cancel();
-			}
-		}
-	});
-	$effect(() => {
-		function onUnload(e: BeforeUnloadEvent) {
-			if (tripState.prefill) {
-				e.preventDefault();
-				e.returnValue = '';
-			}
-		}
-		window.addEventListener('beforeunload', onUnload);
-		return () => window.removeEventListener('beforeunload', onUnload);
-	});
+	// Le formulaire de dépense (création/édition) vit dans le layout (bottom-sheet) :
+	// ici on ne fait qu'ouvrir l'édition d'une ligne.
 
 	async function onDelete(exp: Expense) {
 		if (!confirm('Supprimer cette dépense ?')) return;
 		try {
 			await tripState.removeExpense(exp);
-			if (tripState.editingExpense?.id === exp.id) tripState.editingExpense = null;
+			if (tripState.editingExpense?.id === exp.id) tripState.closeExpenseForm();
 		} catch (err) {
 			tripState.error = err instanceof Error ? err.message : String(err);
 		}
@@ -54,24 +20,6 @@
 </script>
 
 <section class="space-y-2">
-	{#if formOpen}
-		{#key tripState.editingExpense?.id ?? (tripState.prefill ? 'prefill' : 'new')}
-			<ExpenseForm
-				expense={tripState.editingExpense}
-				prefill={tripState.editingExpense ? null : tripState.prefill}
-				onDone={onDone}
-			/>
-		{/key}
-	{:else}
-		<button
-			type="button"
-			class="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-medium text-white hover:bg-green-700"
-			onclick={() => (showForm = true)}
-		>
-			＋ Ajouter une dépense
-		</button>
-	{/if}
-
 	<ul class="space-y-2">
 		{#each tripState.expenses as e (e.id)}
 			<li class="rounded-lg border bg-white p-3 {tripState.editingExpense?.id === e.id ? 'border-slate-900' : 'border-slate-200'}">
@@ -90,7 +38,7 @@
 								aria-label="Modifier"
 								title="Modifier"
 								class="inline-flex items-center rounded-md bg-amber-600 p-1 text-white hover:bg-amber-700"
-								onclick={() => (tripState.editingExpense = e)}
+								onclick={() => tripState.openEditExpense(e)}
 							>
 								<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4">
 									<path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
@@ -118,7 +66,7 @@
 			</li>
 		{:else}
 			<li class="rounded-lg border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400">
-				Aucune dépense pour l'instant.
+				Aucune dépense pour l'instant. Touchez « + » pour en ajouter une.
 			</li>
 		{/each}
 	</ul>

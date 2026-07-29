@@ -6,10 +6,11 @@
 	import { previewSplit } from '$lib/split';
 	import { centsFromEuros, money } from '$lib/format';
 
-	let { expense = null, prefill = null, onDone }: {
+	let { expense = null, prefill = null, onDone, onCancel }: {
 		expense?: Expense | null;
 		prefill?: ExpensePrefill | null;
 		onDone: () => void;
+		onCancel?: () => void;
 	} = $props();
 
 	const tripState = getTripState();
@@ -108,6 +109,13 @@
 	let benefValue = $state<Record<string, string>>(init.benefValue);
 	let saving = $state(false);
 	let formError = $state<string | null>(null);
+
+	// En création, signale au layout qu'une saisie est en cours (montant ou libellé saisi)
+	// → le FAB propose « Reprendre » plutôt que d'ouvrir un formulaire vierge.
+	const dirty = $derived(amountStr.trim() !== '' || description.trim() !== '');
+	$effect(() => {
+		tripState.hasCreateDraft = !editing && dirty;
+	});
 
 	const beneficiaries = $derived.by((): BeneficiaryInput[] => {
 		const out: BeneficiaryInput[] = [];
@@ -319,7 +327,7 @@
 		>
 			{saving ? (editing ? 'Modification…' : 'Création…') : editing ? 'Modifier' : 'Créer'}
 		</button>
-		<button type="button" class="rounded-lg border border-slate-300 px-4 py-2 text-slate-600" onclick={onDone}>
+		<button type="button" class="rounded-lg border border-slate-300 px-4 py-2 text-slate-600" onclick={() => (onCancel ?? onDone)()}>
 			Annuler
 		</button>
 	</div>

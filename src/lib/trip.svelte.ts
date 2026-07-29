@@ -22,10 +22,16 @@ export type ExpensePrefill = {
  * Les mutations rechargent l'ensemble.
  */
 export class TripState {
-	/** pré-remplissage en attente pour le formulaire de dépense (onglet Dépenses) */
+	/** pré-remplissage en attente pour le formulaire de dépense (remboursement) */
 	prefill = $state<ExpensePrefill | null>(null);
 	/** dépense en cours d'édition — persiste au changement d'onglet */
 	editingExpense = $state<Expense | null>(null);
+	/** le bottom-sheet de dépense (dans le layout) est-il déployé ? */
+	formOpen = $state(false);
+	/** une saisie de création est en cours (renseigné par ExpenseForm) → bouton « Reprendre » */
+	hasCreateDraft = $state(false);
+	/** incrémenté à l'abandon/validation pour forcer un formulaire de création vierge la fois suivante */
+	formSeq = $state(0);
 	tripId = $state('');
 	loading = $state(true);
 	error = $state<string | null>(null);
@@ -90,6 +96,37 @@ export class TripState {
 	async removeExpense(exp: Expense) {
 		await deleteExpense({ trip_id: this.tripId, expense_id: exp.id, expected_version: exp.version });
 		await this.load();
+	}
+
+	/** Déploie le formulaire pour une nouvelle dépense (reprend une saisie en cours si présente). */
+	openNewExpense() {
+		this.editingExpense = null;
+		this.prefill = null;
+		this.formOpen = true;
+	}
+	/** Déploie le formulaire pré-rempli avec une dépense existante à modifier. */
+	openEditExpense(e: Expense) {
+		this.prefill = null;
+		this.editingExpense = e;
+		this.formOpen = true;
+	}
+	/** Déploie le formulaire pré-rempli (ex. remboursement depuis l'onglet Soldes). */
+	openReimbursement(prefill: ExpensePrefill) {
+		this.editingExpense = null;
+		this.prefill = prefill;
+		this.formOpen = true;
+	}
+	/** Masque le formulaire SANS perdre la saisie (le composant reste monté) → « Reprendre ». */
+	hideExpenseForm() {
+		this.formOpen = false;
+	}
+	/** Referme ET abandonne : réarme un formulaire de création vierge pour la prochaine ouverture. */
+	closeExpenseForm() {
+		this.editingExpense = null;
+		this.prefill = null;
+		this.formOpen = false;
+		this.hasCreateDraft = false;
+		this.formSeq++;
 	}
 	async newParticipant(params: { person_name: string; household_id?: string | null }) {
 		await addParticipant({ trip_id: this.tripId, ...params });

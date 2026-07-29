@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
 	import { getTripState } from '$lib/trip.svelte';
 	import type { Settlement } from '$lib/db';
 	import type { Transfer } from '$lib/settlements';
@@ -10,19 +8,17 @@
 	const fmt = (c: number) => money(c, tripState.currency);
 
 	// Un remboursement = une dépense : le débiteur « paie » le créditeur.
-	// On préremplit le formulaire de dépense et on bascule sur l'onglet Dépenses,
-	// où l'utilisateur peut ajuster puis valider.
+	// On préremplit le formulaire de dépense (bottom-sheet du layout) pour ajuster/valider.
 	function onReimburse(t: Transfer) {
 		const from = tripState.participants.find((p) => p.household_id === t.from_household_id)?.person_id;
 		const to = tripState.participants.find((p) => p.household_id === t.to_household_id)?.person_id;
 		if (!from || !to) return;
-		tripState.prefill = {
+		tripState.openReimbursement({
 			amount_cents: t.amount_cents,
 			paid_by_person_id: from,
 			beneficiary_person_ids: [to],
 			description: 'Remboursement'
-		};
-		goto(`/t/${$page.params.tripId}`);
+		});
 	}
 	async function onCancel(s: Settlement) {
 		try {
