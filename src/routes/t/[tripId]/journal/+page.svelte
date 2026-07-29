@@ -52,19 +52,37 @@
 		expandedId = expandedId === id ? null : id;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	type JsonRecord = Record<string, unknown>;
+
+	function asRecord(value: unknown): JsonRecord | null {
+		return value && typeof value === 'object' && !Array.isArray(value)
+			? (value as JsonRecord)
+			: null;
+	}
+
+	function asString(value: unknown, fallback = ''): string {
+		return typeof value === 'string' ? value : fallback;
+	}
+
+	function asNumber(value: unknown): number | null {
+		return typeof value === 'number' ? value : null;
+	}
+
 	function summary(op: Operation): string {
-		const d: any = op.after ?? op.before;
+		const d = asRecord(op.after ?? op.before);
 		if (op.entity_type === 'expense') {
-			const e = d?.expense ?? d;
-			const amt = e?.amount_cents != null ? ' ' + money(e.amount_cents, cur()) : '';
-			return `Dépense « ${e?.description || 'sans nom'} »${amt}`;
+			const e = asRecord(d?.expense) ?? d;
+			const amount = asNumber(e?.amount_cents);
+			const amt = amount != null ? ' ' + money(amount, cur()) : '';
+			return `Dépense « ${asString(e?.description, 'sans nom') || 'sans nom'} »${amt}`;
 		}
 		if (op.entity_type === 'settlement') {
-			return `Remboursement${d?.amount_cents != null ? ' ' + money(d.amount_cents, cur()) : ''}`;
+			const amount = asNumber(d?.amount_cents);
+			return `Remboursement${amount != null ? ' ' + money(amount, cur()) : ''}`;
 		}
 		if (op.entity_type === 'participant') {
-			const name = d?.person_id ? pname(d.person_id) : 'participant';
+			const personId = asString(d?.person_id);
+			const name = personId ? pname(personId) : 'participant';
 			return `Participant ${name}`;
 		}
 		return op.entity_type;
@@ -83,13 +101,13 @@
 		'created_by',
 		'actor_auth_user_id'
 	]);
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	function rowEntries(row: any): [string, string][] {
-		if (!row) return [];
+	function rowEntries(row: unknown): [string, string][] {
+		const record = asRecord(row);
+		if (!record) return [];
 		const out: [string, string][] = [];
-		for (const [k, v] of Object.entries(row)) {
+		for (const [k, v] of Object.entries(record)) {
 			if (HIDE.has(k)) continue;
-			if (k === 'amount_cents') out.push(['montant', money(v as number, cur())]);
+			if (k === 'amount_cents') out.push(['montant', money(Number(v), cur())]);
 			else if (k === 'person_id') out.push(['personne', pname(v as string)]);
 			else if (k === 'paid_by_person_id') out.push(['payé par', pname(v as string)]);
 			else if (k === 'household_id') out.push(['foyer', hname(v as string)]);
@@ -103,21 +121,28 @@
 	}
 </script>
 
-{#snippet snap(title: string, s: any)}
-	{#if s}
+{#snippet snap(title: string, s: unknown)}
+	{@const record = asRecord(s)}
+	{#if record}
+		{@const expense = asRecord(record.expense)}
+		{@const beneficiaries = Array.isArray(record.beneficiaries) ? record.beneficiaries : []}
 		<div>
 			<p class="font-medium text-slate-500">{title}</p>
-			{#if s.expense}
+			{#if expense}
 				<p>
-					{s.expense.description || 'sans nom'} · {money(s.expense.amount_cents, cur())} ·
-					{s.expense.spent_on} · payé par {pname(s.expense.paid_by_person_id)}
+					{asString(expense.description, 'sans nom') || 'sans nom'} ·
+					{money(Number(expense.amount_cents ?? 0), cur())} · {asString(expense.spent_on)} · payé par
+					{pname(asString(expense.paid_by_person_id))}
 				</p>
 				<ul class="ml-4 list-disc">
-					{#each s.beneficiaries ?? [] as b (b.person_id)}
-						<li class="inline-flex items-center gap-0.5">
-							{pname(b.person_id)} : {money(b.amount_cents, cur())}
-							{#if b.is_locked}<Lock size={12} aria-label="montant verrouillé" />{/if}
-						</li>
+					{#each beneficiaries as b, i (asString(asRecord(b)?.person_id, String(i)))}
+						{@const benef = asRecord(b)}
+						{#if benef}
+							<li class="inline-flex items-center gap-0.5">
+								{pname(asString(benef.person_id))} : {money(Number(benef.amount_cents ?? 0), cur())}
+								{#if benef.is_locked}<Lock size={12} aria-label="montant verrouillé" />{/if}
+							</li>
+						{/if}
 					{/each}
 				</ul>
 			{:else}

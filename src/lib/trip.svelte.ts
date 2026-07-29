@@ -1,8 +1,23 @@
 import { getContext, setContext } from 'svelte';
+import { SvelteMap } from 'svelte/reactivity';
 import {
-	getTrip, listParticipants, listExpenses, listBeneficiaries, getBalances, listSettlements,
-	getMyPersonId, updateTrip, updatePersonName, updateHouseholdName, setParticipantActive,
-	type Trip, type Participant, type Expense, type Beneficiary, type Balance, type Settlement
+	getTrip,
+	listParticipants,
+	listExpenses,
+	listBeneficiaries,
+	getBalances,
+	listSettlements,
+	getMyPersonId,
+	updateTrip,
+	updatePersonName,
+	updateHouseholdName,
+	setParticipantActive,
+	type Trip,
+	type Participant,
+	type Expense,
+	type Beneficiary,
+	type Balance,
+	type Settlement
 } from './db';
 import { saveExpense, deleteExpense, type SaveExpenseInput } from './expenses';
 import { addParticipant } from './auth';
@@ -43,12 +58,14 @@ export class TripState {
 	myPersonId = $state<string | null>(null);
 
 	currency = $derived(this.trip?.currency ?? 'EUR');
-	personName = $derived(new Map(this.participants.map((p) => [p.person_id, p.person_name])));
-	householdName = $derived(new Map(this.participants.map((p) => [p.household_id, p.household_name])));
+	personName = $derived(new SvelteMap(this.participants.map((p) => [p.person_id, p.person_name])));
+	householdName = $derived(
+		new SvelteMap(this.participants.map((p) => [p.household_id, p.household_name]))
+	);
 	households = $derived(Array.from(this.householdName, ([id, name]) => ({ id, name })));
 	transfers = $derived(simplifyDebts(this.balances));
 	benefByExpense = $derived.by(() => {
-		const m = new Map<string, Beneficiary[]>();
+		const m = new SvelteMap<string, Beneficiary[]>();
 		for (const b of this.beneficiaries) {
 			const arr = m.get(b.expense_id);
 			if (arr) arr.push(b);
@@ -70,8 +87,13 @@ export class TripState {
 		try {
 			const [trip, participants, expenses, beneficiaries, balances, settlements, myPersonId] =
 				await Promise.all([
-					getTrip(id), listParticipants(id), listExpenses(id), listBeneficiaries(id),
-					getBalances(id), listSettlements(id), getMyPersonId(id)
+					getTrip(id),
+					listParticipants(id),
+					listExpenses(id),
+					listBeneficiaries(id),
+					getBalances(id),
+					listSettlements(id),
+					getMyPersonId(id)
 				]);
 			this.trip = trip;
 			this.participants = participants;
@@ -93,7 +115,11 @@ export class TripState {
 		await this.load();
 	}
 	async removeExpense(exp: Expense) {
-		await deleteExpense({ trip_id: this.tripId, expense_id: exp.id, expected_version: exp.version });
+		await deleteExpense({
+			trip_id: this.tripId,
+			expense_id: exp.id,
+			expected_version: exp.version
+		});
 		await this.load();
 	}
 

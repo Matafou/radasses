@@ -41,6 +41,34 @@ export type Settlement = {
 	settled_on: string;
 };
 
+type ParticipantRow = {
+	id: string;
+	person_id: string;
+	household_id: string;
+	default_weight: number | string;
+	active: boolean;
+	invite_token: string;
+	persons?: { name?: string | null } | null;
+	households?: { name?: string | null } | null;
+};
+
+type BeneficiaryRow = {
+	expense_id: string;
+	person_id: string;
+	is_locked: boolean;
+	weight: number | string | null;
+	amount_cents: number;
+};
+
+type MyPersonRow = {
+	trip_participants?: { person_id?: string | null } | null;
+};
+
+type ActorRow = {
+	auth_user_id: string;
+	trip_participants?: { persons?: { name?: string | null } | null } | null;
+};
+
 export async function getTrip(tripId: string): Promise<Trip | null> {
 	const { data, error } = await supabase
 		.from('trips')
@@ -54,11 +82,13 @@ export async function getTrip(tripId: string): Promise<Trip | null> {
 export async function listParticipants(tripId: string): Promise<Participant[]> {
 	const { data, error } = await supabase
 		.from('trip_participants')
-		.select('id, person_id, household_id, default_weight, active, invite_token, persons(name), households(name)')
+		.select(
+			'id, person_id, household_id, default_weight, active, invite_token, persons(name), households(name)'
+		)
 		.eq('trip_id', tripId);
 	if (error) throw error;
 	// persons/households sont des embeds (FK directes) ; numeric revient en string.
-	return (data ?? []).map((r: any) => ({
+	return ((data ?? []) as ParticipantRow[]).map((r) => ({
 		participant_id: r.id,
 		person_id: r.person_id,
 		person_name: r.persons?.name ?? '?',
@@ -87,7 +117,7 @@ export async function listBeneficiaries(tripId: string): Promise<Beneficiary[]> 
 		.select('expense_id, person_id, is_locked, weight, amount_cents')
 		.eq('trip_id', tripId);
 	if (error) throw error;
-	return (data ?? []).map((r: any) => ({
+	return ((data ?? []) as BeneficiaryRow[]).map((r) => ({
 		expense_id: r.expense_id,
 		person_id: r.person_id,
 		is_locked: r.is_locked,
@@ -124,7 +154,10 @@ export async function updateHouseholdName(householdId: string, name: string): Pr
 }
 
 export async function setParticipantActive(participantId: string, active: boolean): Promise<void> {
-	const { error } = await supabase.from('trip_participants').update({ active }).eq('id', participantId);
+	const { error } = await supabase
+		.from('trip_participants')
+		.update({ active })
+		.eq('id', participantId);
 	if (error) throw error;
 }
 
@@ -140,7 +173,7 @@ export async function getMyPersonId(tripId: string): Promise<string | null> {
 		.eq('trip_participants.trip_id', tripId)
 		.limit(1);
 	if (error) throw error;
-	const row = (data ?? [])[0] as any;
+	const row = ((data ?? []) as MyPersonRow[])[0];
 	return row?.trip_participants?.person_id ?? null;
 }
 
@@ -150,10 +183,8 @@ export type Operation = {
 	entity_type: string;
 	entity_id: string | null;
 	action: string;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	before: any;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	after: any;
+	before: unknown;
+	after: unknown;
 	created_at: string;
 };
 
@@ -175,7 +206,7 @@ export async function listActors(tripId: string): Promise<Record<string, string>
 		.eq('trip_participants.trip_id', tripId);
 	if (error) throw error;
 	const map: Record<string, string> = {};
-	for (const r of (data ?? []) as any[]) {
+	for (const r of (data ?? []) as ActorRow[]) {
 		const name = r.trip_participants?.persons?.name;
 		if (name) map[r.auth_user_id] = name;
 	}

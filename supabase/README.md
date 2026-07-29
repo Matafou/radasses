@@ -31,8 +31,8 @@ Sans ça, `signInAnonymously()` échoue et personne ne peut se connecter.
 
 > Dashboard → **Settings → API**
 
-- `Project URL`  → `PUBLIC_SUPABASE_URL` (dans `.env`)
-- `anon public`  → `PUBLIC_SUPABASE_ANON_KEY` (dans `.env`)
+- `Project URL` → `PUBLIC_SUPABASE_URL` (dans `.env`)
+- `anon public` → `PUBLIC_SUPABASE_ANON_KEY` (dans `.env`)
 
 Ces deux valeurs sont publiques par conception : la sécurité est assurée par les
 Row Level Security policies, pas par le secret de la clé.

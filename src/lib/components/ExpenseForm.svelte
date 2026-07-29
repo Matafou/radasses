@@ -32,16 +32,18 @@
 	// --- Bénéficiaires regroupés par foyer (pour cocher tout un foyer d'un coup) ---
 	type Group = { id: string; name: string; members: Participant[] };
 	const groups = $derived.by((): Group[] => {
-		const m = new Map<string, Group>();
+		const byHousehold: Record<string, Group> = {};
+		const out: Group[] = [];
 		for (const p of tripState.participants) {
-			let g = m.get(p.household_id);
+			let g = byHousehold[p.household_id];
 			if (!g) {
 				g = { id: p.household_id, name: p.household_name, members: [] };
-				m.set(p.household_id, g);
+				byHousehold[p.household_id] = g;
+				out.push(g);
 			}
 			g.members.push(p);
 		}
-		return Array.from(m.values());
+		return out;
 	});
 	// Auto-sélection : on ne considère QUE les participants actifs (« présents »).
 	const foyerAll = (g: Group) => {
@@ -71,11 +73,12 @@
 	}
 	function initDetail() {
 		const benef = expense ? (tripState.benefByExpense.get(expense.id) ?? []) : [];
-		const byPerson = new Map(benef.map((b) => [b.person_id, b]));
+		const byPerson: Record<string, (typeof benef)[number]> = {};
+		for (const b of benef) byPerson[b.person_id] = b;
 		const mode: Record<string, 'weight' | 'amount'> = {};
 		const value: Record<string, string> = {};
 		for (const p of tripState.participants) {
-			const b = byPerson.get(p.person_id);
+			const b = byPerson[p.person_id];
 			if (b?.is_locked) {
 				mode[p.person_id] = 'amount';
 				value[p.person_id] = String(b.amount_cents / 100);

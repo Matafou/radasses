@@ -7,3 +7,10 @@ bun.lockb
 
 # Miscellaneous
 /static/
+node_modules
+.claude/
+supabase/.temp/
+
+# Output
+.svelte-kit/
+build/

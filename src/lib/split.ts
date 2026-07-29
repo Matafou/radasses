@@ -17,7 +17,8 @@ export function previewSplit(totalCents: number, benefs: BeneficiaryInput[]): Sp
 	const unlocked = benefs.filter((b) => !b.is_locked);
 	const lockedSum = locked.reduce((s, b) => s + Math.max(0, Math.round(b.amount_cents ?? 0)), 0);
 
-	if (unlocked.length < 1) return { error: 'Ajoute au moins un bénéficiaire en poids (pour absorber le reste).' };
+	if (unlocked.length < 1)
+		return { error: 'Ajoute au moins un bénéficiaire en poids (pour absorber le reste).' };
 	if (lockedSum > totalCents) return { error: 'Les montants fixes dépassent le total.' };
 
 	const remainder = totalCents - lockedSum;

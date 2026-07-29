@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
 	import { createTrip, redeemToken } from '$lib/auth';
 	import { getTrip } from '$lib/db';
@@ -31,7 +32,7 @@
 				const tripId = await redeemToken(token);
 				const trip = await getTrip(tripId);
 				rememberTrip({ id: tripId, name: trip?.name ?? 'Séjour' });
-				await goto(`/t/${tripId}`);
+				await goto(resolve('/t/[tripId]', { tripId }));
 			} catch (e) {
 				error = e instanceof Error ? e.message : String(e);
 				joining = false;
@@ -50,7 +51,7 @@
 		try {
 			const res = await createTrip({ name: tripName.trim(), myName: myName.trim() });
 			rememberTrip({ id: res.trip_id, name: tripName.trim() });
-			await goto(`/t/${res.trip_id}`);
+			await goto(resolve('/t/[tripId]', { tripId: res.trip_id }));
 		} catch (e) {
 			error = e instanceof Error ? e.message : String(e);
 		} finally {
@@ -89,7 +90,10 @@
 				<PanelList>
 					{#each known as t (t.id)}
 						<ListRow class="p-0">
-							<a class="block px-4 py-3 hover:bg-slate-50" href={`/t/${t.id}`}>{t.name}</a>
+							<a
+								class="block px-4 py-3 hover:bg-slate-50"
+								href={resolve('/t/[tripId]', { tripId: t.id })}>{t.name}</a
+							>
 						</ListRow>
 					{/each}
 				</PanelList>
