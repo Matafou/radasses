@@ -55,7 +55,8 @@
 	<section class="space-y-2">
 		<h2 class="text-sm font-medium text-slate-500">Remboursements possibles</h2>
 		<p class="text-xs text-slate-400">
-			Les boutons permettent d'enregistrer une dépense de remboursement entre participants.
+			Le bouton <span class="inline-flex items-center rounded bg-emerald-600 px-1 font-medium text-white" aria-hidden="true">✓</span>
+			confirme un remboursement en créant la dépense correspondante.
 		</p>
 		{#if tripState.transfers.length}
 			<ul class="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white">
@@ -67,7 +68,7 @@
 							: {fmt(t.amount_cents)}
 						</span>
 						<button class="shrink-0 whitespace-nowrap rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white" onclick={() => onReimburse(t)}>
-							Noter le remboursement
+							<span aria-hidden="true">✓</span> Remboursé !
 						</button>
 					</li>
 				{/each}

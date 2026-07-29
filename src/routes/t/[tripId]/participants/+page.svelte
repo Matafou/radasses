@@ -101,6 +101,9 @@
 			{showAdd ? 'annuler' : '+ ajouter'}
 		</button>
 	</div>
+	<p class="text-xs text-slate-400">
+		Un membre « parti » reste dans le séjour, mais n'est plus coché par défaut dans les nouvelles dépenses.
+	</p>
 
 	{#if showAdd}
 		<form class="space-y-2 rounded-lg border border-slate-200 bg-white p-3" onsubmit={onAdd}>
@@ -157,13 +160,53 @@
 							{#if !p.active}<span class="text-xs text-slate-400">(parti)</span>{/if}
 							<span class="text-xs text-slate-400">· {p.household_name}</span>
 						</span>
-						<div class="flex shrink-0 gap-2">
-							<button class="text-xs text-slate-500 underline" onclick={() => onToggleActive(p)}>
-								{p.active ? 'parti' : 'présent'}
+						<div class="flex shrink-0 items-center gap-2">
+							<span class="flex items-center gap-1.5 text-xs {p.active ? 'text-emerald-700' : 'text-slate-400'}">
+								{p.active ? 'présent' : 'parti'}
+								<button
+									type="button"
+									role="switch"
+									aria-checked={p.active}
+									aria-label={p.active ? 'Présent (basculer sur parti)' : 'Parti (basculer sur présent)'}
+									onclick={() => onToggleActive(p)}
+									class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors {p.active
+										? 'bg-emerald-600'
+										: 'bg-slate-300'}"
+								>
+									<span
+										class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform {p.active
+											? 'translate-x-4'
+											: 'translate-x-0.5'}"
+									></span>
+								</button>
+							</span>
+							<button
+								type="button"
+								aria-label="Modifier"
+								title="Modifier"
+								class="inline-flex items-center rounded-md bg-amber-600 p-1 text-white hover:bg-amber-700"
+								onclick={() => startEdit(p)}
+							>
+								<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4">
+									<path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
+								</svg>
 							</button>
-							<button class="text-xs text-slate-500 underline" onclick={() => startEdit(p)}>modifier</button>
-							<button class="text-xs text-slate-500 underline" onclick={() => copyLink(p.invite_token)}>
-								{copied === p.invite_token ? '✓' : 'lien'}
+							<button
+								type="button"
+								aria-label="Copier le lien d'invitation"
+								title="Copier le lien d'invitation"
+								class="inline-flex items-center rounded-md border border-slate-300 p-1 text-slate-600 hover:bg-slate-50"
+								onclick={() => copyLink(p.invite_token)}
+							>
+								{#if copied === p.invite_token}
+									<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4 text-emerald-600">
+										<path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+									</svg>
+								{:else}
+									<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4">
+										<path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+									</svg>
+								{/if}
 							</button>
 						</div>
 					</div>
