@@ -3,6 +3,7 @@
 	import { beforeNavigate } from '$app/navigation';
 	import { TripState, setTripState } from '$lib/trip.svelte';
 	import ExpenseForm from '$lib/components/ExpenseForm.svelte';
+	import ReimbursementForm from '$lib/components/ReimbursementForm.svelte';
 
 	let { children } = $props();
 	let tripId = $derived($page.params.tripId!);
@@ -109,12 +110,12 @@
 </nav>
 
 {#if state.trip}
-	<!-- Backdrop : masquer en gardant la saisie -->
+	<!-- Backdrop : masquer (dépense, saisie gardée) ou fermer (remboursement) -->
 	{#if state.formOpen}
 		<button
 			type="button"
-			aria-label="Masquer"
-			onclick={() => state.hideExpenseForm()}
+			aria-label={state.reimburse ? 'Fermer' : 'Masquer'}
+			onclick={() => (state.reimburse ? state.closeExpenseForm() : state.hideExpenseForm())}
 			class="fixed inset-0 z-30 bg-black/30"
 		></button>
 	{/if}
@@ -130,9 +131,9 @@
 				<div class="h-1 w-10 rounded-full bg-slate-300"></div>
 				<button
 					type="button"
-					aria-label="Masquer"
-					title="Masquer (garder la saisie)"
-					onclick={() => state.hideExpenseForm()}
+					aria-label={state.reimburse ? 'Fermer' : 'Masquer'}
+					title={state.reimburse ? 'Fermer' : 'Masquer (garder la saisie)'}
+					onclick={() => (state.reimburse ? state.closeExpenseForm() : state.hideExpenseForm())}
 					class="absolute right-0 text-slate-400 hover:text-slate-600"
 				>
 					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5">
@@ -140,14 +141,21 @@
 					</svg>
 				</button>
 			</div>
-			{#key state.editingExpense?.id ?? (state.prefill ? 'prefill' : `new-${state.formSeq}`)}
-				<ExpenseForm
-					expense={state.editingExpense}
-					prefill={state.editingExpense ? null : state.prefill}
+			{#if state.reimburse}
+				<ReimbursementForm
+					prefill={state.reimburse}
 					onDone={() => state.closeExpenseForm()}
 					onCancel={() => state.closeExpenseForm()}
 				/>
-			{/key}
+			{:else}
+				{#key state.editingExpense?.id ?? `new-${state.formSeq}`}
+					<ExpenseForm
+						expense={state.editingExpense}
+						onDone={() => state.closeExpenseForm()}
+						onCancel={() => state.closeExpenseForm()}
+					/>
+				{/key}
+			{/if}
 		</div>
 	</div>
 {/if}

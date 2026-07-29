@@ -8,12 +8,11 @@ import { saveExpense, deleteExpense, type SaveExpenseInput } from './expenses';
 import { addParticipant } from './auth';
 import { simplifyDebts, recordSettlement, cancelSettlement, type Transfer } from './settlements';
 
-/** Valeurs de pré-remplissage du formulaire de dépense (ex. depuis un remboursement). */
-export type ExpensePrefill = {
-	amount_cents: number;
-	paid_by_person_id: string;
-	beneficiary_person_ids: string[];
-	description: string;
+/** Pré-remplissage du mini-formulaire de remboursement (depuis une suggestion de l'onglet Soldes). */
+export type ReimbursePrefill = {
+	from_person_id?: string;
+	to_person_id?: string;
+	amount_cents?: number;
 };
 
 /**
@@ -22,8 +21,8 @@ export type ExpensePrefill = {
  * Les mutations rechargent l'ensemble.
  */
 export class TripState {
-	/** pré-remplissage en attente pour le formulaire de dépense (remboursement) */
-	prefill = $state<ExpensePrefill | null>(null);
+	/** remboursement en cours de saisie (mini-formulaire) ; null = mode dépense normale */
+	reimburse = $state<ReimbursePrefill | null>(null);
 	/** dépense en cours d'édition — persiste au changement d'onglet */
 	editingExpense = $state<Expense | null>(null);
 	/** le bottom-sheet de dépense (dans le layout) est-il déployé ? */
@@ -101,19 +100,19 @@ export class TripState {
 	/** Déploie le formulaire pour une nouvelle dépense (reprend une saisie en cours si présente). */
 	openNewExpense() {
 		this.editingExpense = null;
-		this.prefill = null;
+		this.reimburse = null;
 		this.formOpen = true;
 	}
 	/** Déploie le formulaire pré-rempli avec une dépense existante à modifier. */
 	openEditExpense(e: Expense) {
-		this.prefill = null;
+		this.reimburse = null;
 		this.editingExpense = e;
 		this.formOpen = true;
 	}
-	/** Déploie le formulaire pré-rempli (ex. remboursement depuis l'onglet Soldes). */
-	openReimbursement(prefill: ExpensePrefill) {
+	/** Déploie le mini-formulaire de remboursement (préremplissable depuis une suggestion). */
+	openReimbursement(prefill: ReimbursePrefill = {}) {
 		this.editingExpense = null;
-		this.prefill = prefill;
+		this.reimburse = prefill;
 		this.formOpen = true;
 	}
 	/** Masque le formulaire SANS perdre la saisie (le composant reste monté) → « Reprendre ». */
@@ -123,7 +122,7 @@ export class TripState {
 	/** Referme ET abandonne : réarme un formulaire de création vierge pour la prochaine ouverture. */
 	closeExpenseForm() {
 		this.editingExpense = null;
-		this.prefill = null;
+		this.reimburse = null;
 		this.formOpen = false;
 		this.hasCreateDraft = false;
 		this.formSeq++;

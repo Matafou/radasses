@@ -14,10 +14,9 @@
 		const to = tripState.participants.find((p) => p.household_id === t.to_household_id)?.person_id;
 		if (!from || !to) return;
 		tripState.openReimbursement({
-			amount_cents: t.amount_cents,
-			paid_by_person_id: from,
-			beneficiary_person_ids: [to],
-			description: 'Remboursement'
+			from_person_id: from,
+			to_person_id: to,
+			amount_cents: t.amount_cents
 		});
 	}
 	async function onCancel(s: Settlement) {
@@ -78,6 +77,14 @@
 				Tout est équilibré 🎉
 			</p>
 		{/if}
+
+		<button
+			type="button"
+			class="w-full rounded-lg border border-dashed border-emerald-500 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+			onclick={() => tripState.openReimbursement()}
+		>
+			+ confirmer un autre remboursement
+		</button>
 
 		{#if tripState.settlements.length}
 			<details class="rounded-lg border border-slate-200 bg-white p-3">

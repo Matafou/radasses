@@ -1,14 +1,13 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { getTripState, type ExpensePrefill } from '$lib/trip.svelte';
+	import { getTripState } from '$lib/trip.svelte';
 	import type { Expense, Participant } from '$lib/db';
 	import type { BeneficiaryInput } from '$lib/expenses';
 	import { previewSplit } from '$lib/split';
 	import { centsFromEuros, money } from '$lib/format';
 
-	let { expense = null, prefill = null, onDone, onCancel }: {
+	let { expense = null, onDone, onCancel }: {
 		expense?: Expense | null;
-		prefill?: ExpensePrefill | null;
 		onDone: () => void;
 		onCancel?: () => void;
 	} = $props();
@@ -50,7 +49,6 @@
 		const sel: Record<string, boolean> = {};
 		let allow: Set<string> | null = null;
 		if (expense) allow = new Set((tripState.benefByExpense.get(expense.id) ?? []).map((b) => b.person_id));
-		else if (prefill) allow = new Set(prefill.beneficiary_person_ids);
 		// nouvelle dépense : cocher par défaut les participants actifs seulement
 		for (const p of tripState.participants) sel[p.person_id] = allow ? allow.has(p.person_id) : p.active;
 		return sel;
@@ -79,15 +77,10 @@
 		const now = new Date();
 		const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 		return {
-			amountStr: expense
-				? String(expense.amount_cents / 100)
-				: prefill
-					? String(prefill.amount_cents / 100)
-					: '',
-			description: expense?.description ?? prefill?.description ?? '',
+			amountStr: expense ? String(expense.amount_cents / 100) : '',
+			description: expense?.description ?? '',
 			payerId:
 				expense?.paid_by_person_id ??
-				prefill?.paid_by_person_id ??
 				tripState.myPersonId ??
 				tripState.participants[0]?.person_id ??
 				'',
