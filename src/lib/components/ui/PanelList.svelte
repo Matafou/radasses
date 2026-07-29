@@ -10,8 +10,6 @@
 	} = $props();
 </script>
 
-<ul
-	class="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white {className}"
->
+<ul class="panel-surface divide-y divide-slate-200 overflow-hidden {className}">
 	{@render children()}
 </ul>

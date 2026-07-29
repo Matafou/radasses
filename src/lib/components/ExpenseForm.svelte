@@ -253,7 +253,7 @@
 			<TextInput class="min-w-0 flex-1" placeholder="Description" bind:value={description} />
 		</div>
 		<div class="flex gap-2">
-			<label class="flex-1 text-sm text-slate-600">
+			<label class="inline-form-label flex-1">
 				Payé par
 				<Select class="mt-1 w-full" bind:value={payerId}>
 					{#each tripState.participants as p (p.person_id)}
@@ -261,7 +261,7 @@
 					{/each}
 				</Select>
 			</label>
-			<label class="text-sm text-slate-600">
+			<label class="inline-form-label">
 				Date
 				<TextInput type="date" class="mt-1 w-full" bind:value={spentOn} />
 			</label>

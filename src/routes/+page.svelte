@@ -68,11 +68,11 @@
 			<h1 class="text-xl font-semibold">Nouveau séjour</h1>
 			<form class="space-y-3" onsubmit={onCreate}>
 				<label class="block">
-					<span class="text-sm text-slate-600">Nom du séjour</span>
+					<span class="inline-form-label">Nom du séjour</span>
 					<TextInput class="mt-1 w-full" bind:value={tripName} placeholder="Été à la mer" />
 				</label>
 				<label class="block">
-					<span class="text-sm text-slate-600">Ton prénom</span>
+					<span class="inline-form-label">Ton prénom</span>
 					<TextInput class="mt-1 w-full" bind:value={myName} placeholder="Alice" />
 				</label>
 				{#if error}

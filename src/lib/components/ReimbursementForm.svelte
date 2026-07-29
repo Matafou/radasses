@@ -75,7 +75,7 @@
 		<p class="text-sm font-medium text-slate-600">Remboursement</p>
 
 		<div class="flex items-end gap-2">
-			<label class="flex-1 text-sm text-slate-600">
+			<label class="inline-form-label flex-1">
 				Qui rembourse
 				<Select class="mt-1 w-full px-2" bind:value={fromId}>
 					{#each tripState.participants as p (p.person_id)}
@@ -84,7 +84,7 @@
 				</Select>
 			</label>
 			<ArrowRight size={18} class="mb-2 shrink-0 text-slate-400" aria-hidden="true" />
-			<label class="flex-1 text-sm text-slate-600">
+			<label class="inline-form-label flex-1">
 				Qui est remboursé
 				<Select class="mt-1 w-full px-2" bind:value={toId}>
 					<option value="">—</option>

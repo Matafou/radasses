@@ -10,6 +10,6 @@
 	} = $props();
 </script>
 
-<div class="rounded-lg border border-slate-200 bg-white p-3 {className}">
+<div class="panel-surface p-3 {className}">
 	{@render children()}
 </div>

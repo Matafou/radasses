@@ -131,7 +131,7 @@
 		<Card>
 			<form class="space-y-2" onsubmit={onAdd}>
 				<TextInput class="w-full" placeholder="Prénom" bind:value={newName} />
-				<label class="block text-sm text-slate-600">
+				<label class="form-label">
 					Foyer
 					<Select class="mt-1 w-full" bind:value={newHousehold}>
 						<option value="__new__">Nouveau foyer (cette personne seule)</option>

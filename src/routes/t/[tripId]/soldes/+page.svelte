@@ -117,7 +117,7 @@
 			{/if}
 
 			{#if tripState.settlements.length}
-				<details class="rounded-lg border border-slate-200 bg-white p-3">
+				<details class="panel-surface p-3">
 					<summary class="cursor-pointer text-sm text-slate-500">
 						Remboursements enregistrés ({tripState.settlements.length})
 					</summary>

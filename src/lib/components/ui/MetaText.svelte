@@ -10,4 +10,4 @@
 	} = $props();
 </script>
 
-<span class="text-xs text-slate-400 {className}">{@render children()}</span>
+<span class="meta-text {className}">{@render children()}</span>

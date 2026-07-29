@@ -35,11 +35,11 @@
 	<SectionHeader title="Réglages du séjour" />
 	<Card>
 		<form class="space-y-3" onsubmit={onSave}>
-			<label class="block text-sm text-slate-600">
+			<label class="form-label">
 				Nom du séjour
 				<TextInput class="mt-1 w-full" bind:value={name} />
 			</label>
-			<label class="block text-sm text-slate-600">
+			<label class="form-label">
 				Devise
 				<Select class="mt-1 w-full" bind:value={currency}>
 					{#each currencies as c (c)}
