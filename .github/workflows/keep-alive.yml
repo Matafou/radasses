@@ -23,9 +23,12 @@ jobs:
           URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
           KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
         run: |
+          BASE="${URL%/}" # retire un éventuel / final
           ok=0
           for i in 1 2 3; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' -H "apikey: $KEY" "$URL/rest/v1/")
+            code=$(curl -s -o /dev/null -w '%{http_code}' \
+              -H "apikey: $KEY" -H "Authorization: Bearer $KEY" \
+              "$BASE/rest/v1/")
             echo "Requête $i → HTTP $code"
             [ "$code" = "200" ] && ok=$((ok + 1))
             sleep 3
