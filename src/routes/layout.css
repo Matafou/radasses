@@ -1,5 +1,18 @@
 @import 'tailwindcss';
 
+/* =====================================================================
+   Tokens de design — LE point unique où centraliser les choix « arbitraires »
+   (largeurs, et à terme couleurs, rayons, z-index, durées…). En Tailwind v4,
+   `@theme` génère les utilitaires correspondants.
+   - `--container-*` → utilitaires `max-w-*`.
+   ===================================================================== */
+@theme {
+	/* Largeur de la colonne principale de l'app (en-tête, contenu, nav du bas). */
+	--container-app: 28rem;
+	/* Largeur du bottom-sheet (formulaire de dépense / remboursement). */
+	--container-sheet: 36rem;
+}
+
 @layer base {
 	/* Le shell de l'app est en `h-dvh` avec scroll interne (zones `overflow-y-auto`).
 	   On verrouille le document lui-même pour éviter que la page entière défile ou

@@ -29,7 +29,7 @@
 {/if}
 
 <div
-	class="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-xl rounded-t-2xl bg-white shadow-xl transition-transform duration-200 {open
+	class="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-sheet rounded-t-2xl bg-white shadow-xl transition-transform duration-200 {open
 		? 'translate-y-0'
 		: 'pointer-events-none translate-y-full'} {className}"
 >

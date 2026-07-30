@@ -29,7 +29,7 @@
 </script>
 
 <nav class="flex-none border-t border-slate-200 bg-white">
-	<div class="relative mx-auto grid max-w-md grid-cols-4">
+	<div class="relative mx-auto grid max-w-app grid-cols-4">
 		<a href={resolve('/t/[tripId]', { tripId })} class={tabClass(isActive(''))}>Dépenses</a>
 		<a href={resolve('/t/[tripId]/soldes', { tripId })} class={tabClass(isActive('soldes'))}
 			>Soldes</a
