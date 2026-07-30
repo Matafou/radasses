@@ -1,5 +1,17 @@
 @import 'tailwindcss';
 
+@layer base {
+	/* Le shell de l'app est en `h-dvh` avec scroll interne (zones `overflow-y-auto`).
+	   On verrouille le document lui-même pour éviter que la page entière défile ou
+	   « rebondisse » (overscroll) sur mobile — déroutant sinon. */
+	html,
+	body {
+		height: 100%;
+		overflow: hidden;
+		overscroll-behavior: none;
+	}
+}
+
 @layer components {
 	/* Reuse these app-wide primitives before duplicating their Tailwind class lists. */
 	.section-title {
