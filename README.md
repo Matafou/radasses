@@ -1,6 +1,6 @@
-# sv
+# Radasse
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Application web de partage de dépenses entre amis (SvelteKit + Supabase).
 
 ## Creating a project
 
@@ -40,3 +40,10 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+
+## Licence
+
+Ce projet est distribué sous licence [MIT](./LICENSE) © 2026 Pierre Courtieu.
+
+Les dépendances tierces conservent leurs propres licences (permissives : MIT,
+ISC, Apache-2.0) ; voir [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).

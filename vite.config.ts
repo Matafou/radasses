@@ -12,7 +12,10 @@ export default defineConfig({
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
-			adapter: adapter({ fallback: '404.html' })
+			adapter: adapter({ fallback: '404.html' }),
+			// Chemin de base : vide en dev/local, '/radasses' en prod (GitHub Pages,
+			// servi sous https://matafou.github.io/radasses/). Injecté par le workflow.
+			paths: { base: process.env.BASE_PATH ?? '' }
 		})
 	]
 });
