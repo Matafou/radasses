@@ -35,14 +35,6 @@ export type Beneficiary = {
 
 export type Balance = { household_id: string; net_cents: number };
 
-export type Settlement = {
-	id: string;
-	from_household_id: string;
-	to_household_id: string;
-	amount_cents: number;
-	settled_on: string;
-};
-
 export type Operation = {
 	id: number;
 	actor_auth_user_id: string | null;

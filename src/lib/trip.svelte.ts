@@ -8,10 +8,9 @@ import {
 	type Expense,
 	type Beneficiary,
 	type Balance,
-	type Settlement,
 	type SaveExpenseInput
 } from '$lib/backend';
-import { simplifyDebts, type Transfer } from './settlements';
+import { simplifyDebts } from './settlements';
 
 /** Pré-remplissage du mini-formulaire de remboursement (depuis une suggestion de l'onglet Soldes). */
 export type ReimbursePrefill = {
@@ -44,7 +43,6 @@ export class TripState {
 	expenses = $state<Expense[]>([]);
 	beneficiaries = $state<Beneficiary[]>([]);
 	balances = $state<Balance[]>([]);
-	settlements = $state<Settlement[]>([]);
 	myPersonId = $state<string | null>(null);
 
 	currency = $derived(this.trip?.currency ?? 'EUR');
@@ -75,22 +73,21 @@ export class TripState {
 		this.loading = true;
 		this.error = null;
 		try {
-			const [trip, participants, expenses, beneficiaries, balances, settlements, myPersonId] =
-				await Promise.all([
+			const [trip, participants, expenses, beneficiaries, balances, myPersonId] = await Promise.all(
+				[
 					backend.getTrip(id),
 					backend.listParticipants(id),
 					backend.listExpenses(id),
 					backend.listBeneficiaries(id),
 					backend.getBalances(id),
-					backend.listSettlements(id),
 					backend.getMyPersonId(id)
-				]);
+				]
+			);
 			this.trip = trip;
 			this.participants = participants;
 			this.expenses = expenses;
 			this.beneficiaries = beneficiaries;
 			this.balances = balances;
-			this.settlements = settlements;
 			this.myPersonId = myPersonId;
 		} catch (e) {
 			this.error = e instanceof Error ? e.message : String(e);
@@ -182,14 +179,6 @@ export class TripState {
 	/** Réglages du séjour (nom, devise). */
 	async updateSettings(patch: { name?: string; currency?: string }) {
 		await backend.updateTrip(this.tripId, patch);
-		await this.load();
-	}
-	async settle(t: Transfer) {
-		await backend.recordSettlement({ trip_id: this.tripId, ...t });
-		await this.load();
-	}
-	async unsettle(s: Settlement) {
-		await backend.cancelSettlement(s.id);
 		await this.load();
 	}
 }

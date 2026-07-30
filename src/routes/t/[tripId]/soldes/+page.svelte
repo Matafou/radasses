@@ -2,7 +2,6 @@
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
 	import { ArrowRight, Check, Plus } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
-	import type { Settlement } from '$lib/backend';
 	import type { Transfer } from '$lib/settlements';
 	import { money } from '$lib/format';
 	import {
@@ -30,13 +29,6 @@
 			to_person_id: to,
 			amount_cents: t.amount_cents
 		});
-	}
-	async function onCancel(s: Settlement) {
-		try {
-			await tripState.unsettle(s);
-		} catch (err) {
-			tripState.error = err instanceof Error ? err.message : String(err);
-		}
 	}
 </script>
 
@@ -114,27 +106,6 @@
 				</PanelList>
 			{:else}
 				<EmptyState class="p-3">Tout est équilibré 🎉</EmptyState>
-			{/if}
-
-			{#if tripState.settlements.length}
-				<details class="panel-surface p-3">
-					<summary class="cursor-pointer text-sm text-slate-500">
-						Remboursements enregistrés ({tripState.settlements.length})
-					</summary>
-					<ul class="mt-2 space-y-1">
-						{#each tripState.settlements as s (s.id)}
-							<li class="flex items-center justify-between text-sm">
-								<span class="text-slate-600">
-									{s.settled_on} · {tripState.householdName.get(s.from_household_id) ?? '?'} →
-									{tripState.householdName.get(s.to_household_id) ?? '?'} : {fmt(s.amount_cents)}
-								</span>
-								<button class="text-xs text-red-500 underline" onclick={() => onCancel(s)}
-									>annuler</button
-								>
-							</li>
-						{/each}
-					</ul>
-				</details>
 			{/if}
 		</div>
 	</section>

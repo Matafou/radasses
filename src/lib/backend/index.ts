@@ -13,7 +13,6 @@ import type {
 	Participant,
 	SaveExpenseInput,
 	SaveExpenseResult,
-	Settlement,
 	Trip
 } from './types';
 import { supabaseBackend } from './supabase';
@@ -56,7 +55,6 @@ export interface Backend {
 	listExpenses(tripId: string): Promise<Expense[]>;
 	listBeneficiaries(tripId: string): Promise<Beneficiary[]>;
 	getBalances(tripId: string): Promise<Balance[]>;
-	listSettlements(tripId: string): Promise<Settlement[]>;
 	listOperations(tripId: string): Promise<Operation[]>;
 	/** Table auth_user_id -> nom de la personne (pour afficher « qui » a agi). */
 	listActors(tripId: string): Promise<Record<string, string>>;
@@ -74,15 +72,6 @@ export interface Backend {
 		expense_id: string;
 		expected_version?: number | null;
 	}): Promise<{ expense_id: string; deleted: boolean }>;
-
-	// --- Remboursements enregistrés ---
-	recordSettlement(params: {
-		trip_id: string;
-		from_household_id: string;
-		to_household_id: string;
-		amount_cents: number;
-	}): Promise<void>;
-	cancelSettlement(id: string): Promise<void>;
 }
 
 /** Fournisseur actif. Changer cette ligne suffit à basculer d'adaptateur. */

@@ -8,7 +8,6 @@ import {
 	listExpenses,
 	listBeneficiaries,
 	getBalances,
-	listSettlements,
 	listOperations,
 	listActors,
 	getMyPersonId,
@@ -18,7 +17,6 @@ import {
 	setParticipantActive
 } from './db';
 import { saveExpense, deleteExpense } from './expenses';
-import { recordSettlement, cancelSettlement } from './settlements';
 
 export const supabaseBackend: Backend = {
 	// Le `ensureSession` interne renvoie la session (utilisée par les autres
@@ -35,7 +33,6 @@ export const supabaseBackend: Backend = {
 	listExpenses,
 	listBeneficiaries,
 	getBalances,
-	listSettlements,
 	listOperations,
 	listActors,
 	updateTrip,
@@ -43,7 +40,5 @@ export const supabaseBackend: Backend = {
 	updateHouseholdName,
 	setParticipantActive,
 	saveExpense,
-	deleteExpense,
-	recordSettlement,
-	cancelSettlement
+	deleteExpense
 };

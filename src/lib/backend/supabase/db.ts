@@ -1,14 +1,6 @@
 import { supabase } from './client';
 import { toBackendError } from './errors';
-import type {
-	Balance,
-	Beneficiary,
-	Expense,
-	Operation,
-	Participant,
-	Settlement,
-	Trip
-} from '../types';
+import type { Balance, Beneficiary, Expense, Operation, Participant, Trip } from '../types';
 
 // Lignes brutes renvoyées par PostgREST (embeds, numeric en string…) —
 // spécifiques à Supabase, mappées ci-dessous vers les types de domaine.
@@ -171,15 +163,4 @@ export async function listActors(tripId: string): Promise<Record<string, string>
 		if (name) map[r.auth_user_id] = name;
 	}
 	return map;
-}
-
-export async function listSettlements(tripId: string): Promise<Settlement[]> {
-	const { data, error } = await supabase
-		.from('settlements')
-		.select('id, from_household_id, to_household_id, amount_cents, settled_on')
-		.eq('trip_id', tripId)
-		.is('deleted_at', null)
-		.order('settled_on', { ascending: false });
-	if (error) throw toBackendError(error);
-	return (data ?? []) as Settlement[];
 }
