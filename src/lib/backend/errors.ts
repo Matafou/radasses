@@ -1,0 +1,28 @@
+// Erreur normalisée, indépendante du fournisseur. Chaque adaptateur traduit
+// ses erreurs natives en `BackendError` (voir `supabase/errors.ts`), pour que
+// l'UI n'ait jamais à connaître les codes/messages spécifiques d'un provider.
+
+export type BackendErrorCode =
+	/** conflit de version (donnée modifiée entre-temps) */
+	| 'conflict'
+	/** accès refusé (droits insuffisants) */
+	| 'forbidden'
+	/** entrée invalide rejetée par une règle métier */
+	| 'validation'
+	/** ressource introuvable */
+	| 'not-found'
+	/** problème réseau (requête non aboutie) */
+	| 'network'
+	/** cas non classé */
+	| 'unknown';
+
+/** Étend `Error` : `error.message` reste utilisable partout où l'UI l'affiche déjà. */
+export class BackendError extends Error {
+	readonly code: BackendErrorCode;
+
+	constructor(code: BackendErrorCode, message: string, options?: { cause?: unknown }) {
+		super(message, options);
+		this.name = 'BackendError';
+		this.code = code;
+	}
+}

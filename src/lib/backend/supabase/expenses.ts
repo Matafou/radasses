@@ -1,5 +1,6 @@
 import { supabase } from './client';
 import { ensureSession } from './auth';
+import { toBackendError } from './errors';
 import type { SaveExpenseInput, SaveExpenseResult } from '../types';
 
 /** Crée ou met à jour une dépense (calcul du split + verrou + journal côté serveur). */
@@ -16,7 +17,7 @@ export async function saveExpense(input: SaveExpenseInput): Promise<SaveExpenseR
 		p_expense_id: input.expense_id ?? null,
 		p_expected_version: input.expected_version ?? null
 	});
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 	return data as SaveExpenseResult;
 }
 
@@ -35,6 +36,6 @@ export async function deleteExpense(params: {
 		p_expense_id: params.expense_id,
 		p_expected_version: params.expected_version ?? null
 	});
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 	return data as { expense_id: string; deleted: boolean };
 }

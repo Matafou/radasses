@@ -1,4 +1,5 @@
 import { supabase } from './client';
+import { toBackendError } from './errors';
 import type {
 	Balance,
 	Beneficiary,
@@ -45,7 +46,7 @@ export async function getTrip(tripId: string): Promise<Trip | null> {
 		.select('id, name, currency, created_at')
 		.eq('id', tripId)
 		.maybeSingle();
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 	return data as Trip | null;
 }
 
@@ -56,7 +57,7 @@ export async function listParticipants(tripId: string): Promise<Participant[]> {
 			'id, person_id, household_id, default_weight, active, invite_token, persons(name), households(name)'
 		)
 		.eq('trip_id', tripId);
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 	// persons/households sont des embeds (FK directes) ; numeric revient en string.
 	return ((data ?? []) as ParticipantRow[]).map((r) => ({
 		participant_id: r.id,
@@ -77,7 +78,7 @@ export async function listExpenses(tripId: string): Promise<Expense[]> {
 		.eq('trip_id', tripId)
 		.is('deleted_at', null)
 		.order('spent_on', { ascending: false });
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 	return (data ?? []) as Expense[];
 }
 
@@ -86,7 +87,7 @@ export async function listBeneficiaries(tripId: string): Promise<Beneficiary[]> 
 		.from('expense_beneficiaries')
 		.select('expense_id, person_id, is_locked, weight, amount_cents')
 		.eq('trip_id', tripId);
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 	return ((data ?? []) as BeneficiaryRow[]).map((r) => ({
 		expense_id: r.expense_id,
 		person_id: r.person_id,
@@ -101,7 +102,7 @@ export async function getBalances(tripId: string): Promise<Balance[]> {
 		.from('balances')
 		.select('household_id, net_cents')
 		.eq('trip_id', tripId);
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 	return (data ?? []) as Balance[];
 }
 
@@ -110,17 +111,17 @@ export async function updateTrip(
 	patch: { name?: string; currency?: string }
 ): Promise<void> {
 	const { error } = await supabase.from('trips').update(patch).eq('id', tripId);
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 }
 
 export async function updatePersonName(personId: string, name: string): Promise<void> {
 	const { error } = await supabase.from('persons').update({ name }).eq('id', personId);
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 }
 
 export async function updateHouseholdName(householdId: string, name: string): Promise<void> {
 	const { error } = await supabase.from('households').update({ name }).eq('id', householdId);
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 }
 
 export async function setParticipantActive(participantId: string, active: boolean): Promise<void> {
@@ -128,7 +129,7 @@ export async function setParticipantActive(participantId: string, active: boolea
 		.from('trip_participants')
 		.update({ active })
 		.eq('id', participantId);
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 }
 
 /** person_id de l'utilisateur courant dans ce séjour (via sa session), ou null. */
@@ -142,7 +143,7 @@ export async function getMyPersonId(tripId: string): Promise<string | null> {
 		.eq('auth_user_id', uid)
 		.eq('trip_participants.trip_id', tripId)
 		.limit(1);
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 	const row = ((data ?? []) as MyPersonRow[])[0];
 	return row?.trip_participants?.person_id ?? null;
 }
@@ -153,7 +154,7 @@ export async function listOperations(tripId: string): Promise<Operation[]> {
 		.select('id, actor_auth_user_id, entity_type, entity_id, action, before, after, created_at')
 		.eq('trip_id', tripId)
 		.order('id', { ascending: false });
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 	return (data ?? []) as Operation[];
 }
 
@@ -163,7 +164,7 @@ export async function listActors(tripId: string): Promise<Record<string, string>
 		.from('participant_access')
 		.select('auth_user_id, trip_participants!inner(trip_id, persons(name))')
 		.eq('trip_participants.trip_id', tripId);
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 	const map: Record<string, string> = {};
 	for (const r of (data ?? []) as ActorRow[]) {
 		const name = r.trip_participants?.persons?.name;
@@ -179,6 +180,6 @@ export async function listSettlements(tripId: string): Promise<Settlement[]> {
 		.eq('trip_id', tripId)
 		.is('deleted_at', null)
 		.order('settled_on', { ascending: false });
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 	return (data ?? []) as Settlement[];
 }

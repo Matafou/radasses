@@ -2,6 +2,7 @@ import { getContext, setContext } from 'svelte';
 import { SvelteMap } from 'svelte/reactivity';
 import {
 	backend,
+	BackendError,
 	type Trip,
 	type Participant,
 	type Expense,
@@ -98,17 +99,33 @@ export class TripState {
 		}
 	}
 
+	/**
+	 * En cas de conflit de version (donnée modifiée entre-temps), on recharge le
+	 * séjour pour repartir de l'état à jour, puis on laisse l'erreur remonter à
+	 * l'appelant (qui affiche le message).
+	 */
+	private async withConflictReload<T>(op: () => Promise<T>): Promise<T> {
+		try {
+			return await op();
+		} catch (e) {
+			if (e instanceof BackendError && e.code === 'conflict') await this.load();
+			throw e;
+		}
+	}
+
 	/** Crée (sans expense_id) ou met à jour (avec expense_id + expected_version). */
 	async upsertExpense(input: Omit<SaveExpenseInput, 'trip_id'>) {
-		await backend.saveExpense({ trip_id: this.tripId, ...input });
+		await this.withConflictReload(() => backend.saveExpense({ trip_id: this.tripId, ...input }));
 		await this.load();
 	}
 	async removeExpense(exp: Expense) {
-		await backend.deleteExpense({
-			trip_id: this.tripId,
-			expense_id: exp.id,
-			expected_version: exp.version
-		});
+		await this.withConflictReload(() =>
+			backend.deleteExpense({
+				trip_id: this.tripId,
+				expense_id: exp.id,
+				expected_version: exp.version
+			})
+		);
 		await this.load();
 	}
 

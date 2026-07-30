@@ -19,6 +19,7 @@ import type {
 import { supabaseBackend } from './supabase';
 
 export * from './types';
+export { BackendError, type BackendErrorCode } from './errors';
 
 /**
  * Contrat que doit remplir tout fournisseur de données. C'est exactement la

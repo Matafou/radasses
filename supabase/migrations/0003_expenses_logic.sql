@@ -147,7 +147,9 @@ $$;
 --  en accès direct (seed/tests via postgres), auth.uid() est NULL -> OK.
 --
 --  Verrou optimiste : en mise à jour, p_expected_version doit correspondre
---  à la version courante, sinon erreur de conflit (errcode 40001).
+--  à la version courante, sinon erreur de conflit (errcode PT409 -> HTTP 409).
+--  NB : ne PAS utiliser 40001 (serialization_failure) que PostgREST réessaie
+--  en boucle jusqu'au timeout.
 --  Journal : UNE opération avec before/after complets (dépense + split).
 -- ---------------------------------------------------------------------
 
@@ -199,7 +201,7 @@ begin
 			raise exception
 				'Conflit : la dépense a été modifiée entre-temps (version attendue %, actuelle %).',
 				p_expected_version, (v_before->>'version')::int
-				using errcode = '40001';
+				using errcode = 'PT409';
 		end if;
 		v_before := jsonb_build_object(
 			'expense', v_before,
@@ -301,7 +303,7 @@ begin
 		raise exception
 			'Conflit : la dépense a été modifiée entre-temps (version attendue %, actuelle %).',
 			p_expected_version, (v_expense->>'version')::int
-			using errcode = '40001';
+			using errcode = 'PT409';
 	end if;
 
 	v_before := jsonb_build_object(

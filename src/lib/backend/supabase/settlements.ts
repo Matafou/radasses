@@ -1,5 +1,6 @@
 import { supabase } from './client';
 import { ensureSession } from './auth';
+import { toBackendError } from './errors';
 
 /** Enregistre un remboursement effectif d'un foyer vers un autre. */
 export async function recordSettlement(params: {
@@ -15,7 +16,7 @@ export async function recordSettlement(params: {
 		to_household_id: params.to_household_id,
 		amount_cents: params.amount_cents
 	});
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 }
 
 /** Annule (suppression logique) un remboursement enregistré. */
@@ -25,5 +26,5 @@ export async function cancelSettlement(id: string): Promise<void> {
 		.from('settlements')
 		.update({ deleted_at: new Date().toISOString() })
 		.eq('id', id);
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 }

@@ -1,4 +1,5 @@
 import { supabase } from './client';
+import { toBackendError } from './errors';
 
 /**
  * Garantit qu'une session existe. Si aucune, ouvre une session ANONYME
@@ -10,7 +11,7 @@ export async function ensureSession() {
 	if (data.session) return data.session;
 
 	const { data: signed, error } = await supabase.auth.signInAnonymously();
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 	return signed.session;
 }
 
@@ -22,7 +23,7 @@ export async function ensureSession() {
 export async function redeemToken(token: string): Promise<string> {
 	await ensureSession();
 	const { data, error } = await supabase.rpc('redeem_token', { p_token: token });
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 	return data as string;
 }
 
@@ -44,7 +45,7 @@ export async function createTrip(params: {
 		p_my_name: params.myName,
 		p_my_household_name: params.myHouseholdName ?? null
 	});
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 	return data as { trip_id: string; participant_id: string; token: string };
 }
 
@@ -67,6 +68,6 @@ export async function addParticipant(params: {
 		p_household_id: params.household_id ?? null,
 		p_default_weight: params.default_weight ?? 1
 	});
-	if (error) throw error;
+	if (error) throw toBackendError(error);
 	return data as { participant_id: string; person_id: string; household_id: string; token: string };
 }
