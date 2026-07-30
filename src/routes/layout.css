@@ -11,6 +11,18 @@
 	--container-app: 28rem;
 	/* Largeur du bottom-sheet (formulaire de dépense / remboursement). */
 	--container-sheet: 36rem;
+
+	/* Empilement (z-index) du séjour : FAB < backdrop < bottom-sheet. */
+	--z-fab: 20;
+	--z-backdrop: 30;
+	--z-sheet: 40;
+
+	/* FAB : position horizontale (au-dessus du 1er des 4 onglets → centre du 1er quart). */
+	--fab-x: 12.5%;
+
+	/* Bottom-sheet : hauteur max et durée d'animation d'ouverture. */
+	--sheet-max-h: 85vh;
+	--sheet-duration: 200ms;
 }
 
 @layer base {

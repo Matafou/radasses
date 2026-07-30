@@ -48,14 +48,14 @@
 					icon={Pencil}
 					label="Reprendre la saisie en cours"
 					variant="warning"
-					class="absolute bottom-full left-[12.5%] z-20 -mb-2 -translate-x-1/2"
+					class="absolute bottom-full left-(--fab-x) z-(--z-fab) -mb-2 -translate-x-1/2"
 					onclick={onAdd}
 				/>
 			{:else}
 				<Fab
 					icon={Plus}
 					label="Ajouter une dépense"
-					class="absolute bottom-full left-[12.5%] z-20 -mb-2 -translate-x-1/2"
+					class="absolute bottom-full left-(--fab-x) z-(--z-fab) -mb-2 -translate-x-1/2"
 					onclick={onAdd}
 				/>
 			{/if}

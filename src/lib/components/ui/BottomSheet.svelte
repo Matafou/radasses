@@ -24,16 +24,16 @@
 		type="button"
 		aria-label={closeLabel}
 		onclick={onClose}
-		class="fixed inset-0 z-30 bg-black/30"
+		class="fixed inset-0 z-(--z-backdrop) bg-black/30"
 	></button>
 {/if}
 
 <div
-	class="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-sheet rounded-t-2xl bg-white shadow-xl transition-transform duration-200 {open
+	class="fixed inset-x-0 bottom-0 z-(--z-sheet) mx-auto max-w-sheet rounded-t-2xl bg-white shadow-xl transition-transform duration-(--sheet-duration) {open
 		? 'translate-y-0'
 		: 'pointer-events-none translate-y-full'} {className}"
 >
-	<div class="max-h-[85vh] overflow-y-auto p-3">
+	<div class="max-h-(--sheet-max-h) overflow-y-auto p-3">
 		<div class="relative mb-2 flex h-6 items-center justify-center">
 			<div class="h-1 w-10 rounded-full bg-slate-300"></div>
 			<IconButton
