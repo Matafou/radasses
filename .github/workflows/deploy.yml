@@ -1,8 +1,10 @@
 name: Deploy to GitHub Pages
 
+# Déploiement volontaire : on pousse `main` vers `production` quand on veut
+# mettre en ligne (main reste le tronc de travail). Aussi lançable à la main.
 on:
   push:
-    branches: [main]
+    branches: [production]
   workflow_dispatch:
 
 permissions:
