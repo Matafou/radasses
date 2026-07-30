@@ -2,7 +2,7 @@
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
 	import { ChevronDown, ChevronRight, Lock } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
-	import { listOperations, listActors, type Operation } from '$lib/db';
+	import { backend, type Operation } from '$lib/backend';
 	import { money } from '$lib/format';
 	import {
 		Alert,
@@ -29,7 +29,7 @@
 		loading = true;
 		error = null;
 		try {
-			[ops, actors] = await Promise.all([listOperations(id), listActors(id)]);
+			[ops, actors] = await Promise.all([backend.listOperations(id), backend.listActors(id)]);
 		} catch (e) {
 			error = e instanceof Error ? e.message : String(e);
 		} finally {

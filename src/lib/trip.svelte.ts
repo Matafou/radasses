@@ -1,27 +1,16 @@
 import { getContext, setContext } from 'svelte';
 import { SvelteMap } from 'svelte/reactivity';
 import {
-	getTrip,
-	listParticipants,
-	listExpenses,
-	listBeneficiaries,
-	getBalances,
-	listSettlements,
-	getMyPersonId,
-	updateTrip,
-	updatePersonName,
-	updateHouseholdName,
-	setParticipantActive,
+	backend,
 	type Trip,
 	type Participant,
 	type Expense,
 	type Beneficiary,
 	type Balance,
-	type Settlement
-} from './db';
-import { saveExpense, deleteExpense, type SaveExpenseInput } from './expenses';
-import { addParticipant } from './auth';
-import { simplifyDebts, recordSettlement, cancelSettlement, type Transfer } from './settlements';
+	type Settlement,
+	type SaveExpenseInput
+} from '$lib/backend';
+import { simplifyDebts, type Transfer } from './settlements';
 
 /** Pré-remplissage du mini-formulaire de remboursement (depuis une suggestion de l'onglet Soldes). */
 export type ReimbursePrefill = {
@@ -87,13 +76,13 @@ export class TripState {
 		try {
 			const [trip, participants, expenses, beneficiaries, balances, settlements, myPersonId] =
 				await Promise.all([
-					getTrip(id),
-					listParticipants(id),
-					listExpenses(id),
-					listBeneficiaries(id),
-					getBalances(id),
-					listSettlements(id),
-					getMyPersonId(id)
+					backend.getTrip(id),
+					backend.listParticipants(id),
+					backend.listExpenses(id),
+					backend.listBeneficiaries(id),
+					backend.getBalances(id),
+					backend.listSettlements(id),
+					backend.getMyPersonId(id)
 				]);
 			this.trip = trip;
 			this.participants = participants;
@@ -111,11 +100,11 @@ export class TripState {
 
 	/** Crée (sans expense_id) ou met à jour (avec expense_id + expected_version). */
 	async upsertExpense(input: Omit<SaveExpenseInput, 'trip_id'>) {
-		await saveExpense({ trip_id: this.tripId, ...input });
+		await backend.saveExpense({ trip_id: this.tripId, ...input });
 		await this.load();
 	}
 	async removeExpense(exp: Expense) {
-		await deleteExpense({
+		await backend.deleteExpense({
 			trip_id: this.tripId,
 			expense_id: exp.id,
 			expected_version: exp.version
@@ -154,7 +143,7 @@ export class TripState {
 		this.formSeq++;
 	}
 	async newParticipant(params: { person_name: string; household_id?: string | null }) {
-		await addParticipant({ trip_id: this.tripId, ...params });
+		await backend.addParticipant({ trip_id: this.tripId, ...params });
 		await this.load();
 	}
 	/** Renomme la personne et son foyer (le foyer est partagé -> renommé pour tous ses membres). */
@@ -164,26 +153,26 @@ export class TripState {
 		household_id: string;
 		household_name: string;
 	}) {
-		await updatePersonName(params.person_id, params.person_name);
-		await updateHouseholdName(params.household_id, params.household_name);
+		await backend.updatePersonName(params.person_id, params.person_name);
+		await backend.updateHouseholdName(params.household_id, params.household_name);
 		await this.load();
 	}
 	/** Marque un participant présent (active=true) ou parti (false). */
 	async setActive(participantId: string, active: boolean) {
-		await setParticipantActive(participantId, active);
+		await backend.setParticipantActive(participantId, active);
 		await this.load();
 	}
 	/** Réglages du séjour (nom, devise). */
 	async updateSettings(patch: { name?: string; currency?: string }) {
-		await updateTrip(this.tripId, patch);
+		await backend.updateTrip(this.tripId, patch);
 		await this.load();
 	}
 	async settle(t: Transfer) {
-		await recordSettlement({ trip_id: this.tripId, ...t });
+		await backend.recordSettlement({ trip_id: this.tripId, ...t });
 		await this.load();
 	}
 	async unsettle(s: Settlement) {
-		await cancelSettlement(s.id);
+		await backend.cancelSettlement(s.id);
 		await this.load();
 	}
 }

@@ -3,7 +3,7 @@
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
 	import { Check, Link, Pencil, Plus, X } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
-	import type { Participant } from '$lib/db';
+	import type { Participant } from '$lib/backend';
 	import {
 		Alert,
 		Button,

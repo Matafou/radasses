@@ -2,7 +2,7 @@
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
 	import { ArrowRight, Check, Plus } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
-	import type { Settlement } from '$lib/db';
+	import type { Settlement } from '$lib/backend';
 	import type { Transfer } from '$lib/settlements';
 	import { money } from '$lib/format';
 	import {

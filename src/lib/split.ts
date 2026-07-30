@@ -1,4 +1,4 @@
-import type { BeneficiaryInput } from './expenses';
+import type { BeneficiaryInput } from '$lib/backend';
 
 export type SplitPreview = { amounts?: Record<string, number>; error?: string };
 

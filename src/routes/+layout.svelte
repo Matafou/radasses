@@ -3,7 +3,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { ensureSession } from '$lib/auth';
+	import { backend } from '$lib/backend';
 	import { Alert, AppShell, LoadingText } from '$lib/components/ui';
 
 	let { children } = $props();
@@ -15,7 +15,7 @@
 
 	onMount(async () => {
 		try {
-			await ensureSession(); // session anonyme (sans écran de login)
+			await backend.ensureSession(); // session anonyme (sans écran de login)
 			ready = true;
 		} catch (e) {
 			error = e instanceof Error ? e.message : String(e);

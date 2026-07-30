@@ -3,8 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
-	import { createTrip, redeemToken } from '$lib/auth';
-	import { getTrip } from '$lib/db';
+	import { backend } from '$lib/backend';
 	import { getKnownTrips, rememberTrip, type KnownTrip } from '$lib/trips-store';
 	import {
 		Button,
@@ -29,8 +28,8 @@
 		if (token) {
 			joining = true;
 			try {
-				const tripId = await redeemToken(token);
-				const trip = await getTrip(tripId);
+				const tripId = await backend.redeemToken(token);
+				const trip = await backend.getTrip(tripId);
 				rememberTrip({ id: tripId, name: trip?.name ?? 'Séjour' });
 				await goto(resolve('/t/[tripId]', { tripId }));
 			} catch (e) {
@@ -49,7 +48,7 @@
 		}
 		busy = true;
 		try {
-			const res = await createTrip({ name: tripName.trim(), myName: myName.trim() });
+			const res = await backend.createTrip({ name: tripName.trim(), myName: myName.trim() });
 			rememberTrip({ id: res.trip_id, name: tripName.trim() });
 			await goto(resolve('/t/[tripId]', { tripId: res.trip_id }));
 		} catch (e) {

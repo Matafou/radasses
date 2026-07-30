@@ -2,7 +2,7 @@
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
 	import { Lock, Pencil, Trash2 } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
-	import type { Expense } from '$lib/db';
+	import type { Expense } from '$lib/backend';
 	import { money } from '$lib/format';
 	import { Card, EmptyState, IconButton, MetaText } from '$lib/components/ui';
 

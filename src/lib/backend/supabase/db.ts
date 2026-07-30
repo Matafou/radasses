@@ -1,46 +1,16 @@
-import { supabase } from './supabase';
+import { supabase } from './client';
+import type {
+	Balance,
+	Beneficiary,
+	Expense,
+	Operation,
+	Participant,
+	Settlement,
+	Trip
+} from '../types';
 
-export type Trip = { id: string; name: string; currency: string; created_at: string };
-
-export type Participant = {
-	participant_id: string;
-	person_id: string;
-	person_name: string;
-	household_id: string;
-	household_name: string;
-	default_weight: number;
-	active: boolean;
-	invite_token: string;
-};
-
-export type Expense = {
-	id: string;
-	description: string;
-	category: string | null;
-	amount_cents: number;
-	spent_on: string;
-	paid_by_person_id: string;
-	version: number;
-};
-
-export type Beneficiary = {
-	expense_id: string;
-	person_id: string;
-	is_locked: boolean;
-	weight: number | null;
-	amount_cents: number;
-};
-
-export type Balance = { household_id: string; net_cents: number };
-
-export type Settlement = {
-	id: string;
-	from_household_id: string;
-	to_household_id: string;
-	amount_cents: number;
-	settled_on: string;
-};
-
+// Lignes brutes renvoyées par PostgREST (embeds, numeric en string…) —
+// spécifiques à Supabase, mappées ci-dessous vers les types de domaine.
 type ParticipantRow = {
 	id: string;
 	person_id: string;
@@ -176,17 +146,6 @@ export async function getMyPersonId(tripId: string): Promise<string | null> {
 	const row = ((data ?? []) as MyPersonRow[])[0];
 	return row?.trip_participants?.person_id ?? null;
 }
-
-export type Operation = {
-	id: number;
-	actor_auth_user_id: string | null;
-	entity_type: string;
-	entity_id: string | null;
-	action: string;
-	before: unknown;
-	after: unknown;
-	created_at: string;
-};
 
 export async function listOperations(tripId: string): Promise<Operation[]> {
 	const { data, error } = await supabase

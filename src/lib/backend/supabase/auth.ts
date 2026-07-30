@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from './client';
 
 /**
  * Garantit qu'une session existe. Si aucune, ouvre une session ANONYME

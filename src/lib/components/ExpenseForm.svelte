@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { getTripState } from '$lib/trip.svelte';
-	import type { Expense, Participant } from '$lib/db';
-	import type { BeneficiaryInput } from '$lib/expenses';
+	import type { Expense, Participant, BeneficiaryInput } from '$lib/backend';
 	import { previewSplit } from '$lib/split';
 	import { centsFromEuros, money } from '$lib/format';
 	import { todayISO } from '$lib/date';

@@ -11,6 +11,7 @@ if (!PUBLIC_SUPABASE_URL || !PUBLIC_SUPABASE_ANON_KEY) {
 
 // Client unique côté navigateur. `persistSession` garde la session (anonyme
 // ou non) dans le localStorage → l'utilisateur reste identifié sur cet appareil.
+// Interne à l'adaptateur : le reste de l'app passe par `$lib/backend`.
 export const supabase = createClient(
 	PUBLIC_SUPABASE_URL || 'http://localhost:54321',
 	PUBLIC_SUPABASE_ANON_KEY || 'anon-key-manquante',
