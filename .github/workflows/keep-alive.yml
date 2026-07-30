@@ -1,0 +1,37 @@
+name: Supabase keep-alive
+
+# Le plan gratuit Supabase met un projet en PAUSE après 7 jours sans requête.
+# Comme l'app est utilisée par à-coups (silence entre deux séjours), on envoie
+# 3 requêtes anodines tous les 3 jours pour que le projet ne se mette jamais en
+# pause. La requête vise la racine PostgREST (/rest/v1/) : 200 propre, aucune
+# donnée exposée, mais activité réelle sur l'API base de données.
+#
+# NB : les workflows planifiés ne tournent que depuis la branche par défaut
+# (main). Utilise les secrets déjà définis (PUBLIC_SUPABASE_URL / _ANON_KEY).
+
+on:
+  schedule:
+    - cron: '0 6 */3 * *' # ~tous les 3 jours à 06:00 UTC (marge large sous 7 j)
+  workflow_dispatch: # lançable à la main depuis l'onglet Actions
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pinger Supabase (3 requêtes anodines)
+        env:
+          URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+          KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          ok=0
+          for i in 1 2 3; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -H "apikey: $KEY" "$URL/rest/v1/")
+            echo "Requête $i → HTTP $code"
+            [ "$code" = "200" ] && ok=$((ok + 1))
+            sleep 3
+          done
+          if [ "$ok" -eq 0 ]; then
+            echo "::error::Aucune requête n'a abouti — projet Supabase injoignable ou en pause ?"
+            exit 1
+          fi
+          echo "$ok/3 requêtes OK — projet maintenu actif."
