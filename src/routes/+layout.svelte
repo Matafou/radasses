@@ -1,6 +1,5 @@
 <script lang="ts">
 	import './layout.css';
-	import favicon from '$lib/assets/favicon.svg';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { backend } from '$lib/backend';
@@ -22,8 +21,6 @@
 		}
 	});
 </script>
-
-<svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
 <AppShell showHeader={!tripId}>
 	{#if error}
