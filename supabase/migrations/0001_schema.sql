@@ -4,7 +4,9 @@
 --  et journal d'opérations append-only.
 -- =====================================================================
 
-create extension if not exists pgcrypto;  -- gen_random_bytes / gen_random_uuid
+-- Aléa : on n'utilise que `gen_random_uuid()`, fonction cœur de Postgres 13+
+-- (toujours disponible, sans extension). On évite `gen_random_bytes` (pgcrypto),
+-- qui sur Supabase cloud vit dans le schéma `extensions` hors du search_path.
 
 -- ---------------------------------------------------------------------
 --  Identité globale (réutilisable d'un séjour à l'autre)
@@ -50,7 +52,7 @@ create table trip_participants (
 	person_id      uuid not null references persons(id) on delete restrict,
 	household_id   uuid not null references households(id) on delete restrict,
 	default_weight numeric(8,3) not null default 1 check (default_weight >= 0),
-	invite_token   text not null unique default encode(gen_random_bytes(16), 'hex'),
+	invite_token   text not null unique default replace(gen_random_uuid()::text, '-', ''),
 	created_at     timestamptz not null default now(),
 	unique (trip_id, person_id)
 );
