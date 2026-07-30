@@ -3,8 +3,10 @@ name: Supabase keep-alive
 # Le plan gratuit Supabase met un projet en PAUSE après 7 jours sans requête.
 # Comme l'app est utilisée par à-coups (silence entre deux séjours), on envoie
 # 3 requêtes anodines tous les 3 jours pour que le projet ne se mette jamais en
-# pause. La requête vise la racine PostgREST (/rest/v1/) : 200 propre, aucune
-# donnée exposée, mais activité réelle sur l'API base de données.
+# pause. On vise /auth/v1/settings (config d'auth publique) : 200 propre avec la
+# seule clé anon, SANS session — contrairement à /rest/v1/ qui exige une session
+# (401) côté cloud. C'est une requête au projet via la passerelle → compte comme
+# activité et empêche la mise en pause.
 #
 # NB : les workflows planifiés ne tournent que depuis la branche par défaut
 # (main). Utilise les secrets déjà définis (PUBLIC_SUPABASE_URL / _ANON_KEY).
@@ -27,8 +29,8 @@ jobs:
           ok=0
           for i in 1 2 3; do
             code=$(curl -s -o /dev/null -w '%{http_code}' \
-              -H "apikey: $KEY" -H "Authorization: Bearer $KEY" \
-              "$BASE/rest/v1/")
+              -H "apikey: $KEY" \
+              "$BASE/auth/v1/settings")
             echo "Requête $i → HTTP $code"
             [ "$code" = "200" ] && ok=$((ok + 1))
             sleep 3
