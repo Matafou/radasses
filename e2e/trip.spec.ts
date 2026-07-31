@@ -17,7 +17,7 @@ test('une dépense partagée met à jour la liste ET les soldes', async ({ page 
 
 	// liste Dépenses à jour (reload expenses + beneficiaries)
 	await expect(page.getByText('Courses')).toBeVisible();
-	await expect(page.getByText(/payé par Alice/)).toBeVisible();
+	await expect(page.getByTitle(/payé par Alice/)).toBeVisible();
 
 	// Soldes recalculés par le vrai SQL (reload balances) : Alice +30, Bob -30
 	await page.getByRole('link', { name: 'Soldes' }).click();
@@ -42,7 +42,7 @@ test('ajouter un participant dans un nouveau foyer ajoute une ligne de solde', a
 test('renommer un participant se reflète comme payeur dans les dépenses', async ({ page }) => {
 	await createTrip(page, uniqueTripName(), 'Alice');
 	await addSimpleExpense(page, { amount: '20', description: 'Café' });
-	await expect(page.getByText(/payé par Alice/)).toBeVisible();
+	await expect(page.getByTitle(/payé par Alice/)).toBeVisible();
 
 	// renommer Alice -> Alicia (un seul participant → un seul bouton « Modifier »)
 	await page.getByRole('link', { name: 'Participants' }).click();
@@ -53,7 +53,7 @@ test('renommer un participant se reflète comme payeur dans les dépenses', asyn
 
 	// reload participants → la map personName se met à jour → carte dépense aussi
 	await page.getByRole('link', { name: 'Dépenses' }).click();
-	await expect(page.getByText(/payé par Alicia/)).toBeVisible();
+	await expect(page.getByTitle(/payé par Alicia/)).toBeVisible();
 });
 
 test('valider une dépense sans bénéficiaire est refusé', async ({ page }) => {

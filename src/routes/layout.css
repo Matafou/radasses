@@ -42,7 +42,24 @@
 	}
 }
 
+@layer utilities {
+	/* Masque la barre de défilement (le signal de scroll est fourni par le
+	   dégradé de l'action `scrollShadow`). */
+	.hide-scrollbar {
+		scrollbar-width: none;
+	}
+	.hide-scrollbar::-webkit-scrollbar {
+		display: none;
+	}
+}
+
 @layer components {
+	/* Virgule séparant les groupes de bénéficiaires (onglet Dépenses) : collée au
+	   groupe (pas d'espace avant), l'espace après venant du `gap` du conteneur. */
+	.benef-item:not(:last-child)::after {
+		content: ',';
+	}
+
 	/* Reuse these app-wide primitives before duplicating their Tailwind class lists. */
 	.section-title {
 		@apply text-sm font-medium text-slate-500;
