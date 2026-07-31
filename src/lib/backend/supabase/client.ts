@@ -2,20 +2,20 @@ import { createClient } from '@supabase/supabase-js';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 
 if (!PUBLIC_SUPABASE_URL || !PUBLIC_SUPABASE_ANON_KEY) {
-	// L'appli se charge quand même, mais toute requête échouera tant que
-	// le `.env` n'est pas rempli (voir .env.example).
-	console.warn(
-		'[supabase] Non configuré : renseigne PUBLIC_SUPABASE_URL et PUBLIC_SUPABASE_ANON_KEY dans .env'
+	// Échec bruyant : sans ces variables, TOUTE requête échouerait de toute
+	// façon. Mieux vaut planter tout de suite avec un message clair (config
+	// oubliée) qu'un repli silencieux sur localhost qui masque le problème
+	// en prod. En dev : remplir `.env` (voir .env.example) ; en CI : les
+	// secrets `PUBLIC_SUPABASE_*` du workflow.
+	throw new Error(
+		'Configuration Supabase manquante : renseigne PUBLIC_SUPABASE_URL et ' +
+			'PUBLIC_SUPABASE_ANON_KEY (.env en dev, secrets du workflow en CI). Voir .env.example.'
 	);
 }
 
 // Client unique côté navigateur. `persistSession` garde la session (anonyme
 // ou non) dans le localStorage → l'utilisateur reste identifié sur cet appareil.
 // Interne à l'adaptateur : le reste de l'app passe par `$lib/backend`.
-export const supabase = createClient(
-	PUBLIC_SUPABASE_URL || 'http://localhost:54321',
-	PUBLIC_SUPABASE_ANON_KEY || 'anon-key-manquante',
-	{
-		auth: { persistSession: true, autoRefreshToken: true }
-	}
-);
+export const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+	auth: { persistSession: true, autoRefreshToken: true }
+});

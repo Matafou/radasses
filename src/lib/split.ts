@@ -19,6 +19,13 @@ export function previewSplit(totalCents: number, benefs: BeneficiaryInput[]): Sp
 
 	if (unlocked.length < 1)
 		return { error: 'Ajoute au moins un bénéficiaire en poids (pour absorber le reste).' };
+	// Miroir de compute_split : parmi les non-verrouillés, c'est tout ou rien —
+	// soit tous ont un poids, soit aucun (parts égales). Un mélange est rejeté.
+	const weighted = unlocked.filter((b) => b.weight != null).length;
+	if (weighted > 0 && weighted < unlocked.length)
+		return {
+			error: 'Poids incohérents : mélange de bénéficiaires avec et sans poids (tout ou rien).'
+		};
 	if (lockedSum > totalCents) return { error: 'Les montants fixes dépassent le total.' };
 
 	const remainder = totalCents - lockedSum;

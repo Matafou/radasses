@@ -12,6 +12,17 @@ import {
 } from '$lib/backend';
 import { simplifyDebts } from './settlements';
 
+/** Sections rechargeables indépendamment (voir `load`). */
+type LoadSection = 'trip' | 'participants' | 'expenses' | 'beneficiaries' | 'balances' | 'me';
+const ALL_SECTIONS: readonly LoadSection[] = [
+	'trip',
+	'participants',
+	'expenses',
+	'beneficiaries',
+	'balances',
+	'me'
+];
+
 /** Pré-remplissage du mini-formulaire de remboursement (depuis une suggestion de l'onglet Soldes). */
 export type ReimbursePrefill = {
 	from_person_id?: string;
@@ -67,32 +78,42 @@ export class TripState {
 		await this.load();
 	}
 
-	async load() {
+	/**
+	 * (Re)charge le séjour. Par défaut tout ; on peut ne recharger que les
+	 * sections touchées par une mutation pour éviter de relancer les ~6
+	 * requêtes à chaque fois. Le sentinelle `undefined` (jamais renvoyé par le
+	 * backend, `myPersonId` valant `null` au plus) distingue « non demandé » de
+	 * « valeur récupérée ». Un rechargement partiel ne touche pas à `loading`
+	 * (pas de spinner plein écran après une simple mutation).
+	 */
+	async load(sections: readonly LoadSection[] = ALL_SECTIONS) {
 		const id = this.tripId;
 		if (!id) return;
-		this.loading = true;
+		const want = (s: LoadSection) => sections.includes(s);
+		const full = sections === ALL_SECTIONS;
+		if (full) this.loading = true;
 		this.error = null;
 		try {
 			const [trip, participants, expenses, beneficiaries, balances, myPersonId] = await Promise.all(
 				[
-					backend.getTrip(id),
-					backend.listParticipants(id),
-					backend.listExpenses(id),
-					backend.listBeneficiaries(id),
-					backend.getBalances(id),
-					backend.getMyPersonId(id)
+					want('trip') ? backend.getTrip(id) : undefined,
+					want('participants') ? backend.listParticipants(id) : undefined,
+					want('expenses') ? backend.listExpenses(id) : undefined,
+					want('beneficiaries') ? backend.listBeneficiaries(id) : undefined,
+					want('balances') ? backend.getBalances(id) : undefined,
+					want('me') ? backend.getMyPersonId(id) : undefined
 				]
 			);
-			this.trip = trip;
-			this.participants = participants;
-			this.expenses = expenses;
-			this.beneficiaries = beneficiaries;
-			this.balances = balances;
-			this.myPersonId = myPersonId;
+			if (trip !== undefined) this.trip = trip;
+			if (participants !== undefined) this.participants = participants;
+			if (expenses !== undefined) this.expenses = expenses;
+			if (beneficiaries !== undefined) this.beneficiaries = beneficiaries;
+			if (balances !== undefined) this.balances = balances;
+			if (myPersonId !== undefined) this.myPersonId = myPersonId;
 		} catch (e) {
 			this.error = e instanceof Error ? e.message : String(e);
 		} finally {
-			this.loading = false;
+			if (full) this.loading = false;
 		}
 	}
 
@@ -113,7 +134,7 @@ export class TripState {
 	/** Crée (sans expense_id) ou met à jour (avec expense_id + expected_version). */
 	async upsertExpense(input: Omit<SaveExpenseInput, 'trip_id'>) {
 		await this.withConflictReload(() => backend.saveExpense({ trip_id: this.tripId, ...input }));
-		await this.load();
+		await this.load(['expenses', 'beneficiaries', 'balances']);
 	}
 	async removeExpense(exp: Expense) {
 		await this.withConflictReload(() =>
@@ -123,7 +144,7 @@ export class TripState {
 				expected_version: exp.version
 			})
 		);
-		await this.load();
+		await this.load(['expenses', 'beneficiaries', 'balances']);
 	}
 
 	/** Déploie le formulaire pour une nouvelle dépense (reprend une saisie en cours si présente). */
@@ -158,7 +179,8 @@ export class TripState {
 	}
 	async newParticipant(params: { person_name: string; household_id?: string | null }) {
 		await backend.addParticipant({ trip_id: this.tripId, ...params });
-		await this.load();
+		// un nouveau foyer ajoute une ligne (solde 0) à la vue balances
+		await this.load(['participants', 'balances']);
 	}
 	/** Renomme la personne et son foyer (le foyer est partagé -> renommé pour tous ses membres). */
 	async renameParticipant(params: {
@@ -169,17 +191,19 @@ export class TripState {
 	}) {
 		await backend.updatePersonName(params.person_id, params.person_name);
 		await backend.updateHouseholdName(params.household_id, params.household_name);
-		await this.load();
+		// les soldes sont indexés par foyer (person_id) ; seuls les noms changent
+		await this.load(['participants']);
 	}
 	/** Marque un participant présent (active=true) ou parti (false). */
 	async setActive(participantId: string, active: boolean) {
 		await backend.setParticipantActive(participantId, active);
-		await this.load();
+		// `active` n'entre pas dans le calcul des soldes existants
+		await this.load(['participants']);
 	}
 	/** Réglages du séjour (nom, devise). */
 	async updateSettings(patch: { name?: string; currency?: string }) {
 		await backend.updateTrip(this.tripId, patch);
-		await this.load();
+		await this.load(['trip']);
 	}
 }
 
