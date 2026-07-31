@@ -120,6 +120,13 @@ select save_expense('00000000-0000-0000-0000-0000000000e1', 2500, '00000000-0000
 	'[{"person_id":"00000000-0000-0000-0000-0000000000d5"},{"person_id":"00000000-0000-0000-0000-0000000000c3"}]'::jsonb,
 	'Petit-déjeuner', 'Alimentation', date '2026-07-24');
 
+-- 15) Grosse sortie 150,00 € — Alice ; TOUT LE MONDE bénéficiaire mais avec un
+--     montant DIFFÉRENT chacun (poids 1→5 = 10/20/30/40/50 €) → illustre la ligne
+--     de bénéficiaires scrollable (5 groupes distincts).
+select save_expense('00000000-0000-0000-0000-0000000000e1', 15000, '00000000-0000-0000-0000-0000000000a1',
+	'[{"person_id":"00000000-0000-0000-0000-0000000000a1","weight":1},{"person_id":"00000000-0000-0000-0000-0000000000b2","weight":2},{"person_id":"00000000-0000-0000-0000-0000000000c3","weight":3},{"person_id":"00000000-0000-0000-0000-0000000000d4","weight":4},{"person_id":"00000000-0000-0000-0000-0000000000d5","weight":5}]'::jsonb,
+	'Grosse sortie', 'Divers', date '2026-07-25');
+
 -- ---------------------------------------------------------------------
 --  Séjour « Week-end » — Foyer Martin (Marie, Paul) + Foyer Sofia (Sofia)
 -- ---------------------------------------------------------------------
