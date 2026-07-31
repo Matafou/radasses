@@ -126,6 +126,25 @@
 		tripState.hasCreateDraft = !editing && dirty;
 	});
 
+	// Le formulaire reste monté dans le layout (bottom-sheet) et `initSelected`
+	// ne s'exécute qu'au montage : un participant ajouté APRÈS (cas courant — on
+	// ajoute d'abord les participants, puis la 1re dépense) ne serait jamais coché
+	// par défaut. On rattrape ici, en création uniquement, les participants
+	// nouvellement apparus (cochés s'ils sont actifs), sans toucher aux choix
+	// déjà faits par l'utilisateur sur les autres.
+	// Suivi NON réactif des participants déjà intégrés (le rendre réactif
+	// ferait boucler l'effet : il lit puis écrit la même structure).
+	const seen: Record<string, boolean> = { ...init.selected };
+	$effect(() => {
+		if (editing) return;
+		for (const p of tripState.participants) {
+			if (!(p.person_id in seen)) {
+				seen[p.person_id] = true;
+				selected[p.person_id] = p.active;
+			}
+		}
+	});
+
 	const beneficiaries = $derived.by((): BeneficiaryInput[] => {
 		const out: BeneficiaryInput[] = [];
 		for (const p of tripState.participants) {
