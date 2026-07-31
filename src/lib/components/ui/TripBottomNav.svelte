@@ -24,12 +24,12 @@
 	}
 
 	function tabClass(active: boolean): string {
-		return `py-3 text-center text-xs ${active ? 'font-semibold text-slate-900' : 'text-slate-400'}`;
+		return `flex items-center justify-center text-xs ${active ? 'font-semibold text-slate-900' : 'text-slate-400'}`;
 	}
 </script>
 
-<nav class="flex-none border-t border-slate-200 bg-white">
-	<div class="relative mx-auto grid max-w-app grid-cols-4">
+<nav class="flex-none border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
+	<div class="relative mx-auto grid h-(--bar-h) max-w-app grid-cols-4">
 		<a href={resolve('/t/[tripId]', { tripId })} class={tabClass(isActive(''))}>Dépenses</a>
 		<a href={resolve('/t/[tripId]/soldes', { tripId })} class={tabClass(isActive('soldes'))}
 			>Soldes</a

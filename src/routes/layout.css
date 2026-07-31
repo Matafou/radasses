@@ -12,6 +12,11 @@
 	/* Largeur du bottom-sheet (formulaire de dépense / remboursement). */
 	--container-sheet: 36rem;
 
+	/* Hauteur des barres (en-tête du haut ET nav du bas) — fixée ici pour qu'elles
+	   restent identiques et régulières quel que soit le contenu (56 px = standard
+	   mobile Material, et ≥ cible tactile 48 px). */
+	--bar-h: 3.5rem;
+
 	/* Empilement (z-index) du séjour : FAB < backdrop < bottom-sheet. */
 	--z-fab: 20;
 	--z-backdrop: 30;
