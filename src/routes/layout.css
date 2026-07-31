@@ -40,6 +40,14 @@
 		overflow: hidden;
 		overscroll-behavior: none;
 	}
+
+	/* Focus visible au CLAVIER uniquement (le navigateur n'active `:focus-visible`
+	   pas au clic souris) : anneau sobre et contrasté, cohérent sur tous les
+	   éléments interactifs. ⚠️ Ne jamais faire `outline: none` sans remplacement. */
+	:focus-visible {
+		outline: 2px solid var(--color-slate-900);
+		outline-offset: 2px;
+	}
 }
 
 @layer utilities {
