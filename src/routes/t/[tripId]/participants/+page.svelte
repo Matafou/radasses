@@ -3,6 +3,7 @@
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
 	import { Check, Link, Pencil, Plus, X } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
+	import { autofocusWithin } from '$lib/actions/autofocus';
 	import type { Participant } from '$lib/backend';
 	import {
 		Alert,
@@ -129,8 +130,8 @@
 
 	{#if showAdd}
 		<Card>
-			<form class="space-y-2" onsubmit={onAdd}>
-				<TextInput class="w-full" placeholder="Prénom" bind:value={newName} />
+			<form class="space-y-2" onsubmit={onAdd} use:autofocusWithin>
+				<TextInput class="w-full" placeholder="Prénom" bind:value={newName} data-autofocus />
 				<label class="form-label">
 					Foyer
 					<Select class="mt-1 w-full" bind:value={newHousehold}>
@@ -158,10 +159,10 @@
 		{#each tripState.participants as p (p.participant_id)}
 			<ListRow>
 				{#if editingId === p.participant_id}
-					<div class="space-y-2">
+					<div class="space-y-2" use:autofocusWithin>
 						<label class="block text-xs text-slate-500">
 							Prénom
-							<TextInput class="mt-1 w-full text-sm" bind:value={editName} />
+							<TextInput class="mt-1 w-full text-sm" bind:value={editName} data-autofocus />
 						</label>
 						<label class="block text-xs text-slate-500">
 							Foyer <span class="text-slate-400">(partagé : renomme pour tous ses membres)</span>

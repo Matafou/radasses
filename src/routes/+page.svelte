@@ -5,6 +5,7 @@
 	import { page } from '$app/stores';
 	import { backend } from '$lib/backend';
 	import { getKnownTrips, rememberTrip, type KnownTrip } from '$lib/trips-store';
+	import { autofocusWithin } from '$lib/actions/autofocus';
 	import {
 		Button,
 		FieldError,
@@ -65,10 +66,15 @@
 	{:else}
 		<section class="space-y-4">
 			<h1 class="text-xl font-semibold">Nouveau séjour</h1>
-			<form class="space-y-3" onsubmit={onCreate}>
+			<form class="space-y-3" onsubmit={onCreate} use:autofocusWithin>
 				<label class="block">
 					<span class="inline-form-label">Nom du séjour</span>
-					<TextInput class="mt-1 w-full" bind:value={tripName} placeholder="Été à la mer" />
+					<TextInput
+						class="mt-1 w-full"
+						bind:value={tripName}
+						placeholder="Été à la mer"
+						data-autofocus
+					/>
 				</label>
 				<label class="block">
 					<span class="inline-form-label">Ton prénom</span>

@@ -85,3 +85,12 @@
 		@apply px-4 py-3;
 	}
 }
+
+/* Respecte la préférence système « réduire les animations » (troubles
+   vestibulaires, sensibilité au mouvement) : le bottom-sheet apparaît sans
+   glissement plutôt que de monter en fondu enchaîné. */
+@media (prefers-reduced-motion: reduce) {
+	:root {
+		--sheet-duration: 0ms;
+	}
+}

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { getTripState } from '$lib/trip.svelte';
+	import { autofocusWithin } from '$lib/actions/autofocus';
 	import { Button, Card, FieldError, SectionHeader, Select, TextInput } from '$lib/components/ui';
 
 	const tripState = getTripState();
@@ -34,10 +35,10 @@
 <section class="space-y-3">
 	<SectionHeader title="Réglages du séjour" />
 	<Card>
-		<form class="space-y-3" onsubmit={onSave}>
+		<form class="space-y-3" onsubmit={onSave} use:autofocusWithin>
 			<label class="form-label">
 				Nom du séjour
-				<TextInput class="mt-1 w-full" bind:value={name} />
+				<TextInput class="mt-1 w-full" bind:value={name} data-autofocus />
 			</label>
 			<label class="form-label">
 				Devise

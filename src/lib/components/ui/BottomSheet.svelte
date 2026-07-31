@@ -3,6 +3,7 @@
 	import { ChevronDown } from '@lucide/svelte';
 	import type { Snippet } from 'svelte';
 	import IconButton from './IconButton.svelte';
+	import { focusAutofocusTarget } from '$lib/actions/autofocus';
 
 	let {
 		children,
@@ -17,6 +18,12 @@
 		onClose: () => void;
 		class?: string;
 	} = $props();
+
+	let sheet = $state<HTMLElement>();
+	// À l'ouverture, place le focus dans le 1er champ (desktop only, cf. action).
+	$effect(() => {
+		if (open && sheet) focusAutofocusTarget(sheet);
+	});
 </script>
 
 {#if open}
@@ -29,6 +36,7 @@
 {/if}
 
 <div
+	bind:this={sheet}
 	class="fixed inset-x-0 bottom-0 z-(--z-sheet) mx-auto max-w-sheet rounded-t-2xl bg-white shadow-xl transition-transform duration-(--sheet-duration) {open
 		? 'translate-y-0'
 		: 'pointer-events-none translate-y-full'} {className}"

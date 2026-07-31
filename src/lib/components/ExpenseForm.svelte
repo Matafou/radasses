@@ -267,7 +267,13 @@
 			<p class="text-sm font-medium text-slate-600">Modifier la dépense</p>
 		{/if}
 		<div class="flex gap-2">
-			<TextInput class="w-28" placeholder="Montant €" inputmode="decimal" bind:value={amountStr} />
+			<TextInput
+				class="w-28"
+				placeholder="Montant €"
+				inputmode="decimal"
+				bind:value={amountStr}
+				data-autofocus
+			/>
 			<TextInput class="min-w-0 flex-1" placeholder="Description" bind:value={description} />
 		</div>
 		<div class="flex gap-2">

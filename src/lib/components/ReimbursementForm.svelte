@@ -96,7 +96,13 @@
 		</div>
 
 		<div class="flex gap-2">
-			<TextInput class="w-32" placeholder="Montant €" inputmode="decimal" bind:value={amountStr} />
+			<TextInput
+				class="w-32"
+				placeholder="Montant €"
+				inputmode="decimal"
+				bind:value={amountStr}
+				data-autofocus
+			/>
 			<TextInput type="date" bind:value={spentOn} />
 		</div>
 

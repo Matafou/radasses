@@ -19,6 +19,10 @@
 	};
 </script>
 
-<p class="rounded-lg p-3 text-sm {tones[tone]} {className}">
+<!-- error → role="alert" (assertif) ; warning → role="status" (poli) : vocalisé par les lecteurs d'écran. -->
+<p
+	role={tone === 'error' ? 'alert' : 'status'}
+	class="rounded-lg p-3 text-sm {tones[tone]} {className}"
+>
 	{@render children()}
 </p>

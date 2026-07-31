@@ -4,4 +4,5 @@
 	let { children }: { children: Snippet } = $props();
 </script>
 
-<p class="text-sm text-red-600">{@render children()}</p>
+<!-- role="alert" : l'erreur est vocalisée dès son apparition par les lecteurs d'écran. -->
+<p role="alert" class="text-sm text-red-600">{@render children()}</p>
