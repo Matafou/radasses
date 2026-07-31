@@ -37,5 +37,7 @@
 	]} {className}"
 	{...rest}
 >
-	<Icon {size} strokeWidth={2.25} aria-hidden="true" />
+	<!-- Icône en `em` (suit le bouton quand le texte est agrandi ; `size/16` =
+	     même rendu qu'avant à 16px). -->
+	<Icon strokeWidth={2.25} aria-hidden="true" style="width:{size / 16}em;height:{size / 16}em" />
 </button>

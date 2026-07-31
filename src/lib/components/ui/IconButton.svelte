@@ -42,5 +42,7 @@
 	]} {className}"
 	{...rest}
 >
-	<Icon {size} strokeWidth={2} aria-hidden="true" />
+	<!-- Taille d'icône en `em` (relative à la police du bouton) → elle suit le
+	     bouton quand le texte est agrandi. `size/16` = même rendu qu'avant à 16px. -->
+	<Icon strokeWidth={2} aria-hidden="true" style="width:{size / 16}em;height:{size / 16}em" />
 </button>
