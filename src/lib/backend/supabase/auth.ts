@@ -1,6 +1,18 @@
 import { supabase } from './client';
 import { toBackendError } from './errors';
 
+/** Décode l'`iat` (émis-le, en secondes) d'un JWT, ou null si illisible. */
+function jwtIssuedAt(token: string): number | null {
+	try {
+		const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+		const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4);
+		const iat = JSON.parse(atob(padded)).iat;
+		return typeof iat === 'number' ? iat : null;
+	} catch {
+		return null;
+	}
+}
+
 /**
  * Garantit qu'une session existe. Si aucune, ouvre une session ANONYME
  * (aucun écran de login, aucun mot de passe). L'identité est stockée dans
@@ -8,11 +20,26 @@ import { toBackendError } from './errors';
  */
 export async function ensureSession() {
 	const { data } = await supabase.auth.getSession();
-	if (data.session) return data.session;
+	let session = data.session;
+	if (!session) {
+		const { data: signed, error } = await supabase.auth.signInAnonymously();
+		if (error) throw toBackendError(error);
+		session = signed.session;
+	}
 
-	const { data: signed, error } = await supabase.auth.signInAnonymously();
-	if (error) throw toBackendError(error);
-	return signed.session;
+	// Parade « JWT issued at future » : par micro-désynchro d'horloge (serveurs
+	// Supabase ↔ appareil), un jeton fraîchement émis peut avoir un `iat` dans le
+	// futur ; le serveur le rejette tant que son horloge ne l'a pas dépassé (erreur
+	// intermittente, indépendante de l'horloge de l'appareil). On attend donc que le
+	// jeton devienne valide AVANT que l'app s'en serve, plafonné à 2 s pour ne jamais
+	// bloquer longtemps. Cas normal (iat déjà passé) → aucune attente.
+	const iat = session?.access_token ? jwtIssuedAt(session.access_token) : null;
+	if (iat != null) {
+		const aheadMs = iat * 1000 - Date.now();
+		if (aheadMs > 0) await new Promise((r) => setTimeout(r, Math.min(aheadMs + 250, 2000)));
+	}
+
+	return session;
 }
 
 /**
