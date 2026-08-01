@@ -7,10 +7,17 @@ import type { Action } from 'svelte/action';
 const isPointerFine = () =>
 	typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-/** Focalise le 1er descendant marqué `data-autofocus` du conteneur (desktop only). */
-export function focusAutofocusTarget(container: HTMLElement) {
-	if (!isPointerFine()) return;
-	container.querySelector<HTMLElement>('[data-autofocus]')?.focus();
+/**
+ * Focalise le 1er descendant marqué `data-autofocus` du conteneur (desktop only).
+ * Renvoie `true` si le focus a bien été déplacé, `false` sinon (tactile, ou aucune
+ * cible) → l'appelant peut alors focaliser le conteneur du dialogue à la place.
+ */
+export function focusAutofocusTarget(container: HTMLElement): boolean {
+	if (!isPointerFine()) return false;
+	const el = container.querySelector<HTMLElement>('[data-autofocus]');
+	if (!el) return false;
+	el.focus();
+	return true;
 }
 
 /**

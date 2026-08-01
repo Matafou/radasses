@@ -71,6 +71,11 @@
 {#if state.trip}
 	<BottomSheet
 		open={state.formOpen}
+		title={state.reimburse
+			? 'Signaler un remboursement'
+			: state.editingExpense
+				? 'Modifier la dépense'
+				: 'Nouvelle dépense'}
 		closeLabel={state.reimburse ? 'Fermer' : 'Masquer (garder la saisie)'}
 		onClose={() => (state.reimburse ? state.closeExpenseForm() : state.hideExpenseForm())}
 	>

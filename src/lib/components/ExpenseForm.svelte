@@ -262,10 +262,9 @@
 {/snippet}
 
 <Card>
+	<!-- Le titre (« Nouvelle dépense » / « Modifier la dépense ») est fourni par le
+	     BottomSheet (nom accessible du dialogue). -->
 	<form class="space-y-2" onsubmit={onSubmit}>
-		{#if editing}
-			<p class="text-sm font-medium text-slate-600">Modifier la dépense</p>
-		{/if}
 		<div class="flex gap-2">
 			<TextInput
 				class="w-28"
