@@ -42,6 +42,31 @@ export async function ensureSession() {
 	return session;
 }
 
+// Anti-boucle : une réparation par chargement de page. `sessionStorage` survit
+// au `location.reload()` (même onglet) mais pas à une nouvelle ouverture → si,
+// après réparation + rechargement, une écriture retombe en session orpheline
+// (ne devrait jamais arriver, la nouvelle session est valide), on n'enchaîne
+// pas des rechargements en boucle : l'erreur remonte alors normalement à l'UI.
+const REPAIR_FLAG = 'radasses:session-repaired';
+
+/**
+ * Répare une session ORPHELINE (l'utilisateur d'auth n'existe plus côté serveur,
+ * typiquement après un `db reset` du cloud) : purge la session locale, en ouvre
+ * une anonyme neuve, puis recharge la page. Ne fait rien (retourne `false`) si
+ * une réparation a déjà été tentée sur ce chargement, ou hors navigateur.
+ * Appelée par le filet `withSessionRepair` de l'adaptateur.
+ */
+export async function repairOrphanedSession(): Promise<boolean> {
+	if (typeof window === 'undefined') return false;
+	if (window.sessionStorage.getItem(REPAIR_FLAG)) return false;
+	window.sessionStorage.setItem(REPAIR_FLAG, '1');
+
+	await supabase.auth.signOut({ scope: 'local' }); // purge la session orpheline (local only)
+	await supabase.auth.signInAnonymously(); // repart sur une identité valide
+	window.location.reload();
+	return true;
+}
+
 /**
  * Rattache la session courante au participant désigné par le jeton
  * d'invitation présent dans l'URL. Idempotent (rejouable sur un autre

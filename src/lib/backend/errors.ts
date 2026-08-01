@@ -5,6 +5,13 @@
 export type BackendErrorCode =
 	/** conflit de version (donnée modifiée entre-temps) */
 	| 'conflict'
+	/**
+	 * session orpheline : l'utilisateur d'auth de la session locale n'existe plus
+	 * côté serveur (typiquement après un `db reset` du cloud). Le backend s'en
+	 * répare tout seul (nouvelle session anonyme + rechargement) ; ce code n'est
+	 * visible que si la réparation a déjà été tentée sur ce chargement.
+	 */
+	| 'orphaned-session'
 	/** accès refusé (droits insuffisants) */
 	| 'forbidden'
 	/** entrée invalide rejetée par une règle métier */
