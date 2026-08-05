@@ -1,6 +1,7 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
-	import { ArrowRight, Check, Plus } from '@lucide/svelte';
+	import { ArrowRight, Check, ChevronRight, Plus } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
 	import type { Transfer } from '$lib/settlements';
 	import { money } from '$lib/format';
@@ -40,20 +41,31 @@
 		</div>
 		<PanelList class="flex-1 overflow-y-auto">
 			{#each tripState.balances as b (b.household_id)}
-				<ListRow class="flex items-center justify-between">
-					<span>{tripState.householdName.get(b.household_id) ?? '?'}</span>
-					<span
-						class={b.net_cents > 0
-							? 'font-medium text-emerald-600'
-							: b.net_cents < 0
-								? 'font-medium text-red-600'
-								: 'text-slate-400'}
+				<ListRow class="p-0">
+					<a
+						class="flex w-full items-center justify-between gap-2 px-4 py-3 hover:bg-slate-50"
+						href={resolve('/t/[tripId]/foyer/[householdId]', {
+							tripId: tripState.tripId,
+							householdId: b.household_id
+						})}
 					>
-						{b.net_cents > 0 ? '+' : ''}{fmt(b.net_cents)}
-						<MetaText class="ml-1">
-							{b.net_cents > 0 ? 'on lui doit' : b.net_cents < 0 ? 'doit' : ''}
-						</MetaText>
-					</span>
+						<span class="inline-flex min-w-0 items-center gap-1">
+							<ChevronRight size={14} class="shrink-0 text-slate-400" aria-hidden="true" />
+							<span class="truncate">{tripState.householdName.get(b.household_id) ?? '?'}</span>
+						</span>
+						<span
+							class={b.net_cents > 0
+								? 'font-medium text-emerald-600'
+								: b.net_cents < 0
+									? 'font-medium text-red-600'
+									: 'text-slate-400'}
+						>
+							{b.net_cents > 0 ? '+' : ''}{fmt(b.net_cents)}
+							<MetaText class="ml-1">
+								{b.net_cents > 0 ? 'on lui doit' : b.net_cents < 0 ? 'doit' : ''}
+							</MetaText>
+						</span>
+					</a>
 				</ListRow>
 			{:else}
 				<ListRow class="text-sm text-slate-400">Aucun solde.</ListRow>

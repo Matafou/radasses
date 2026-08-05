@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { base } from '$app/paths';
+	import { base, resolve } from '$app/paths';
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
 	import { Check, Link, Pencil, Plus, X } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
@@ -192,7 +192,13 @@
 	{:else}
 		<div class="flex items-center justify-between gap-2">
 			<span class:text-slate-400={!p.active}>
-				{p.person_name}
+				<a
+					class="hover:underline"
+					href={resolve('/t/[tripId]/personne/[personId]', {
+						tripId: tripState.tripId,
+						personId: p.person_id
+					})}>{p.person_name}</a
+				>
 				{#if !p.active}<MetaText>(parti)</MetaText>{/if}
 			</span>
 			<div class="flex shrink-0 items-center gap-2">
@@ -276,7 +282,15 @@
 							</Button>
 						</div>
 					{:else}
-						<h2 class="text-sm font-medium text-slate-600">{g.name}</h2>
+						<h2 class="text-sm font-medium text-slate-600">
+							<a
+								class="hover:underline"
+								href={resolve('/t/[tripId]/foyer/[householdId]', {
+									tripId: tripState.tripId,
+									householdId: g.id
+								})}>{g.name}</a
+							>
+						</h2>
 						<IconButton
 							icon={Pencil}
 							label="Renommer le foyer"
