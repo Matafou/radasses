@@ -209,6 +209,11 @@ export class TripState {
 		// le déplacement de foyer est rétroactif (soldes joints par foyer courant)
 		await this.load(['participants', 'balances']);
 	}
+	/** Renomme un foyer (partagé → visible pour tous ses membres). */
+	async renameHousehold(householdId: string, name: string) {
+		await backend.updateHouseholdName(householdId, name);
+		await this.load(['participants']);
+	}
 	/** Marque un participant présent (active=true) ou parti (false). */
 	async setActive(participantId: string, active: boolean) {
 		await backend.setParticipantActive(participantId, active);

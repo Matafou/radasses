@@ -30,3 +30,18 @@ test('le champ Foyer est un déroulant à la création ET à l’édition', asyn
 	// et il propose bien de déplacer vers le foyer de Bob
 	await expect(editFoyer.locator('option', { hasText: 'Bob' })).toBeAttached();
 });
+
+test('renommer un foyer depuis son en-tête dans l’onglet Participants', async ({ page }) => {
+	await createTrip(page, uniqueTripName(), 'Alice');
+
+	await page.getByRole('link', { name: 'Participants' }).click();
+	// en-tête du foyer d'Alice (nommé « Alice » par défaut) → renommer.
+	// Le champ de renommage prend l'autofocus (desktop) → on le cible ainsi, pour
+	// éviter les autres champs texte de la page (formulaire de dépense monté caché).
+	await page.getByRole('button', { name: 'Renommer le foyer' }).click();
+	await page.locator('input:focus').fill('Famille Test');
+	await page.getByRole('button', { name: 'Enregistrer' }).click();
+
+	// l'en-tête de foyer est un titre (h2)
+	await expect(page.getByRole('heading', { name: 'Famille Test' })).toBeVisible();
+});

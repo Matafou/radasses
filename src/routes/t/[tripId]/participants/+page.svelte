@@ -23,6 +23,30 @@
 
 	const tripState = getTripState();
 
+	// Participants regroupés par foyer (ordre de 1re apparition), pour un en-tête
+	// de foyer renommable au-dessus de ses membres.
+	type Group = { id: string; name: string; members: Participant[] };
+	const groups = $derived.by((): Group[] => {
+		const byId: Record<string, Group> = {};
+		const out: Group[] = [];
+		for (const p of tripState.participants) {
+			let g = byId[p.household_id];
+			if (!g) {
+				g = { id: p.household_id, name: p.household_name, members: [] };
+				byId[p.household_id] = g;
+				out.push(g);
+			}
+			g.members.push(p);
+		}
+		return out;
+	});
+
+	// renommage d'un foyer (en-tête de groupe)
+	let editingHouseholdId = $state<string | null>(null);
+	let householdNameDraft = $state('');
+	let householdSaving = $state(false);
+	let householdError = $state<string | null>(null);
+
 	// ajout
 	let showAdd = $state(false);
 	let newName = $state('');
@@ -86,6 +110,26 @@
 		}
 	}
 
+	function startRenameHousehold(g: Group) {
+		editingHouseholdId = g.id;
+		householdNameDraft = g.name;
+		householdError = null;
+	}
+	async function onSaveHouseholdName(g: Group) {
+		householdError = null;
+		const name = householdNameDraft.trim();
+		if (!name) return void (householdError = 'Nom de foyer requis.');
+		householdSaving = true;
+		try {
+			await tripState.renameHousehold(g.id, name);
+			editingHouseholdId = null;
+		} catch (err) {
+			householdError = err instanceof Error ? err.message : String(err);
+		} finally {
+			householdSaving = false;
+		}
+	}
+
 	function startEdit(p: Participant) {
 		editingId = p.participant_id;
 		editName = p.person_name;
@@ -124,6 +168,59 @@
 	/>
 {/snippet}
 
+{#snippet memberRow(p: Participant)}
+	{#if editingId === p.participant_id}
+		<div class="space-y-2" use:autofocusWithin>
+			<label class="block text-xs text-slate-500">
+				Prénom
+				<TextInput class="mt-1 w-full text-sm" bind:value={editName} data-autofocus />
+			</label>
+			<label class="block text-xs text-slate-500">
+				Foyer <span class="text-slate-400">(déplace ce participant ; l'historique suit)</span>
+				<HouseholdSelect class="mt-1 w-full text-sm" bind:value={editHouseholdId} />
+			</label>
+			{#if editError}
+				<FieldError>{editError}</FieldError>
+			{/if}
+			<div class="flex gap-2">
+				<Button size="sm" disabled={saving} onclick={() => onSaveEdit(p)}>
+					{saving ? '…' : 'Enregistrer'}
+				</Button>
+				<Button size="sm" variant="secondary" onclick={() => (editingId = null)}>Annuler</Button>
+			</div>
+		</div>
+	{:else}
+		<div class="flex items-center justify-between gap-2">
+			<span class:text-slate-400={!p.active}>
+				{p.person_name}
+				{#if !p.active}<MetaText>(parti)</MetaText>{/if}
+			</span>
+			<div class="flex shrink-0 items-center gap-2">
+				<span
+					class="flex items-center gap-1.5 text-xs {p.active
+						? 'text-emerald-700'
+						: 'text-slate-400'}"
+				>
+					{p.active ? 'présent' : 'parti'}
+					<Switch
+						checked={p.active}
+						label={p.active ? 'Présent (basculer sur parti)' : 'Parti (basculer sur présent)'}
+						onclick={() => onToggleActive(p)}
+					/>
+				</span>
+				<IconButton icon={Pencil} label="Modifier" variant="warning" onclick={() => startEdit(p)} />
+				<IconButton
+					icon={copied === p.invite_token ? Check : Link}
+					label="Copier le lien d'invitation"
+					variant="outline"
+					class={copied === p.invite_token ? 'text-emerald-600' : ''}
+					onclick={() => copyLink(p.invite_token)}
+				/>
+			</div>
+		</div>
+	{/if}
+{/snippet}
+
 <section class="space-y-2">
 	<SectionHeader
 		title="Participants"
@@ -157,68 +254,48 @@
 		<Alert tone="warning" class="p-2 text-xs">{addNotice}</Alert>
 	{/if}
 
-	<PanelList>
-		{#each tripState.participants as p (p.participant_id)}
-			<ListRow>
-				{#if editingId === p.participant_id}
-					<div class="space-y-2" use:autofocusWithin>
-						<label class="block text-xs text-slate-500">
-							Prénom
-							<TextInput class="mt-1 w-full text-sm" bind:value={editName} data-autofocus />
-						</label>
-						<label class="block text-xs text-slate-500">
-							Foyer <span class="text-slate-400">(déplace ce participant ; l'historique suit)</span>
-							<HouseholdSelect class="mt-1 w-full text-sm" bind:value={editHouseholdId} />
-						</label>
-						{#if editError}
-							<FieldError>{editError}</FieldError>
-						{/if}
-						<div class="flex gap-2">
-							<Button size="sm" disabled={saving} onclick={() => onSaveEdit(p)}>
-								{saving ? '…' : 'Enregistrer'}
+	<div class="space-y-4">
+		{#each groups as g (g.id)}
+			<div>
+				<!-- En-tête de foyer : un TITRE (pas une ligne de liste), pour ne pas
+				     dupliquer le nom dans `li.list-row` (un foyer d'une personne porte
+				     le nom de la personne). -->
+				<div class="mb-1 flex min-h-7 items-center justify-between gap-2 px-1">
+					{#if editingHouseholdId === g.id}
+						<div class="flex flex-1 items-center gap-2" use:autofocusWithin>
+							<TextInput
+								class="min-w-0 flex-1 text-sm"
+								bind:value={householdNameDraft}
+								data-autofocus
+							/>
+							<Button size="sm" disabled={householdSaving} onclick={() => onSaveHouseholdName(g)}>
+								{householdSaving ? '…' : 'Enregistrer'}
 							</Button>
-							<Button size="sm" variant="secondary" onclick={() => (editingId = null)}
-								>Annuler</Button
-							>
+							<Button size="sm" variant="secondary" onclick={() => (editingHouseholdId = null)}>
+								Annuler
+							</Button>
 						</div>
-					</div>
-				{:else}
-					<div class="flex items-center justify-between gap-2">
-						<span class:text-slate-400={!p.active}>
-							{p.person_name}
-							{#if !p.active}<MetaText>(parti)</MetaText>{/if}
-							<MetaText>· {p.household_name}</MetaText>
-						</span>
-						<div class="flex shrink-0 items-center gap-2">
-							<span
-								class="flex items-center gap-1.5 text-xs {p.active
-									? 'text-emerald-700'
-									: 'text-slate-400'}"
-							>
-								{p.active ? 'présent' : 'parti'}
-								<Switch
-									checked={p.active}
-									label={p.active ? 'Présent (basculer sur parti)' : 'Parti (basculer sur présent)'}
-									onclick={() => onToggleActive(p)}
-								/>
-							</span>
-							<IconButton
-								icon={Pencil}
-								label="Modifier"
-								variant="warning"
-								onclick={() => startEdit(p)}
-							/>
-							<IconButton
-								icon={copied === p.invite_token ? Check : Link}
-								label="Copier le lien d'invitation"
-								variant="outline"
-								class={copied === p.invite_token ? 'text-emerald-600' : ''}
-								onclick={() => copyLink(p.invite_token)}
-							/>
-						</div>
-					</div>
+					{:else}
+						<h2 class="text-sm font-medium text-slate-600">{g.name}</h2>
+						<IconButton
+							icon={Pencil}
+							label="Renommer le foyer"
+							variant="warning"
+							onclick={() => startRenameHousehold(g)}
+						/>
+					{/if}
+				</div>
+				{#if householdError && editingHouseholdId === g.id}
+					<div class="mb-1 px-1"><FieldError>{householdError}</FieldError></div>
 				{/if}
-			</ListRow>
+				<PanelList>
+					{#each g.members as p (p.participant_id)}
+						<ListRow>
+							{@render memberRow(p)}
+						</ListRow>
+					{/each}
+				</PanelList>
+			</div>
 		{/each}
-	</PanelList>
+	</div>
 </section>
