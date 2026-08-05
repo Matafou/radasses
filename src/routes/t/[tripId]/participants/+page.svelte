@@ -5,6 +5,7 @@
 	import { getTripState } from '$lib/trip.svelte';
 	import { autofocusWithin } from '$lib/actions/autofocus';
 	import type { Participant } from '$lib/backend';
+	import HouseholdSelect from '$lib/components/HouseholdSelect.svelte';
 	import {
 		Alert,
 		Button,
@@ -16,7 +17,6 @@
 		MetaText,
 		PanelList,
 		SectionHeader,
-		Select,
 		Switch,
 		TextInput
 	} from '$lib/components/ui';
@@ -35,7 +35,7 @@
 	// édition
 	let editingId = $state<string | null>(null);
 	let editName = $state('');
-	let editHousehold = $state('');
+	let editHouseholdId = $state(''); // household_id courant, ou '__new__'
 	let saving = $state(false);
 	let editError = $state<string | null>(null);
 
@@ -89,19 +89,22 @@
 	function startEdit(p: Participant) {
 		editingId = p.participant_id;
 		editName = p.person_name;
-		editHousehold = p.household_name;
+		editHouseholdId = p.household_id;
 		editError = null;
 	}
 	async function onSaveEdit(p: Participant) {
 		editError = null;
-		if (!editName.trim() || !editHousehold.trim()) return void (editError = 'Nom et foyer requis.');
+		const name = editName.trim();
+		if (!name) return void (editError = 'Nom requis.');
+		const moved = editHouseholdId !== p.household_id;
 		saving = true;
 		try {
-			await tripState.renameParticipant({
+			await tripState.updateParticipant({
 				person_id: p.person_id,
-				person_name: editName.trim(),
-				household_id: p.household_id,
-				household_name: editHousehold.trim()
+				participant_id: p.participant_id,
+				person_name: name !== p.person_name ? name : undefined,
+				move_household_id: !moved ? undefined : editHouseholdId === '__new__' ? null : editHouseholdId,
+				new_household_name: editHouseholdId === '__new__' ? name : undefined
 			});
 			editingId = null;
 		} catch (err) {
@@ -134,12 +137,11 @@
 				<TextInput class="w-full" placeholder="Prénom" bind:value={newName} data-autofocus />
 				<label class="form-label">
 					Foyer
-					<Select class="mt-1 w-full" bind:value={newHousehold}>
-						<option value="__new__">Nouveau foyer (cette personne seule)</option>
-						{#each tripState.households as h (h.id)}
-							<option value={h.id}>Rejoindre : {h.name}</option>
-						{/each}
-					</Select>
+					<HouseholdSelect
+						class="mt-1 w-full"
+						bind:value={newHousehold}
+						optionPrefix="Rejoindre : "
+					/>
 				</label>
 				{#if addError}
 					<FieldError>{addError}</FieldError>
@@ -165,8 +167,8 @@
 							<TextInput class="mt-1 w-full text-sm" bind:value={editName} data-autofocus />
 						</label>
 						<label class="block text-xs text-slate-500">
-							Foyer <span class="text-slate-400">(partagé : renomme pour tous ses membres)</span>
-							<TextInput class="mt-1 w-full text-sm" bind:value={editHousehold} />
+							Foyer <span class="text-slate-400">(déplace ce participant ; l'historique suit)</span>
+							<HouseholdSelect class="mt-1 w-full text-sm" bind:value={editHouseholdId} />
 						</label>
 						{#if editError}
 							<FieldError>{editError}</FieldError>

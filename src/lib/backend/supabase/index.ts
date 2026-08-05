@@ -15,7 +15,8 @@ import {
 	updateTrip,
 	updatePersonName,
 	updateHouseholdName,
-	setParticipantActive
+	setParticipantActive,
+	setParticipantHousehold
 } from './db';
 import { saveExpense, deleteExpense } from './expenses';
 
@@ -62,6 +63,7 @@ const raw: Backend = {
 	updatePersonName,
 	updateHouseholdName,
 	setParticipantActive,
+	setParticipantHousehold,
 	saveExpense,
 	deleteExpense
 };

@@ -3,6 +3,8 @@
 	import { getTripState } from '$lib/trip.svelte';
 	import type { Expense, Participant, BeneficiaryInput } from '$lib/backend';
 	import { previewSplit } from '$lib/split';
+	import ParticipantSelect from '$lib/components/ParticipantSelect.svelte';
+	import AmountInput from '$lib/components/AmountInput.svelte';
 	import { centsFromEuros, money } from '$lib/format';
 	import { todayISO } from '$lib/date';
 	import {
@@ -266,23 +268,13 @@
 	     BottomSheet (nom accessible du dialogue). -->
 	<form class="space-y-2" onsubmit={onSubmit}>
 		<div class="flex gap-2">
-			<TextInput
-				class="w-28"
-				placeholder="Montant €"
-				inputmode="decimal"
-				bind:value={amountStr}
-				data-autofocus
-			/>
+			<AmountInput class="w-28" bind:value={amountStr} data-autofocus />
 			<TextInput class="min-w-0 flex-1" placeholder="Description" bind:value={description} />
 		</div>
 		<div class="flex gap-2">
 			<label class="inline-form-label flex-1">
 				Payé par
-				<Select class="mt-1 w-full" bind:value={payerId}>
-					{#each tripState.participants as p (p.person_id)}
-						<option value={p.person_id}>{p.person_name}</option>
-					{/each}
-				</Select>
+				<ParticipantSelect class="mt-1 w-full" bind:value={payerId} />
 			</label>
 			<label class="inline-form-label">
 				Date

@@ -5,7 +5,9 @@
 	import { getTripState, type ReimbursePrefill } from '$lib/trip.svelte';
 	import { centsFromEuros } from '$lib/format';
 	import { todayISO } from '$lib/date';
-	import { Button, Card, FieldError, Select, TextInput } from '$lib/components/ui';
+	import { Button, Card, FieldError, TextInput } from '$lib/components/ui';
+	import ParticipantSelect from '$lib/components/ParticipantSelect.svelte';
+	import AmountInput from '$lib/components/AmountInput.svelte';
 
 	let {
 		prefill = {},
@@ -77,32 +79,22 @@
 		<div class="flex items-end gap-2">
 			<label class="inline-form-label flex-1">
 				Qui rembourse
-				<Select class="mt-1 w-full px-2" bind:value={fromId}>
-					{#each tripState.participants as p (p.person_id)}
-						<option value={p.person_id}>{p.person_name}{p.active ? '' : ' (parti)'}</option>
-					{/each}
-				</Select>
+				<ParticipantSelect class="mt-1 w-full px-2" bind:value={fromId} showInactiveTag />
 			</label>
 			<ArrowRight size={18} class="mb-2 shrink-0 text-slate-400" aria-hidden="true" />
 			<label class="inline-form-label flex-1">
 				Qui est remboursé
-				<Select class="mt-1 w-full px-2" bind:value={toId}>
-					<option value="">—</option>
-					{#each tripState.participants as p (p.person_id)}
-						<option value={p.person_id}>{p.person_name}{p.active ? '' : ' (parti)'}</option>
-					{/each}
-				</Select>
+				<ParticipantSelect
+					class="mt-1 w-full px-2"
+					bind:value={toId}
+					showInactiveTag
+					placeholder="—"
+				/>
 			</label>
 		</div>
 
 		<div class="flex gap-2">
-			<TextInput
-				class="w-32"
-				placeholder="Montant €"
-				inputmode="decimal"
-				bind:value={amountStr}
-				data-autofocus
-			/>
+			<AmountInput class="w-32" bind:value={amountStr} data-autofocus />
 			<TextInput type="date" bind:value={spentOn} />
 		</div>
 

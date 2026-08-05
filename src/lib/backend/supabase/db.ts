@@ -124,6 +124,38 @@ export async function setParticipantActive(participantId: string, active: boolea
 	if (error) throw toBackendError(error);
 }
 
+/**
+ * Déplace un participant vers un autre foyer. `household_id` absent/null =>
+ * créer un nouveau foyer (nommé `household_name`, ou « Foyer » à défaut) pour
+ * l'y placer seul. RLS autorise déjà l'`insert households` + l'`update
+ * trip_participants.household_id` d'un membre (cf. `setParticipantActive`), donc
+ * pas de RPC. NB : les soldes suivent le foyer COURANT (vue `balances` jointe par
+ * person_id) → le changement est rétroactif sur tout l'historique du participant.
+ * Un ancien foyer laissé vide n'est PAS nettoyé (décision produit).
+ */
+export async function setParticipantHousehold(params: {
+	participant_id: string;
+	household_id?: string | null;
+	household_name?: string | null;
+}): Promise<void> {
+	let householdId = params.household_id ?? null;
+	if (!householdId) {
+		const name = (params.household_name ?? '').trim() || 'Foyer';
+		const { data, error } = await supabase
+			.from('households')
+			.insert({ name })
+			.select('id')
+			.single();
+		if (error) throw toBackendError(error);
+		householdId = (data as { id: string }).id;
+	}
+	const { error } = await supabase
+		.from('trip_participants')
+		.update({ household_id: householdId })
+		.eq('id', params.participant_id);
+	if (error) throw toBackendError(error);
+}
+
 /** person_id de l'utilisateur courant dans ce séjour (via sa session), ou null. */
 export async function getMyPersonId(tripId: string): Promise<string | null> {
 	const { data: u } = await supabase.auth.getUser();

@@ -182,17 +182,32 @@ export class TripState {
 		// un nouveau foyer ajoute une ligne (solde 0) à la vue balances
 		await this.load(['participants', 'balances']);
 	}
-	/** Renomme la personne et son foyer (le foyer est partagé -> renommé pour tous ses membres). */
-	async renameParticipant(params: {
+	/**
+	 * Met à jour un participant depuis l'écran d'édition : renomme la personne
+	 * (`person_name` fourni) et/ou le déplace de foyer (`move_household_id` fourni :
+	 * un id existant, ou `null` = nouveau foyer nommé `new_household_name`). Chaque
+	 * champ est optionnel → on n'écrit que ce qui a changé (évite une entrée de
+	 * journal superflue). Un seul rechargement pour les deux.
+	 */
+	async updateParticipant(params: {
 		person_id: string;
-		person_name: string;
-		household_id: string;
-		household_name: string;
+		participant_id: string;
+		person_name?: string;
+		move_household_id?: string | null;
+		new_household_name?: string;
 	}) {
-		await backend.updatePersonName(params.person_id, params.person_name);
-		await backend.updateHouseholdName(params.household_id, params.household_name);
-		// les soldes sont indexés par foyer (person_id) ; seuls les noms changent
-		await this.load(['participants']);
+		if (params.person_name != null) {
+			await backend.updatePersonName(params.person_id, params.person_name);
+		}
+		if (params.move_household_id !== undefined) {
+			await backend.setParticipantHousehold({
+				participant_id: params.participant_id,
+				household_id: params.move_household_id,
+				household_name: params.new_household_name
+			});
+		}
+		// le déplacement de foyer est rétroactif (soldes joints par foyer courant)
+		await this.load(['participants', 'balances']);
 	}
 	/** Marque un participant présent (active=true) ou parti (false). */
 	async setActive(participantId: string, active: boolean) {

@@ -64,6 +64,12 @@ export interface Backend {
 	updatePersonName(personId: string, name: string): Promise<void>;
 	updateHouseholdName(householdId: string, name: string): Promise<void>;
 	setParticipantActive(participantId: string, active: boolean): Promise<void>;
+	/** Déplace un participant vers un foyer existant (`household_id`) ou un nouveau (null). */
+	setParticipantHousehold(params: {
+		participant_id: string;
+		household_id?: string | null;
+		household_name?: string | null;
+	}): Promise<void>;
 
 	// --- Dépenses (logique serveur : split, verrou optimiste, journal) ---
 	saveExpense(input: SaveExpenseInput): Promise<SaveExpenseResult>;
