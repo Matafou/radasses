@@ -85,7 +85,12 @@
 				onDone={() => state.closeExpenseForm()}
 				onCancel={() => state.closeExpenseForm()}
 			/>
-		{:else}
+		{:else if state.formOpen || state.hasCreateDraft}
+			<!-- Montage paresseux : le formulaire n'existe que sheet ouvert (ou brouillon
+			     à reprendre). Le snapshot des participants se fait donc à la 1re ouverture,
+			     participants à jour → cas courant correct par construction (le catch-up
+			     $effect ne sert plus qu'au flux rare « Masquer → ajouter un participant →
+			     Reprendre »). -->
 			{#key state.editingExpense?.id ?? `new-${state.formSeq}`}
 				<ExpenseForm
 					expense={state.editingExpense}
