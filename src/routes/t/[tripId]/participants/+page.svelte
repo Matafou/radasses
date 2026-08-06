@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { base, resolve } from '$app/paths';
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
-	import { Check, Link, Pencil, Plus, X } from '@lucide/svelte';
+	import { Check, Link, Mail, MessageSquare, Pencil, Plus, Share2, X } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
 	import { autofocusWithin } from '$lib/actions/autofocus';
 	import type { Participant } from '$lib/backend';
 	import HouseholdSelect from '$lib/components/HouseholdSelect.svelte';
 	import {
 		Alert,
+		BottomSheet,
 		Button,
 		Card,
 		Fab,
@@ -55,6 +56,11 @@
 	let addError = $state<string | null>(null);
 	let addNotice = $state<string | null>(null);
 	let copied = $state<string | null>(null);
+	let sharing = $state<Participant | null>(null); // participant dont on partage le lien (ouvre la feuille)
+	// navigator.share dispo (mobile surtout) : évalué côté client (navigator absent en SSR).
+	const canNativeShare = $derived(
+		typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+	);
 
 	// édition
 	let editingId = $state<string | null>(null);
@@ -75,6 +81,33 @@
 			setTimeout(() => (copied = null), 1500);
 		} catch {
 			/* clipboard indispo */
+		}
+	}
+
+	// --- Partage du lien d'invitation (feuille de partage) ---
+	const channelClass =
+		'flex w-full items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50';
+	const tripName = () => tripState.trip?.name ?? 'le séjour';
+	// Message pré-rédigé, nominatif (le lien EST la crédential → phrase amicale + lien).
+	const shareText = (p: Participant) =>
+		`Salut ${p.person_name}, voici ton lien pour rejoindre le séjour « ${tripName()} » sur radasses :`;
+	const shareSubject = () => `Rejoindre « ${tripName()} » sur radasses`;
+	// mailto/sms sont du texte brut → on y inclut le lien ; Web Share porte l'URL à part.
+	const shareBody = (p: Participant) => `${shareText(p)}\n${inviteLink(p.invite_token)}`;
+	const mailtoHref = (p: Participant) =>
+		`mailto:?subject=${encodeURIComponent(shareSubject())}&body=${encodeURIComponent(shareBody(p))}`;
+	// `sms:?&body=` : forme acceptée par iOS ET Android (sans destinataire).
+	const smsHref = (p: Participant) => `sms:?&body=${encodeURIComponent(shareBody(p))}`;
+	async function nativeShare(p: Participant) {
+		try {
+			await navigator.share({
+				title: shareSubject(),
+				text: shareText(p),
+				url: inviteLink(p.invite_token)
+			});
+			sharing = null;
+		} catch {
+			/* partage annulé ou indisponible */
 		}
 	}
 
@@ -232,11 +265,10 @@
 				</span>
 				<IconButton icon={Pencil} label="Modifier" variant="warning" onclick={() => startEdit(p)} />
 				<IconButton
-					icon={copied === p.invite_token ? Check : Link}
-					label="Copier le lien d'invitation"
+					icon={Share2}
+					label="Partager le lien d'invitation"
 					variant="outline"
-					class={copied === p.invite_token ? 'text-emerald-600' : ''}
-					onclick={() => copyLink(p.invite_token)}
+					onclick={() => (sharing = p)}
 				/>
 			</div>
 		</div>
@@ -329,3 +361,47 @@
 		{/each}
 	</div>
 </section>
+
+<!-- Feuille de partage du lien d'invitation : canaux explicites en boutons. Le
+     partage natif (navigator.share) n'apparaît que sur les plateformes qui le
+     gèrent (mobile) ; e-mail/SMS sont de vrais liens ; copier reste le repli. -->
+<BottomSheet
+	open={sharing !== null}
+	title={sharing ? `Partager le lien de ${sharing.person_name}` : ''}
+	onClose={() => (sharing = null)}
+>
+	{#if sharing}
+		{@const p = sharing}
+		<div class="space-y-2 pb-2">
+			{#if canNativeShare}
+				<button type="button" class={channelClass} onclick={() => nativeShare(p)}>
+					<Share2 size={18} class="shrink-0" aria-hidden="true" />
+					Partager…
+				</button>
+			{/if}
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- schéma mailto: (pas une route) -->
+			<a class={channelClass} href={mailtoHref(p)}>
+				<Mail size={18} class="shrink-0" aria-hidden="true" />
+				E-mail
+			</a>
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- schéma sms: (pas une route) -->
+			<a class={channelClass} href={smsHref(p)}>
+				<MessageSquare size={18} class="shrink-0" aria-hidden="true" />
+				SMS
+			</a>
+			<button type="button" class={channelClass} onclick={() => copyLink(p.invite_token)}>
+				{#if copied === p.invite_token}
+					<Check size={18} class="shrink-0 text-emerald-600" aria-hidden="true" />
+					Lien copié
+				{:else}
+					<Link size={18} class="shrink-0" aria-hidden="true" />
+					Copier le lien
+				{/if}
+			</button>
+			<Alert tone="warning" class="p-2 text-xs">
+				Ce lien donne l'accès au séjour au nom de {p.person_name} : partage-le par un canal
+				individuel (message privé), évite les groupes.
+			</Alert>
+		</div>
+	{/if}
+</BottomSheet>
