@@ -13,11 +13,14 @@
 
 	let {
 		expense,
-		shareCents = null
+		shareCents = null,
+		shareLabel = null
 	}: {
 		expense: Expense;
-		/** Si fourni (vue « payé pour lui »), affiche cette PART en gros + le total en petit. */
+		/** Si fourni (vues de détail), affiche « part / total » en gros, libellés dessous. */
 		shareCents?: number | null;
+		/** Libellé de la part (colonne gauche, ex. « pour les autres » / « pour lui »). */
+		shareLabel?: string | null;
 	} = $props();
 
 	const tripState = getTripState();
@@ -74,10 +77,14 @@
 			</h3>
 			<MetaText class="shrink-0">{expense.spent_on}</MetaText>
 			{#if shareCents != null}
-				<!-- Vue « payé pour lui » : la PART pour le sujet prime sur le total. -->
-				<div class="ml-auto shrink-0 text-right leading-tight">
-					<span class="block text-lg font-bold tabular-nums">{fmt(shareCents)}</span>
-					<MetaText class="block text-xs">sur {fmt(expense.amount_cents)}</MetaText>
+				<!-- Vues de détail : même modèle que le bandeau — total en bout de ligne,
+				     « dont {libellé} : {part} » dessous (part à la même graisse que le total). -->
+				<div class="ml-auto shrink-0 leading-tight">
+					<p class="text-right font-semibold tabular-nums">{fmt(expense.amount_cents)}</p>
+					<div class="flex items-baseline justify-end gap-x-1">
+						<MetaText class="text-xs">dont {shareLabel} :</MetaText>
+						<span class="font-semibold tabular-nums">{fmt(shareCents)}</span>
+					</div>
 				</div>
 			{:else}
 				<p class="ml-auto shrink-0 font-semibold">{fmt(expense.amount_cents)}</p>

@@ -42,7 +42,7 @@
 			</MetaText>
 		</div>
 
-		<BalanceLedger personIds={memberIds} />
+		<BalanceLedger personIds={memberIds} subjectName={`le foyer ${name}`} />
 
 		<p class="text-xs text-slate-400">
 			Le solde d'un foyer est ce qu'il doit ou ce qu'on lui doit ; les remboursements se règlent à

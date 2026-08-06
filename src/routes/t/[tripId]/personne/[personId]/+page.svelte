@@ -29,7 +29,7 @@
 			<MetaText>Foyer : {participant.household_name}</MetaText>
 		</div>
 
-		<BalanceLedger personIds={[personId]} />
+		<BalanceLedger personIds={[personId]} subjectName={participant.person_name} />
 
 		<p class="text-xs text-slate-400">
 			Détail indicatif : les remboursements se règlent par <strong>foyer</strong>, pas par personne.
