@@ -4,7 +4,7 @@
 	import { ArrowRight, Check, ChevronRight, Plus } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
 	import type { Transfer } from '$lib/settlements';
-	import { money } from '$lib/format';
+	import { foyerLabel, money } from '$lib/format';
 	import {
 		Button,
 		EmptyState,
@@ -51,7 +51,9 @@
 					>
 						<span class="inline-flex min-w-0 items-center gap-1">
 							<ChevronRight size={14} class="shrink-0 text-slate-400" aria-hidden="true" />
-							<span class="truncate">{tripState.householdName.get(b.household_id) ?? '?'}</span>
+							<span class="truncate first-letter:uppercase"
+							>{foyerLabel(tripState.householdName.get(b.household_id) ?? '?')}</span
+						>
 						</span>
 						<span
 							class={b.net_cents > 0
@@ -96,12 +98,12 @@
 					{#each tripState.transfers as t (t.from_household_id + t.to_household_id)}
 						<ListRow class="flex items-center justify-between gap-2 text-sm">
 							<span class="inline-flex min-w-0 flex-wrap items-center gap-1">
-								<span class="font-medium"
-									>{tripState.householdName.get(t.from_household_id) ?? '?'}</span
+								<span class="font-medium first-letter:uppercase"
+									>{foyerLabel(tripState.householdName.get(t.from_household_id) ?? '?')}</span
 								>
 								<ArrowRight size={14} class="text-slate-400" aria-hidden="true" />
 								<span class="font-medium"
-									>{tripState.householdName.get(t.to_household_id) ?? '?'}</span
+									>{foyerLabel(tripState.householdName.get(t.to_household_id) ?? '?')}</span
 								>
 								: {fmt(t.amount_cents)}
 							</span>

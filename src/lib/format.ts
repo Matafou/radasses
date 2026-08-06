@@ -8,6 +8,15 @@ export function euros(cents: number): string {
 	return money(cents, 'EUR');
 }
 
+/**
+ * Libellé standard d'un foyer : « le foyer {nom} ». Centralisé ici pour une
+ * dénomination cohérente partout (et pour l'i18n à venir). Minuscule (usage en
+ * prose) ; ajouter `first-letter:uppercase` côté CSS quand c'est un titre.
+ */
+export function foyerLabel(name: string): string {
+	return `le foyer ${name}`;
+}
+
 /** "12,34" ou "12.34" -> 1234 centimes. NaN si invalide. */
 export function centsFromEuros(input: string): number {
 	const n = Number(String(input).replace(',', '.').trim());

@@ -21,7 +21,7 @@ insert into auth.users (id, aud, role, email) values
 	(:'MEMBER',   'authenticated', 'authenticated', 'member@test.local'),
 	(:'OUTSIDER', 'authenticated', 'authenticated', 'outsider@test.local');
 
-insert into households (id, name) values (:'HD', 'Foyer test');
+insert into households (id, name) values (:'HD', 'Test');
 insert into persons (id, name) values (:'AL', 'Alice');
 insert into trips (id, name) values (:'TR', 'Séjour test');
 insert into trip_participants (trip_id, person_id, household_id)

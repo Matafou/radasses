@@ -4,6 +4,7 @@
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
 	import { ArrowLeft } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
+	import { foyerLabel } from '$lib/format';
 	import BalanceLedger from '$lib/components/BalanceLedger.svelte';
 	import { MetaText } from '$lib/components/ui';
 
@@ -27,7 +28,7 @@
 
 	{#if name}
 		<div>
-			<h1 class="text-xl font-semibold">{name}</h1>
+			<h1 class="text-xl font-semibold first-letter:uppercase">{foyerLabel(name)}</h1>
 			<MetaText>
 				Foyer ·
 				{#each members as p, i (p.person_id)}
@@ -42,7 +43,7 @@
 			</MetaText>
 		</div>
 
-		<BalanceLedger personIds={memberIds} subjectName={`le foyer ${name}`} />
+		<BalanceLedger personIds={memberIds} subjectName={foyerLabel(name)} />
 
 		<p class="text-xs text-slate-400">
 			Le solde d'un foyer est ce qu'il doit ou ce qu'on lui doit ; les remboursements se règlent à

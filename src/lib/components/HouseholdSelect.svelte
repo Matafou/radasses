@@ -3,6 +3,7 @@
 	// (« Rejoindre ») et son édition (« Déplacer vers »). La valeur est un
 	// `household_id`, ou la sentinelle `__new__` = créer un nouveau foyer.
 	import { getTripState } from '$lib/trip.svelte';
+	import { foyerLabel } from '$lib/format';
 	import { Select } from '$lib/components/ui';
 
 	let {
@@ -27,6 +28,6 @@
 <Select bind:value class={className} {...rest}>
 	<option value="__new__">{newLabel}</option>
 	{#each tripState.households as h (h.id)}
-		<option value={h.id}>{optionPrefix}{h.name}</option>
+		<option value={h.id}>{optionPrefix}{foyerLabel(h.name)}</option>
 	{/each}
 </Select>

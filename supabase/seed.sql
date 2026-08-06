@@ -15,11 +15,11 @@
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
---  Séjour « Été » — Foyer Dupont (Alice, Bob, Chloé) + Foyer Zoé (Zoé)
+--  Séjour « Été » — le foyer Dupont (Alice, Bob, Chloé) + le foyer Zoé (Zoé)
 -- ---------------------------------------------------------------------
 insert into households (id, name) values
-	('00000000-0000-0000-0000-0000000000f1', 'Foyer Dupont'),
-	('00000000-0000-0000-0000-0000000000f2', 'Foyer Zoé');
+	('00000000-0000-0000-0000-0000000000f1', 'Dupont'),
+	('00000000-0000-0000-0000-0000000000f2', 'Zoé');
 
 insert into persons (id, name) values
 	('00000000-0000-0000-0000-0000000000a1', 'Alice'),
@@ -97,9 +97,9 @@ select save_expense('00000000-0000-0000-0000-0000000000e1', 1500, '00000000-0000
 	'[{"person_id":"00000000-0000-0000-0000-0000000000d4"}]'::jsonb,
 	'Remboursement à Zoé', 'Remboursement', date '2026-07-21');
 
--- --- Foyer David (une seule personne) + dépenses qui le concernent ---
+-- --- le foyer David (une seule personne) + dépenses qui le concernent ---
 insert into households (id, name) values
-	('00000000-0000-0000-0000-0000000000f5', 'Foyer David');
+	('00000000-0000-0000-0000-0000000000f5', 'David');
 insert into persons (id, name) values
 	('00000000-0000-0000-0000-0000000000d5', 'David');
 insert into trip_participants (trip_id, person_id, household_id, default_weight) values
@@ -128,11 +128,11 @@ select save_expense('00000000-0000-0000-0000-0000000000e1', 15000, '00000000-000
 	'Grosse sortie', 'Divers', date '2026-07-25');
 
 -- ---------------------------------------------------------------------
---  Séjour « Week-end » — Foyer Martin (Marie, Paul) + Foyer Sofia (Sofia)
+--  Séjour « Week-end » — le foyer Martin (Marie, Paul) + le foyer Sofia (Sofia)
 -- ---------------------------------------------------------------------
 insert into households (id, name) values
-	('00000000-0000-0000-0000-0000000000f3', 'Foyer Martin'),
-	('00000000-0000-0000-0000-0000000000f4', 'Foyer Sofia');
+	('00000000-0000-0000-0000-0000000000f3', 'Martin'),
+	('00000000-0000-0000-0000-0000000000f4', 'Sofia');
 
 insert into persons (id, name) values
 	('00000000-0000-0000-0000-0000000000a5', 'Marie'),

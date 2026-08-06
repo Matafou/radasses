@@ -140,7 +140,7 @@ export async function setParticipantDefaultWeight(
 
 /**
  * Déplace un participant vers un autre foyer. `household_id` absent/null =>
- * créer un nouveau foyer (nommé `household_name`, ou « Foyer » à défaut) pour
+ * créer un nouveau foyer (nommé `household_name`, ou « Sans nom » à défaut) pour
  * l'y placer seul. RLS autorise déjà l'`insert households` + l'`update
  * trip_participants.household_id` d'un membre (cf. `setParticipantActive`), donc
  * pas de RPC. NB : les soldes suivent le foyer COURANT (vue `balances` jointe par
@@ -154,7 +154,7 @@ export async function setParticipantHousehold(params: {
 }): Promise<void> {
 	let householdId = params.household_id ?? null;
 	if (!householdId) {
-		const name = (params.household_name ?? '').trim() || 'Foyer';
+		const name = (params.household_name ?? '').trim() || 'Sans nom';
 		const { data, error } = await supabase
 			.from('households')
 			.insert({ name })

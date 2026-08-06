@@ -12,7 +12,7 @@ select plan(8);
 
 -- ---------------------------------------------------------------------
 --  Scénario complet pour la vue balances
---  Foyer Dupont = Alice, Bob, Chloé ; Foyer Zoé = Zoé.
+--  le foyer Dupont = Alice, Bob, Chloé ; le foyer Zoé = Zoé.
 -- ---------------------------------------------------------------------
 \set AL 'aaaa0000-0000-0000-0000-0000000000a1'
 \set BO 'aaaa0000-0000-0000-0000-0000000000b2'
@@ -41,9 +41,9 @@ select save_expense(:'TR', 5000, :'AL',
 
 -- 1-2) Soldes attendus : Dupont -3167, Zoé +3167 (payé - dû, par foyer).
 select is((select net_cents from balances where trip_id = :'TR' and household_id = :'HD'),
-	-3167::bigint, 'solde Foyer Dupont = -3167');
+	-3167::bigint, 'solde du foyer Dupont = -3167');
 select is((select net_cents from balances where trip_id = :'TR' and household_id = :'HZ'),
-	3167::bigint, 'solde Foyer Zoé = +3167');
+	3167::bigint, 'solde du foyer Zoé = +3167');
 
 -- ---------------------------------------------------------------------
 --  Verrou optimiste (save_expense) — conflit levé en SQLSTATE PT409

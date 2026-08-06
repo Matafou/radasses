@@ -3,6 +3,7 @@
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
 	import { Check, Link, Mail, MessageSquare, Pencil, Plus, Share2, X } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
+	import { foyerLabel } from '$lib/format';
 	import { autofocusWithin } from '$lib/actions/autofocus';
 	import type { Participant } from '$lib/backend';
 	import HouseholdSelect from '$lib/components/HouseholdSelect.svelte';
@@ -291,7 +292,7 @@
 					<HouseholdSelect
 						class="mt-1 w-full"
 						bind:value={newHousehold}
-						optionPrefix="Rejoindre : "
+						optionPrefix="Rejoindre "
 					/>
 				</label>
 				{#if addError}
@@ -330,13 +331,13 @@
 							</Button>
 						</div>
 					{:else}
-						<h2 class="text-sm font-medium text-slate-600">
+						<h2 class="text-sm font-medium text-slate-600 first-letter:uppercase">
 							<a
 								class="hover:underline"
 								href={resolve('/t/[tripId]/foyer/[householdId]', {
 									tripId: tripState.tripId,
 									householdId: g.id
-								})}>{g.name}</a
+								})}>{foyerLabel(g.name)}</a
 							>
 						</h2>
 						<IconButton
