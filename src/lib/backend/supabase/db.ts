@@ -124,6 +124,20 @@ export async function setParticipantActive(participantId: string, active: boolea
 	if (error) throw toBackendError(error);
 }
 
+/** Poids par défaut du participant (parts relatives, > 0), appliqué à la demande
+ *  dans une dépense en mode détaillé. N'affecte PAS les dépenses déjà saisies
+ *  (chacune stocke ses propres poids/montants). */
+export async function setParticipantDefaultWeight(
+	participantId: string,
+	weight: number
+): Promise<void> {
+	const { error } = await supabase
+		.from('trip_participants')
+		.update({ default_weight: weight })
+		.eq('id', participantId);
+	if (error) throw toBackendError(error);
+}
+
 /**
  * Déplace un participant vers un autre foyer. `household_id` absent/null =>
  * créer un nouveau foyer (nommé `household_name`, ou « Foyer » à défaut) pour

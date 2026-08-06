@@ -143,6 +143,12 @@
 			if (!(p.person_id in seen)) {
 				seen[p.person_id] = true;
 				selected[p.person_id] = p.active;
+				// L'état « détaillé » (mode + valeur) n'était initialisé qu'au montage
+				// (initDetail) : un participant apparu APRÈS n'avait pas d'entrée →
+				// ses contrôles poids/€ ne s'affichaient pas en mode détaillé. On
+				// sème les valeurs par défaut ici aussi.
+				benefMode[p.person_id] = 'weight';
+				benefValue[p.person_id] = '1';
 			}
 		}
 	});
@@ -189,6 +195,20 @@
 		const u = beneficiaries.filter((b) => !b.is_locked);
 		return u.length === 1 ? u[0].person_id : null;
 	});
+
+	// Poids par défaut : proposé en mode détaillé quand au moins un bénéficiaire
+	// coché a un poids par défaut ≠ 1 (sinon le bouton ne changerait rien). Le
+	// remplissage initial reste « 1 pour tout le monde » ; ce bouton l'écrase.
+	const canApplyDefaultWeights = $derived(
+		tripState.participants.some((p) => selected[p.person_id] && p.default_weight !== 1)
+	);
+	function applyDefaultWeights() {
+		for (const p of tripState.participants) {
+			if (!selected[p.person_id]) continue;
+			benefMode[p.person_id] = 'weight';
+			benefValue[p.person_id] = String(p.default_weight);
+		}
+	}
 
 	// Sélection globale
 	const activeParticipants = $derived(tripState.participants.filter((p) => p.active));
@@ -302,6 +322,17 @@
 				/>
 				Répartition détaillée (poids ou montants fixes)
 			</label>
+			{#if detailed && canApplyDefaultWeights}
+				<Button
+					type="button"
+					size="sm"
+					variant="outline"
+					class="text-xs"
+					onclick={applyDefaultWeights}
+				>
+					Appliquer les poids par défaut
+				</Button>
+			{/if}
 			{#each groups as g (g.id)}
 				{#if g.members.length === 1}
 					{@render memberRow(g.members[0])}

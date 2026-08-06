@@ -60,6 +60,7 @@
 	let editingId = $state<string | null>(null);
 	let editName = $state('');
 	let editHouseholdId = $state(''); // household_id courant, ou '__new__'
+	let editWeight = $state('1'); // poids par défaut (chaîne, décimale FR/EN tolérée)
 	let saving = $state(false);
 	let editError = $state<string | null>(null);
 
@@ -134,12 +135,16 @@
 		editingId = p.participant_id;
 		editName = p.person_name;
 		editHouseholdId = p.household_id;
+		editWeight = String(p.default_weight);
 		editError = null;
 	}
 	async function onSaveEdit(p: Participant) {
 		editError = null;
 		const name = editName.trim();
 		if (!name) return void (editError = 'Nom requis.');
+		const weight = Number(editWeight.replace(',', '.'));
+		if (!Number.isFinite(weight) || weight <= 0)
+			return void (editError = 'Poids par défaut invalide (nombre > 0).');
 		const moved = editHouseholdId !== p.household_id;
 		saving = true;
 		try {
@@ -147,6 +152,7 @@
 				person_id: p.person_id,
 				participant_id: p.participant_id,
 				person_name: name !== p.person_name ? name : undefined,
+				default_weight: weight !== p.default_weight ? weight : undefined,
 				move_household_id: !moved ? undefined : editHouseholdId === '__new__' ? null : editHouseholdId,
 				new_household_name: editHouseholdId === '__new__' ? name : undefined
 			});
@@ -178,6 +184,16 @@
 			<label class="block text-xs text-slate-500">
 				Foyer <span class="text-slate-400">(déplace ce participant ; l'historique suit)</span>
 				<HouseholdSelect class="mt-1 w-full text-sm" bind:value={editHouseholdId} />
+			</label>
+			<label class="block text-xs text-slate-500">
+				Poids par défaut
+				<span class="text-slate-400">(1 = part normale ; ex. 0,5 pour un enfant)</span>
+				<TextInput
+					class="mt-1 w-24 text-sm"
+					inputmode="decimal"
+					placeholder="1"
+					bind:value={editWeight}
+				/>
 			</label>
 			{#if editError}
 				<FieldError>{editError}</FieldError>

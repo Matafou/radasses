@@ -193,11 +193,15 @@ export class TripState {
 		person_id: string;
 		participant_id: string;
 		person_name?: string;
+		default_weight?: number;
 		move_household_id?: string | null;
 		new_household_name?: string;
 	}) {
 		if (params.person_name != null) {
 			await backend.updatePersonName(params.person_id, params.person_name);
+		}
+		if (params.default_weight != null) {
+			await backend.setParticipantDefaultWeight(params.participant_id, params.default_weight);
 		}
 		if (params.move_household_id !== undefined) {
 			await backend.setParticipantHousehold({

@@ -64,6 +64,8 @@ export interface Backend {
 	updatePersonName(personId: string, name: string): Promise<void>;
 	updateHouseholdName(householdId: string, name: string): Promise<void>;
 	setParticipantActive(participantId: string, active: boolean): Promise<void>;
+	/** Poids par défaut du participant (parts relatives, > 0). */
+	setParticipantDefaultWeight(participantId: string, weight: number): Promise<void>;
 	/** Déplace un participant vers un foyer existant (`household_id`) ou un nouveau (null). */
 	setParticipantHousehold(params: {
 		participant_id: string;
