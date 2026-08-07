@@ -1,7 +1,5 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
-	import { ArrowLeft } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
 	import BalanceLedger from '$lib/components/BalanceLedger.svelte';
 	import { MetaText } from '$lib/components/ui';
@@ -12,14 +10,6 @@
 </script>
 
 <div class="space-y-4">
-	<button
-		type="button"
-		class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
-		onclick={() => history.back()}
-	>
-		<ArrowLeft size={16} aria-hidden="true" /> Retour
-	</button>
-
 	{#if participant}
 		<div>
 			<h1 class="text-xl font-semibold" class:text-slate-400={!participant.active}>
