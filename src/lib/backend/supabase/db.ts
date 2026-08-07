@@ -35,7 +35,7 @@ type ActorRow = {
 export async function getTrip(tripId: string): Promise<Trip | null> {
 	const { data, error } = await supabase
 		.from('trips')
-		.select('id, name, currency, created_at')
+		.select('id, name, currency, created_at, join_token')
 		.eq('id', tripId)
 		.maybeSingle();
 	if (error) throw toBackendError(error);

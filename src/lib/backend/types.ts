@@ -2,7 +2,23 @@
 // Aucune dépendance ici : ce sont les entités et entrées/sorties manipulées
 // par l'application, quelle que soit l'implémentation du backend.
 
-export type Trip = { id: string; name: string; currency: string; created_at: string };
+export type Trip = {
+	id: string;
+	name: string;
+	currency: string;
+	created_at: string;
+	/** Secret du lien de séjour PARTAGEABLE (« Qui es-tu ? »), distinct des jetons par participant. */
+	join_token: string;
+};
+
+/** Un participant proposé au choix sur l'écran « Qui es-tu ? » (via le lien de séjour). */
+export type JoinCandidate = {
+	participant_id: string;
+	person_name: string;
+	household_name: string;
+	/** true = cette identité a déjà été réclamée au moins une fois (avertissement). */
+	claimed: boolean;
+};
 
 export type Participant = {
 	participant_id: string;

@@ -2,7 +2,15 @@
 // fonctions de ce dossier. Seul cet adaptateur connaît `@supabase/supabase-js`.
 import type { Backend } from '../index';
 import { BackendError } from '../errors';
-import { ensureSession, redeemToken, createTrip, addParticipant, repairOrphanedSession } from './auth';
+import {
+	ensureSession,
+	redeemToken,
+	listJoinCandidates,
+	claimParticipant,
+	createTrip,
+	addParticipant,
+	repairOrphanedSession
+} from './auth';
 import {
 	getTrip,
 	listParticipants,
@@ -50,6 +58,8 @@ const raw: Backend = {
 		await ensureSession();
 	},
 	redeemToken,
+	listJoinCandidates,
+	claimParticipant,
 	getMyPersonId,
 	createTrip,
 	addParticipant,

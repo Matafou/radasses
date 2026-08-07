@@ -9,6 +9,7 @@ import type {
 	Balance,
 	Beneficiary,
 	Expense,
+	JoinCandidate,
 	Operation,
 	Participant,
 	SaveExpenseInput,
@@ -31,6 +32,10 @@ export interface Backend {
 	ensureSession(): Promise<void>;
 	/** Rattache la session courante au participant du jeton ; renvoie l'id du séjour. */
 	redeemToken(token: string): Promise<string>;
+	/** Participants proposés au choix (« Qui es-tu ? ») pour le lien de séjour partageable. */
+	listJoinCandidates(joinToken: string): Promise<JoinCandidate[]>;
+	/** Rattache la session courante au participant CHOISI via le lien de séjour ; renvoie l'id du séjour. */
+	claimParticipant(joinToken: string, participantId: string): Promise<string>;
 	/** person_id de l'utilisateur courant dans ce séjour, ou null. */
 	getMyPersonId(tripId: string): Promise<string | null>;
 

@@ -58,6 +58,8 @@
 	let addNotice = $state<string | null>(null);
 	let copied = $state<string | null>(null);
 	let sharing = $state<Participant | null>(null); // participant dont on partage le lien (ouvre la feuille)
+	let sharingTrip = $state(false); // partage du lien de séjour (un pour tous, « Qui es-tu ? »)
+	let tripCopied = $state(false);
 	// navigator.share dispo (mobile surtout) : évalué côté client (navigator absent en SSR).
 	const canNativeShare = $derived(
 		typeof navigator !== 'undefined' && typeof navigator.share === 'function'
@@ -109,6 +111,40 @@
 			sharing = null;
 		} catch {
 			/* partage annulé ou indisponible */
+		}
+	}
+
+	// --- Partage du lien de SÉJOUR (un pour tous : chacun choisit son nom) ---
+	function tripInviteLink(): string {
+		const origin = typeof location !== 'undefined' ? location.origin : '';
+		return `${origin}${base}/?join=${tripState.trip?.join_token ?? ''}`;
+	}
+	const tripShareText = () =>
+		`Rejoins le séjour « ${tripName()} » sur radasses — choisis ton nom dans la liste :`;
+	const tripShareSubject = () => `Rejoindre « ${tripName()} » sur radasses`;
+	const tripShareBody = () => `${tripShareText()}\n${tripInviteLink()}`;
+	const tripMailtoHref = () =>
+		`mailto:?subject=${encodeURIComponent(tripShareSubject())}&body=${encodeURIComponent(tripShareBody())}`;
+	const tripSmsHref = () => `sms:?&body=${encodeURIComponent(tripShareBody())}`;
+	async function nativeShareTrip() {
+		try {
+			await navigator.share({
+				title: tripShareSubject(),
+				text: tripShareText(),
+				url: tripInviteLink()
+			});
+			sharingTrip = false;
+		} catch {
+			/* partage annulé ou indisponible */
+		}
+	}
+	async function copyTripLink() {
+		try {
+			await navigator.clipboard.writeText(tripInviteLink());
+			tripCopied = true;
+			setTimeout(() => (tripCopied = false), 1500);
+		} catch {
+			/* clipboard indispo */
 		}
 	}
 
@@ -283,6 +319,11 @@
 		actions={addParticipantAction}
 	/>
 
+	<Button variant="outline" class="w-full" onclick={() => (sharingTrip = true)}>
+		<Share2 size={16} aria-hidden="true" />
+		Partager le lien du séjour
+	</Button>
+
 	{#if showAdd}
 		<Card>
 			<form class="space-y-2" onsubmit={onAdd} use:autofocusWithin>
@@ -405,4 +446,46 @@
 			</Alert>
 		</div>
 	{/if}
+</BottomSheet>
+
+<!-- Feuille de partage du lien de SÉJOUR (un pour tous). À l'ouverture, chacun
+     choisit son nom dans la liste (« Qui es-tu ? »). Pratique pour un groupe, mais
+     n'importe qui avec le lien peut choisir n'importe quel nom → à réserver aux
+     participants du séjour. -->
+<BottomSheet
+	open={sharingTrip}
+	title="Partager le lien du séjour"
+	onClose={() => (sharingTrip = false)}
+>
+	<div class="space-y-2 pb-2">
+		{#if canNativeShare}
+			<button type="button" class={channelClass} onclick={nativeShareTrip}>
+				<Share2 size={18} class="shrink-0" aria-hidden="true" />
+				Partager…
+			</button>
+		{/if}
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- schéma mailto: (pas une route) -->
+		<a class={channelClass} href={tripMailtoHref()}>
+			<Mail size={18} class="shrink-0" aria-hidden="true" />
+			E-mail
+		</a>
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- schéma sms: (pas une route) -->
+		<a class={channelClass} href={tripSmsHref()}>
+			<MessageSquare size={18} class="shrink-0" aria-hidden="true" />
+			SMS
+		</a>
+		<button type="button" class={channelClass} onclick={copyTripLink}>
+			{#if tripCopied}
+				<Check size={18} class="shrink-0 text-emerald-600" aria-hidden="true" />
+				Lien copié
+			{:else}
+				<Link size={18} class="shrink-0" aria-hidden="true" />
+				Copier le lien
+			{/if}
+		</button>
+		<Alert tone="warning" class="p-2 text-xs">
+			Chacun choisira son nom dans la liste du séjour : partage ce lien avec les participants,
+			évite de le rendre public.
+		</Alert>
+	</div>
 </BottomSheet>

@@ -1,5 +1,6 @@
 import { supabase } from './client';
 import { toBackendError } from './errors';
+import type { JoinCandidate } from '../types';
 
 /** Décode l'`iat` (émis-le, en secondes) d'un JWT, ou null si illisible. */
 function jwtIssuedAt(token: string): number | null {
@@ -75,6 +76,32 @@ export async function repairOrphanedSession(): Promise<boolean> {
 export async function redeemToken(token: string): Promise<string> {
 	await ensureSession();
 	const { data, error } = await supabase.rpc('redeem_token', { p_token: token });
+	if (error) throw toBackendError(error);
+	return data as string;
+}
+
+/**
+ * Liste les participants d'un séjour pour l'écran « Qui es-tu ? », à partir du
+ * jeton de séjour PARTAGEABLE (`join_token`). Renvoie chaque identité choisissable
+ * + un drapeau `claimed` (déjà réclamée au moins une fois → confirmation nuancée).
+ */
+export async function listJoinCandidates(joinToken: string): Promise<JoinCandidate[]> {
+	await ensureSession();
+	const { data, error } = await supabase.rpc('list_join_candidates', { p_join_token: joinToken });
+	if (error) throw toBackendError(error);
+	return (data ?? []) as JoinCandidate[];
+}
+
+/**
+ * Réclame une identité (participant) via le lien de séjour : rattache la session
+ * courante au participant choisi. Idempotent. Renvoie l'id du séjour rejoint.
+ */
+export async function claimParticipant(joinToken: string, participantId: string): Promise<string> {
+	await ensureSession();
+	const { data, error } = await supabase.rpc('claim_participant', {
+		p_join_token: joinToken,
+		p_participant_id: participantId
+	});
 	if (error) throw toBackendError(error);
 	return data as string;
 }
