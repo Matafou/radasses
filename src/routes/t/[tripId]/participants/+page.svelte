@@ -279,7 +279,7 @@
 		<div class="flex items-center justify-between gap-2">
 			<span class:text-slate-400={!p.active}>
 				<a
-					class="hover:underline"
+					class="link-inline"
 					href={resolve('/t/[tripId]/personne/[personId]', {
 						tripId: tripState.tripId,
 						personId: p.person_id
@@ -374,7 +374,7 @@
 					{:else}
 						<h2 class="text-sm font-medium text-slate-600 first-letter:uppercase">
 							<a
-								class="hover:underline"
+								class="link-inline"
 								href={resolve('/t/[tripId]/foyer/[householdId]', {
 									tripId: tripState.tripId,
 									householdId: g.id

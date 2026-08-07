@@ -23,7 +23,7 @@
 				Foyer ·
 				{#each members as p, i (p.person_id)}
 					{i > 0 ? ' · ' : ''}<a
-						class="hover:underline"
+						class="link-inline"
 						href={resolve('/t/[tripId]/personne/[personId]', {
 							tripId: tripState.tripId,
 							personId: p.person_id

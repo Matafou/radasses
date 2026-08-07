@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
-	import { Pencil, Plus } from '@lucide/svelte';
+	import { Pencil, Plus, Receipt, Scale, Users } from '@lucide/svelte';
 	import Fab from './Fab.svelte';
 
 	let {
@@ -24,23 +24,39 @@
 	}
 
 	function tabClass(active: boolean): string {
-		return `flex items-center justify-center text-xs ${active ? 'font-semibold text-slate-900' : 'text-slate-400'}`;
+		return `flex flex-col items-center justify-center gap-0.5 text-[0.8rem] leading-none ${active ? 'font-semibold text-slate-900' : 'text-slate-400'}`;
 	}
 </script>
 
 <nav class="flex-none border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
-	<div class="relative mx-auto grid h-(--bar-h) max-w-app grid-cols-4">
-		<a href={resolve('/t/[tripId]', { tripId })} class={tabClass(isActive(''))}>Dépenses</a>
-		<a href={resolve('/t/[tripId]/soldes', { tripId })} class={tabClass(isActive('soldes'))}
-			>Soldes</a
+	<div class="relative mx-auto grid h-(--bar-h) max-w-app grid-cols-3">
+		<a
+			href={resolve('/t/[tripId]', { tripId })}
+			class={tabClass(isActive(''))}
+			title="Dépenses"
+			aria-current={isActive('') ? 'page' : undefined}
 		>
+			<Receipt size={20} aria-hidden="true" />
+			<span>Dépenses</span>
+		</a>
+		<a
+			href={resolve('/t/[tripId]/soldes', { tripId })}
+			class="{tabClass(isActive('soldes'))} border-l border-slate-200"
+			title="Soldes"
+			aria-current={isActive('soldes') ? 'page' : undefined}
+		>
+			<Scale size={20} aria-hidden="true" />
+			<span>Soldes</span>
+		</a>
 		<a
 			href={resolve('/t/[tripId]/participants', { tripId })}
-			class={tabClass(isActive('participants'))}>Participants</a
+			class="{tabClass(isActive('participants'))} border-l border-slate-200"
+			title="Participants"
+			aria-current={isActive('participants') ? 'page' : undefined}
 		>
-		<a href={resolve('/t/[tripId]/journal', { tripId })} class={tabClass(isActive('journal'))}
-			>Journal</a
-		>
+			<Users size={20} aria-hidden="true" />
+			<span>Participants</span>
+		</a>
 
 		{#if showFab}
 			{#if hasDraft}

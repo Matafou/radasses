@@ -17,9 +17,11 @@
 
 	let path = $derived($page.url.pathname);
 	// « Revenir en arrière » n'apparaît que sur les sous-pages (foyer / personne /
-	// réglages), pas sur les onglets de premier niveau. réglages n'a pas de segment
-	// après → on le teste en fin de chemin.
-	let showBack = $derived(/\/(foyer|personne)\//.test(path) || path.endsWith('/reglages'));
+	// réglages / journal), pas sur les onglets de premier niveau. réglages et journal
+	// n'ont pas de segment après → on les teste en fin de chemin.
+	let showBack = $derived(
+		/\/(foyer|personne)\//.test(path) || /\/(reglages|journal)$/.test(path)
+	);
 	// La navigation entre onglets conserve la saisie (le sheet vit dans ce layout).
 	// Seul un départ du séjour démonte le composant et perd la saisie → on prévient.
 	beforeNavigate((nav) => {

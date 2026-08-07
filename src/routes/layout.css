@@ -22,8 +22,8 @@
 	--z-backdrop: 30;
 	--z-sheet: 40;
 
-	/* FAB : position horizontale (au-dessus du 1er des 4 onglets → centre du 1er quart). */
-	--fab-x: 12.5%;
+	/* FAB : position horizontale (au-dessus du 1er des 3 onglets → centre du 1er tiers). */
+	--fab-x: 16.6667%;
 
 	/* Bottom-sheet : hauteur max et durée d'animation d'ouverture. */
 	--sheet-max-h: 85vh;
@@ -91,6 +91,13 @@
 
 	.list-row {
 		@apply px-4 py-3;
+	}
+
+	/* Lien de texte EN LIGNE (un nom cliquable dans une phrase) : soulignement
+	   discret PERMANENT (visible au doigt, pas seulement au survol), qui fonce au
+	   survol. Centralisé ici pour rester cohérent et évoluer avec le thème. */
+	.link-inline {
+		@apply underline decoration-slate-300 underline-offset-2 hover:decoration-slate-500;
 	}
 }
 

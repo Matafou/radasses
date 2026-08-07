@@ -43,30 +43,28 @@
 			{#each tripState.balances as b (b.household_id)}
 				<ListRow class="p-0">
 					<a
-						class="flex w-full items-center justify-between gap-2 px-4 py-3 hover:bg-slate-50"
+						class="flex w-full items-center gap-2 px-4 py-3 hover:bg-slate-50"
 						href={resolve('/t/[tripId]/foyer/[householdId]', {
 							tripId: tripState.tripId,
 							householdId: b.household_id
 						})}
 					>
-						<span class="inline-flex min-w-0 items-center gap-1">
-							<ChevronRight size={14} class="shrink-0 text-slate-400" aria-hidden="true" />
-							<span class="truncate first-letter:uppercase"
+						<span class="min-w-0 flex-1 truncate first-letter:uppercase"
 							>{foyerLabel(tripState.householdName.get(b.household_id) ?? '?')}</span
 						>
-						</span>
 						<span
-							class={b.net_cents > 0
+							class="shrink-0 {b.net_cents > 0
 								? 'font-medium text-emerald-600'
 								: b.net_cents < 0
 									? 'font-medium text-red-600'
-									: 'text-slate-400'}
+									: 'text-slate-400'}"
 						>
 							{b.net_cents > 0 ? '+' : ''}{fmt(b.net_cents)}
 							<MetaText class="ml-1">
 								{b.net_cents > 0 ? 'on lui doit' : b.net_cents < 0 ? 'doit' : ''}
 							</MetaText>
 						</span>
+						<ChevronRight size={16} class="shrink-0 text-slate-400" aria-hidden="true" />
 					</a>
 				</ListRow>
 			{:else}

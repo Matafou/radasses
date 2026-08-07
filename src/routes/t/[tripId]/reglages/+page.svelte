@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
+	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
+	import { ChevronRight, History } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
 	import { autofocusWithin } from '$lib/actions/autofocus';
 	import { Button, Card, FieldError, SectionHeader, Select, TextInput } from '$lib/components/ui';
@@ -56,4 +59,14 @@
 			</Button>
 		</form>
 	</Card>
+
+	<!-- Le Journal a quitté la barre d'onglets → on y accède ici. -->
+	<a
+		href={resolve('/t/[tripId]/journal', { tripId: tripState.tripId })}
+		class="flex items-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 hover:bg-slate-50"
+	>
+		<History size={18} class="shrink-0 text-slate-400" aria-hidden="true" />
+		<span class="flex-1">Journal des opérations</span>
+		<ChevronRight size={16} class="shrink-0 text-slate-400" aria-hidden="true" />
+	</a>
 </section>

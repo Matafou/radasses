@@ -3,6 +3,8 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
+	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
+	import { ChevronRight } from '@lucide/svelte';
 	import { backend } from '$lib/backend';
 	import { getKnownTrips, rememberTrip, type KnownTrip } from '$lib/trips-store';
 	import { autofocusWithin } from '$lib/actions/autofocus';
@@ -190,9 +192,12 @@
 					{#each known as t (t.id)}
 						<ListRow class="p-0">
 							<a
-								class="block px-4 py-3 hover:bg-slate-50"
-								href={resolve('/t/[tripId]', { tripId: t.id })}>{t.name}</a
+								class="flex items-center gap-2 px-4 py-3 hover:bg-slate-50"
+								href={resolve('/t/[tripId]', { tripId: t.id })}
 							>
+								<span class="min-w-0 flex-1 truncate">{t.name}</span>
+								<ChevronRight size={16} class="shrink-0 text-slate-400" aria-hidden="true" />
+							</a>
 						</ListRow>
 					{/each}
 				</PanelList>
