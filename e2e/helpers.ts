@@ -47,3 +47,14 @@ export async function addSimpleExpense(page: Page, opts: { amount: string; descr
 /** Nom de séjour unique (les tests partagent la même base locale). */
 export const uniqueTripName = (prefix = 'E2E') =>
 	`${prefix} ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+/**
+ * Désactive l'arrondi des montants (préférence d'appareil, ON par défaut) AVANT le
+ * 1er chargement → les soldes s'affichent en valeur exacte (« 30,00 € »). À appeler
+ * en tête de test, avant `createTrip`. Simplifie les assertions de montants exacts.
+ */
+export async function disableAmountRounding(page: Page) {
+	await page.addInitScript(() =>
+		localStorage.setItem('radasses.prefs', JSON.stringify({ roundAmounts: false }))
+	);
+}

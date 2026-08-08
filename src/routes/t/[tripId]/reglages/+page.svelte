@@ -4,8 +4,17 @@
 	import { ChevronRight, History, UserRound } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
 	import { foyerLabel } from '$lib/format';
+	import { prefs } from '$lib/prefs.svelte';
 	import { autofocusWithin } from '$lib/actions/autofocus';
-	import { Button, Card, FieldError, SectionHeader, Select, TextInput } from '$lib/components/ui';
+	import {
+		Button,
+		Card,
+		FieldError,
+		SectionHeader,
+		Select,
+		Switch,
+		TextInput
+	} from '$lib/components/ui';
 
 	const tripState = getTripState();
 
@@ -84,6 +93,24 @@
 				{saving ? 'Enregistrement…' : saved ? 'Enregistré ✓' : 'Enregistrer'}
 			</Button>
 		</form>
+	</Card>
+
+	<!-- Préférence d'AFFICHAGE, propre à cet appareil (non partagée avec les membres). -->
+	<Card>
+		<div class="flex items-center justify-between gap-3">
+			<div class="text-sm">
+				<p>Arrondir les montants</p>
+				<p class="text-xs text-slate-500">
+					Soldes et remboursements à l'euro près (montant exact au survol / à l'appui). Réglage de
+					cet appareil.
+				</p>
+			</div>
+			<Switch
+				checked={prefs.roundAmounts}
+				label="Arrondir les montants"
+				onclick={() => prefs.setRoundAmounts(!prefs.roundAmounts)}
+			/>
+		</div>
 	</Card>
 
 	<!-- Le Journal a quitté la barre d'onglets → on y accède ici. -->

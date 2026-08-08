@@ -3,6 +3,16 @@ export function money(cents: number, currency = 'EUR'): string {
 	return new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format((cents ?? 0) / 100);
 }
 
+/** Centimes -> montant ARRONDI à l'entier le plus proche (0 décimale), formaté. */
+export function moneyRounded(cents: number, currency = 'EUR'): string {
+	return new Intl.NumberFormat('fr-FR', {
+		style: 'currency',
+		currency,
+		minimumFractionDigits: 0,
+		maximumFractionDigits: 0
+	}).format(Math.round((cents ?? 0) / 100));
+}
+
 /** Raccourci euros (compat). */
 export function euros(cents: number): string {
 	return money(cents, 'EUR');

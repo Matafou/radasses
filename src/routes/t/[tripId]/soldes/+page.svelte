@@ -4,8 +4,10 @@
 	import { ArrowRight, Check, ChevronRight, Plus } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
 	import { pullToRefresh } from '$lib/actions/pullToRefresh';
+	import { prefs } from '$lib/prefs.svelte';
 	import type { Transfer } from '$lib/settlements';
-	import { foyerLabel, money } from '$lib/format';
+	import { foyerLabel } from '$lib/format';
+	import RoundableAmount from '$lib/components/RoundableAmount.svelte';
 	import {
 		Button,
 		EmptyState,
@@ -16,20 +18,21 @@
 	} from '$lib/components/ui';
 
 	const tripState = getTripState();
-	const fmt = (c: number) => money(c, tripState.currency);
 
 	// Un remboursement = une dépense : le débiteur « paie » le créditeur.
 	// On préremplit le formulaire de dépense (bottom-sheet du layout) pour ajuster/valider.
+	// Si l'arrondi est activé, on préremplit le montant ARRONDI (l'utilisateur peut éditer).
 	function onReimburse(t: Transfer) {
 		const from = tripState.participants.find(
 			(p) => p.household_id === t.from_household_id
 		)?.person_id;
 		const to = tripState.participants.find((p) => p.household_id === t.to_household_id)?.person_id;
 		if (!from || !to) return;
+		const amount = prefs.roundAmounts ? Math.round(t.amount_cents / 100) * 100 : t.amount_cents;
 		tripState.openReimbursement({
 			from_person_id: from,
 			to_person_id: to,
-			amount_cents: t.amount_cents
+			amount_cents: amount
 		});
 	}
 </script>
@@ -45,14 +48,20 @@
 			<div data-ptr-content>
 			<PanelList>
 				{#each tripState.balances as b (b.household_id)}
-					<ListRow class="p-0">
+					<ListRow class="relative p-0">
+						<!-- Lien plein-row (navigation) en dessous ; le contenu au-dessus laisse
+						     passer les taps vers ce lien SAUF le montant (dépliable). -->
 						<a
-							class="flex w-full items-center gap-2 px-4 py-3 hover:bg-slate-50"
+							class="absolute inset-0 hover:bg-slate-50"
 							href={resolve('/t/[tripId]/foyer/[householdId]', {
 								tripId: tripState.tripId,
 								householdId: b.household_id
 							})}
-						>
+							aria-label={`Voir le détail de ${foyerLabel(
+								tripState.householdName.get(b.household_id) ?? '?'
+							)}`}
+						></a>
+						<div class="pointer-events-none relative flex items-center gap-2 px-4 py-3">
 							<span class="min-w-0 flex-1 truncate first-letter:uppercase"
 								>{foyerLabel(tripState.householdName.get(b.household_id) ?? '?')}</span
 							>
@@ -63,13 +72,16 @@
 										? 'font-medium text-red-600'
 										: 'text-slate-400'}"
 							>
-								{b.net_cents > 0 ? '+' : ''}{fmt(b.net_cents)}
+								{b.net_cents > 0 ? '+' : ''}<RoundableAmount
+									cents={b.net_cents}
+									currency={tripState.currency}
+								/>
 								<MetaText class="ml-1">
 									{b.net_cents > 0 ? 'on lui doit' : b.net_cents < 0 ? 'doit' : ''}
 								</MetaText>
 							</span>
 							<ChevronRight size={16} class="shrink-0 text-slate-400" aria-hidden="true" />
-						</a>
+						</div>
 					</ListRow>
 				{:else}
 					<ListRow class="text-sm text-slate-400">Aucun solde.</ListRow>
@@ -109,7 +121,7 @@
 								<span class="font-medium"
 									>{foyerLabel(tripState.householdName.get(t.to_household_id) ?? '?')}</span
 								>
-								: {fmt(t.amount_cents)}
+								: <RoundableAmount cents={t.amount_cents} currency={tripState.currency} />
 							</span>
 							<Button
 								size="sm"

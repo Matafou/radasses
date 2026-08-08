@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { addParticipant, createTrip, uniqueTripName } from './helpers';
+import { addParticipant, createTrip, disableAmountRounding, uniqueTripName } from './helpers';
 
 // Correctif : un participant ajouté APRÈS le montage du formulaire de dépense
 // (cas courant : on ajoute les participants, puis la 1re dépense) doit être
@@ -7,6 +7,7 @@ import { addParticipant, createTrip, uniqueTripName } from './helpers';
 // tant que l'auto-sélection n'inclut pas le participant tardif.
 
 test('un participant ajouté avant la 1re dépense est bénéficiaire par défaut', async ({ page }) => {
+	await disableAmountRounding(page); // soldes en valeur exacte pour l'assertion
 	await createTrip(page, uniqueTripName(), 'Alice');
 	await addParticipant(page, 'Bob');
 

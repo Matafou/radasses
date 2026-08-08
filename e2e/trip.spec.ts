@@ -1,5 +1,12 @@
 import { expect, test } from '@playwright/test';
-import { addParticipant, addSimpleExpense, createTrip, listRow, uniqueTripName } from './helpers';
+import {
+	addParticipant,
+	addSimpleExpense,
+	createTrip,
+	disableAmountRounding,
+	listRow,
+	uniqueTripName
+} from './helpers';
 
 // Ces tests valident surtout le RECHARGEMENT SÉLECTIF (point 4) : après une
 // mutation, on ne recharge qu'un sous-ensemble des données — il faut vérifier
@@ -11,6 +18,7 @@ test('crée un séjour et arrive sur l’onglet Dépenses (vide)', async ({ page
 });
 
 test('une dépense partagée met à jour la liste ET les soldes', async ({ page }) => {
+	await disableAmountRounding(page); // soldes en valeur exacte pour l'assertion
 	await createTrip(page, uniqueTripName(), 'Alice');
 	await addParticipant(page, 'Bob');
 	await addSimpleExpense(page, { amount: '60', description: 'Courses' });
