@@ -9,10 +9,10 @@
 	let {
 		cents,
 		currency = 'EUR',
-		class: className = ''
-	}: { cents: number; currency?: string; class?: string } = $props();
+		class: className = '',
+		revealed = $bindable()
+	}: { cents: number; currency?: string; class?: string; revealed?: boolean } = $props();
 
-	let revealed = $state(false);
 	const exact = $derived(money(cents, currency));
 	const rounded = $derived(moneyRounded(cents, currency));
 </script>

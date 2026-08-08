@@ -19,16 +19,24 @@
 
 	const tripState = getTripState();
 
+	// État « déplié » (montant exact révélé) de chaque suggestion, indexé par foyers.
+	// Permet de préremplir le remboursement avec l'exact quand l'utilisateur a cliqué
+	// sur le montant pour l'afficher.
+	let revealedTransfers = $state<Record<string, boolean>>({});
+	const transferKey = (t: Transfer) => t.from_household_id + t.to_household_id;
+
 	// Un remboursement = une dépense : le débiteur « paie » le créditeur.
 	// On préremplit le formulaire de dépense (bottom-sheet du layout) pour ajuster/valider.
-	// Si l'arrondi est activé, on préremplit le montant ARRONDI (l'utilisateur peut éditer).
-	function onReimburse(t: Transfer) {
+	// Montant prérempli = celui AFFICHÉ : arrondi si l'option est active et que la suggestion
+	// n'a pas été dépliée ; exact sinon (option coupée, ou montant révélé au clic).
+	function onReimburse(t: Transfer, revealed: boolean) {
 		const from = tripState.participants.find(
 			(p) => p.household_id === t.from_household_id
 		)?.person_id;
 		const to = tripState.participants.find((p) => p.household_id === t.to_household_id)?.person_id;
 		if (!from || !to) return;
-		const amount = prefs.roundAmounts ? Math.round(t.amount_cents / 100) * 100 : t.amount_cents;
+		const useExact = !prefs.roundAmounts || revealed;
+		const amount = useExact ? t.amount_cents : Math.round(t.amount_cents / 100) * 100;
 		tripState.openReimbursement({
 			from_person_id: from,
 			to_person_id: to,
@@ -112,6 +120,7 @@
 			{#if tripState.transfers.length}
 				<PanelList>
 					{#each tripState.transfers as t (t.from_household_id + t.to_household_id)}
+						{@const key = transferKey(t)}
 						<ListRow class="flex items-center justify-between gap-2 text-sm">
 							<span class="inline-flex min-w-0 flex-wrap items-center gap-1">
 								<span class="font-medium first-letter:uppercase"
@@ -121,13 +130,17 @@
 								<span class="font-medium"
 									>{foyerLabel(tripState.householdName.get(t.to_household_id) ?? '?')}</span
 								>
-								: <RoundableAmount cents={t.amount_cents} currency={tripState.currency} />
+								: <RoundableAmount
+									cents={t.amount_cents}
+									currency={tripState.currency}
+									bind:revealed={revealedTransfers[key]}
+								/>
 							</span>
 							<Button
 								size="sm"
 								variant="success"
 								class="shrink-0 px-2 py-1 text-xs whitespace-nowrap"
-								onclick={() => onReimburse(t)}
+								onclick={() => onReimburse(t, !!revealedTransfers[key])}
 							>
 								<Check size={14} aria-hidden="true" /> Remboursé !
 							</Button>
