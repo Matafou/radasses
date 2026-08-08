@@ -1,12 +1,19 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
-	import { ChevronRight, History } from '@lucide/svelte';
+	import { ChevronRight, History, UserRound } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
+	import { foyerLabel } from '$lib/format';
 	import { autofocusWithin } from '$lib/actions/autofocus';
 	import { Button, Card, FieldError, SectionHeader, Select, TextInput } from '$lib/components/ui';
 
 	const tripState = getTripState();
+
+	// « Qui suis-je ? » : le participant auquel la session courante est rattachée
+	// (utile depuis le lien de séjour où l'on « choisit son nom »).
+	const me = $derived(
+		tripState.participants.find((p) => p.person_id === tripState.myPersonId) ?? null
+	);
 
 	let name = $state(tripState.trip?.name ?? '');
 	let currency = $state(tripState.trip?.currency ?? 'EUR');
@@ -37,6 +44,25 @@
 
 <section class="space-y-3">
 	<SectionHeader title="Réglages du séjour" />
+
+	<!-- Qui suis-je ? — identité de la session courante dans ce séjour. -->
+	<Card>
+		<div class="flex items-center gap-3">
+			<UserRound size={20} class="shrink-0 text-slate-400" aria-hidden="true" />
+			<div class="min-w-0 text-sm">
+				<p class="text-xs text-slate-500">Qui suis-je ?</p>
+				{#if me}
+					<p class="truncate">
+						<span class="font-medium">{me.person_name}</span>
+						<span class="text-slate-500"> · {foyerLabel(me.household_name)}</span>
+					</p>
+				{:else}
+					<p class="text-slate-400">Identité inconnue sur cet appareil.</p>
+				{/if}
+			</div>
+		</div>
+	</Card>
+
 	<Card>
 		<form class="space-y-3" onsubmit={onSave} use:autofocusWithin>
 			<label class="form-label">
