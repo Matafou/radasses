@@ -32,7 +32,7 @@
 	{type}
 	aria-label={label}
 	title={label}
-	class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white shadow-lg {variants[
+	class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white shadow-lg disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none {variants[
 		variant
 	]} {className}"
 	{...rest}

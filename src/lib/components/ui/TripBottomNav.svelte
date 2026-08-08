@@ -8,12 +8,14 @@
 		tripId,
 		path,
 		showFab = false,
+		fabDisabled = false,
 		hasDraft = false,
 		onAdd
 	}: {
 		tripId: string;
 		path: string;
 		showFab?: boolean;
+		fabDisabled?: boolean;
 		hasDraft?: boolean;
 		onAdd: () => void;
 	} = $props();
@@ -65,6 +67,7 @@
 					label="Reprendre la saisie en cours"
 					variant="warning"
 					class="absolute bottom-full left-(--fab-x) z-(--z-fab) -mb-2 -translate-x-1/2"
+					disabled={fabDisabled}
 					onclick={onAdd}
 				/>
 			{:else}
@@ -72,6 +75,7 @@
 					icon={Plus}
 					label="Ajouter une dépense"
 					class="absolute bottom-full left-(--fab-x) z-(--z-fab) -mb-2 -translate-x-1/2"
+					disabled={fabDisabled}
 					onclick={onAdd}
 				/>
 			{/if}

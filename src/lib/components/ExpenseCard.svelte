@@ -5,6 +5,7 @@
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
 	import { ArrowRight, Lock, Pencil, Trash2 } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
+	import { online } from '$lib/online.svelte';
 	import { money } from '$lib/format';
 	import { scrollShadow } from '$lib/actions/scrollShadow';
 	import { fitText } from '$lib/actions/fitText';
@@ -118,9 +119,16 @@
 					icon={Pencil}
 					label="Modifier"
 					variant="warning"
+					disabled={!online.current}
 					onclick={() => tripState.openEditExpense(expense)}
 				/>
-				<IconButton icon={Trash2} label="Supprimer" variant="danger" onclick={onDelete} />
+				<IconButton
+					icon={Trash2}
+					label="Supprimer"
+					variant="danger"
+					disabled={!online.current}
+					onclick={onDelete}
+				/>
 			</div>
 		</div>
 	</div>

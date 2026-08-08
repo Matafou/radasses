@@ -17,7 +17,7 @@
 	role="switch"
 	aria-checked={checked}
 	aria-label={label}
-	class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors {checked
+	class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 disabled:pointer-events-none {checked
 		? 'bg-emerald-600'
 		: 'bg-slate-300'} {className}"
 	{...rest}

@@ -11,6 +11,8 @@ import {
 } from '$lib/backend';
 import { simplifyDebts } from './settlements';
 import { computeBalances } from './balances';
+import { online } from './online.svelte';
+import { loadTripSnapshot, saveTripSnapshot, type TripSnapshot } from './offline-cache';
 
 /** Sections rechargeables indépendamment (voir `load`). */
 type LoadSection = 'trip' | 'participants' | 'expenses' | 'beneficiaries' | 'me';
@@ -53,6 +55,8 @@ export class TripState {
 	expenses = $state<Expense[]>([]);
 	beneficiaries = $state<Beneficiary[]>([]);
 	myPersonId = $state<string | null>(null);
+	/** données servies depuis le cache local (hors-ligne) plutôt que du réseau */
+	fromCache = $state(false);
 
 	currency = $derived(this.trip?.currency ?? 'EUR');
 	personName = $derived(new SvelteMap(this.participants.map((p) => [p.person_id, p.person_name])));
@@ -92,6 +96,18 @@ export class TripState {
 		if (!id) return;
 		const want = (s: LoadSection) => sections.includes(s);
 		const full = sections === ALL_SECTIONS;
+		// Hors-ligne : servir directement le cache local, sans attendre l'échec réseau
+		// (qui peut être lent). Si aucun cache, on tente quand même le réseau (l'heuristique
+		// navigator.onLine peut se tromper).
+		if (!online.current) {
+			const snap = await loadTripSnapshot(id);
+			if (snap) {
+				this.hydrateFromSnapshot(snap);
+				this.error = null;
+				this.loading = false;
+				return;
+			}
+		}
 		if (full) this.loading = true;
 		this.error = null;
 		try {
@@ -107,10 +123,51 @@ export class TripState {
 			if (expenses !== undefined) this.expenses = expenses;
 			if (beneficiaries !== undefined) this.beneficiaries = beneficiaries;
 			if (myPersonId !== undefined) this.myPersonId = myPersonId;
+			this.fromCache = false;
+			// write-through : on garde en cache le dernier état connu (pour l'offline).
+			// `$state.snapshot` = copie simple (les proxies runes ne sont pas clonables par
+			// IndexedDB → sinon le `put` échoue silencieusement).
+			void saveTripSnapshot(
+				id,
+				$state.snapshot({
+					trip: this.trip,
+					participants: this.participants,
+					expenses: this.expenses,
+					beneficiaries: this.beneficiaries,
+					myPersonId: this.myPersonId
+				})
+			);
 		} catch (e) {
+			// Réseau tombé alors qu'on se croyait en ligne : on hydrate depuis le cache
+			// plutôt que d'afficher une erreur.
+			if (e instanceof BackendError && e.code === 'network') {
+				const snap = await loadTripSnapshot(id);
+				if (snap) {
+					this.hydrateFromSnapshot(snap);
+					this.error = null;
+					return;
+				}
+			}
 			this.error = e instanceof Error ? e.message : String(e);
 		} finally {
 			if (full) this.loading = false;
+		}
+	}
+
+	/** Peuple l'état depuis un instantané en cache (lecture hors-ligne). */
+	private hydrateFromSnapshot(snap: TripSnapshot) {
+		this.trip = snap.trip;
+		this.participants = snap.participants;
+		this.expenses = snap.expenses;
+		this.beneficiaries = snap.beneficiaries;
+		this.myPersonId = snap.myPersonId;
+		this.fromCache = true;
+	}
+
+	/** Bloque une écriture hors-ligne (étape 3a = lecture seule offline). */
+	private assertOnline() {
+		if (!online.current) {
+			throw new BackendError('network', 'Action indisponible hors-ligne.');
 		}
 	}
 
@@ -130,10 +187,12 @@ export class TripState {
 
 	/** Crée (sans expense_id) ou met à jour (avec expense_id + expected_version). */
 	async upsertExpense(input: Omit<SaveExpenseInput, 'trip_id'>) {
+		this.assertOnline();
 		await this.withConflictReload(() => backend.saveExpense({ trip_id: this.tripId, ...input }));
 		await this.load(['expenses', 'beneficiaries']); // soldes = dérivés
 	}
 	async removeExpense(exp: Expense) {
+		this.assertOnline();
 		await this.withConflictReload(() =>
 			backend.deleteExpense({
 				trip_id: this.tripId,
@@ -175,6 +234,7 @@ export class TripState {
 		this.formSeq++;
 	}
 	async newParticipant(params: { person_name: string; household_id?: string | null }) {
+		this.assertOnline();
 		await backend.addParticipant({ trip_id: this.tripId, ...params });
 		// un nouveau foyer ajoute une ligne (solde 0) — les soldes sont dérivés des participants
 		await this.load(['participants']);
@@ -194,6 +254,7 @@ export class TripState {
 		move_household_id?: string | null;
 		new_household_name?: string;
 	}) {
+		this.assertOnline();
 		if (params.person_name != null) {
 			await backend.updatePersonName(params.person_id, params.person_name);
 		}
@@ -212,17 +273,20 @@ export class TripState {
 	}
 	/** Renomme un foyer (partagé → visible pour tous ses membres). */
 	async renameHousehold(householdId: string, name: string) {
+		this.assertOnline();
 		await backend.updateHouseholdName(householdId, name);
 		await this.load(['participants']);
 	}
 	/** Marque un participant présent (active=true) ou parti (false). */
 	async setActive(participantId: string, active: boolean) {
+		this.assertOnline();
 		await backend.setParticipantActive(participantId, active);
 		// `active` n'entre pas dans le calcul des soldes existants
 		await this.load(['participants']);
 	}
 	/** Réglages du séjour (nom, devise). */
 	async updateSettings(patch: { name?: string; currency?: string }) {
+		this.assertOnline();
 		await backend.updateTrip(this.tripId, patch);
 		await this.load(['trip']);
 	}

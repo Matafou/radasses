@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { backend } from '$lib/backend';
+	import { online } from '$lib/online.svelte';
 	import { Alert, AppShell, LoadingText } from '$lib/components/ui';
 
 	let { children } = $props();
@@ -11,9 +12,6 @@
 	// Hors-ligne au TOUT premier lancement (jamais venu) : pas de session en cache et
 	// `signInAnonymously` (réseau) échoue → on distingue ce cas d'une vraie erreur.
 	let offline = $state(false);
-	// État de connexion courant (pour la bannière). `navigator.onLine` n'est fiable
-	// qu'après le montage (SSR off, mais prudence).
-	let online = $state(true);
 	// Sur une route de séjour, c'est le layout du séjour qui fournit sa propre
 	// barre du haut (retour + titre + réglages) → on masque l'en-tête « Radasses ».
 	let tripId = $derived($page.params.tripId);
@@ -33,27 +31,22 @@
 
 	onMount(bootstrap);
 
-	// Écoute la connexion : met à jour la bannière et retente le démarrage à la
-	// reconnexion si on n'a pas encore de session (cas « jamais venu hors-ligne »).
+	// Retente le démarrage à la reconnexion si on n'a pas encore de session (cas
+	// « jamais venu hors-ligne »). On saute la 1re exécution (déjà couverte par onMount).
+	let started = false;
 	$effect(() => {
-		online = navigator.onLine;
-		const on = () => {
-			online = true;
-			if (!ready) bootstrap();
-		};
-		const off = () => (online = false);
-		window.addEventListener('online', on);
-		window.addEventListener('offline', off);
-		return () => {
-			window.removeEventListener('online', on);
-			window.removeEventListener('offline', off);
-		};
+		const isOnline = online.current;
+		if (!started) {
+			started = true;
+			return;
+		}
+		if (isOnline && !ready) bootstrap();
 	});
 </script>
 
 <AppShell showHeader={!tripId}>
-	{#if !online && ready}
-		<Alert tone="warning" class="m-2">Hors-ligne — reconnecte-toi pour charger les données.</Alert>
+	{#if !online.current && ready}
+		<Alert tone="warning" class="m-2">Hors-ligne — les modifications sont désactivées.</Alert>
 	{/if}
 	{#if error}
 		<Alert class="m-4">Erreur : {error}</Alert>

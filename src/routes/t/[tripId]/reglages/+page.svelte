@@ -3,6 +3,7 @@
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
 	import { ChevronRight, History, UserRound } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
+	import { online } from '$lib/online.svelte';
 	import { foyerLabel } from '$lib/format';
 	import { prefs } from '$lib/prefs.svelte';
 	import { autofocusWithin } from '$lib/actions/autofocus';
@@ -89,7 +90,7 @@
 			{#if error}
 				<FieldError>{error}</FieldError>
 			{/if}
-			<Button type="submit" class="w-full" disabled={saving}>
+			<Button type="submit" class="w-full" disabled={saving || !online.current}>
 				{saving ? 'Enregistrement…' : saved ? 'Enregistré ✓' : 'Enregistrer'}
 			</Button>
 		</form>

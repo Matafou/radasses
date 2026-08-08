@@ -5,6 +5,7 @@
 	import { getTripState } from '$lib/trip.svelte';
 	import { pullToRefresh } from '$lib/actions/pullToRefresh';
 	import { prefs } from '$lib/prefs.svelte';
+	import { online } from '$lib/online.svelte';
 	import type { Transfer } from '$lib/settlements';
 	import { foyerLabel } from '$lib/format';
 	import RoundableAmount from '$lib/components/RoundableAmount.svelte';
@@ -105,6 +106,7 @@
 			type="button"
 			variant="outline"
 			class="mb-2 w-full flex-col border-2 border-dashed border-emerald-500 bg-white text-center text-emerald-700 hover:bg-emerald-50"
+			disabled={!online.current}
 			onclick={() => tripState.openReimbursement()}
 		>
 			<span class="inline-flex items-center gap-1">
@@ -140,6 +142,7 @@
 								size="sm"
 								variant="success"
 								class="shrink-0 px-2 py-1 text-xs whitespace-nowrap"
+								disabled={!online.current}
 								onclick={() => onReimburse(t, !!revealedTransfers[key])}
 							>
 								<Check size={14} aria-hidden="true" /> Remboursé !

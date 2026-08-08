@@ -37,7 +37,7 @@
 	{type}
 	aria-label={label}
 	{title}
-	class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md {variants[
+	class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md disabled:opacity-40 disabled:pointer-events-none {variants[
 		variant
 	]} {className}"
 	{...rest}

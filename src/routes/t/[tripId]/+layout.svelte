@@ -3,6 +3,7 @@
 	import { beforeNavigate } from '$app/navigation';
 	import { TripState, setTripState } from '$lib/trip.svelte';
 	import { pullToRefresh } from '$lib/actions/pullToRefresh';
+	import { online } from '$lib/online.svelte';
 	import ExpenseForm from '$lib/components/ExpenseForm.svelte';
 	import ReimbursementForm from '$lib/components/ReimbursementForm.svelte';
 	import { Alert, BottomSheet, LoadingText, TripBottomNav, TripHeader } from '$lib/components/ui';
@@ -79,6 +80,7 @@
 		{tripId}
 		{path}
 		showFab={Boolean(state.trip) && !state.formOpen}
+		fabDisabled={!online.current}
 		hasDraft={state.hasCreateDraft}
 		onAdd={() => state.openNewExpense()}
 	/>
