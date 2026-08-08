@@ -7,19 +7,18 @@ import {
 	type Participant,
 	type Expense,
 	type Beneficiary,
-	type Balance,
 	type SaveExpenseInput
 } from '$lib/backend';
 import { simplifyDebts } from './settlements';
+import { computeBalances } from './balances';
 
 /** Sections rechargeables indépendamment (voir `load`). */
-type LoadSection = 'trip' | 'participants' | 'expenses' | 'beneficiaries' | 'balances' | 'me';
+type LoadSection = 'trip' | 'participants' | 'expenses' | 'beneficiaries' | 'me';
 const ALL_SECTIONS: readonly LoadSection[] = [
 	'trip',
 	'participants',
 	'expenses',
 	'beneficiaries',
-	'balances',
 	'me'
 ];
 
@@ -53,7 +52,6 @@ export class TripState {
 	participants = $state<Participant[]>([]);
 	expenses = $state<Expense[]>([]);
 	beneficiaries = $state<Beneficiary[]>([]);
-	balances = $state<Balance[]>([]);
 	myPersonId = $state<string | null>(null);
 
 	currency = $derived(this.trip?.currency ?? 'EUR');
@@ -62,6 +60,9 @@ export class TripState {
 		new SvelteMap(this.participants.map((p) => [p.household_id, p.household_name]))
 	);
 	households = $derived(Array.from(this.householdName, ([id, name]) => ({ id, name })));
+	// Soldes recalculés LOCALEMENT depuis les données chargées (réplique de la vue SQL
+	// `balances`) → toujours cohérents avec les dépenses, sans requête réseau dédiée.
+	balances = $derived(computeBalances(this.participants, this.expenses, this.beneficiaries));
 	transfers = $derived(simplifyDebts(this.balances));
 	benefByExpense = $derived.by(() => {
 		const m = new SvelteMap<string, Beneficiary[]>();
@@ -94,21 +95,17 @@ export class TripState {
 		if (full) this.loading = true;
 		this.error = null;
 		try {
-			const [trip, participants, expenses, beneficiaries, balances, myPersonId] = await Promise.all(
-				[
-					want('trip') ? backend.getTrip(id) : undefined,
-					want('participants') ? backend.listParticipants(id) : undefined,
-					want('expenses') ? backend.listExpenses(id) : undefined,
-					want('beneficiaries') ? backend.listBeneficiaries(id) : undefined,
-					want('balances') ? backend.getBalances(id) : undefined,
-					want('me') ? backend.getMyPersonId(id) : undefined
-				]
-			);
+			const [trip, participants, expenses, beneficiaries, myPersonId] = await Promise.all([
+				want('trip') ? backend.getTrip(id) : undefined,
+				want('participants') ? backend.listParticipants(id) : undefined,
+				want('expenses') ? backend.listExpenses(id) : undefined,
+				want('beneficiaries') ? backend.listBeneficiaries(id) : undefined,
+				want('me') ? backend.getMyPersonId(id) : undefined
+			]);
 			if (trip !== undefined) this.trip = trip;
 			if (participants !== undefined) this.participants = participants;
 			if (expenses !== undefined) this.expenses = expenses;
 			if (beneficiaries !== undefined) this.beneficiaries = beneficiaries;
-			if (balances !== undefined) this.balances = balances;
 			if (myPersonId !== undefined) this.myPersonId = myPersonId;
 		} catch (e) {
 			this.error = e instanceof Error ? e.message : String(e);
@@ -134,7 +131,7 @@ export class TripState {
 	/** Crée (sans expense_id) ou met à jour (avec expense_id + expected_version). */
 	async upsertExpense(input: Omit<SaveExpenseInput, 'trip_id'>) {
 		await this.withConflictReload(() => backend.saveExpense({ trip_id: this.tripId, ...input }));
-		await this.load(['expenses', 'beneficiaries', 'balances']);
+		await this.load(['expenses', 'beneficiaries']); // soldes = dérivés
 	}
 	async removeExpense(exp: Expense) {
 		await this.withConflictReload(() =>
@@ -144,7 +141,7 @@ export class TripState {
 				expected_version: exp.version
 			})
 		);
-		await this.load(['expenses', 'beneficiaries', 'balances']);
+		await this.load(['expenses', 'beneficiaries']); // soldes = dérivés
 	}
 
 	/** Déploie le formulaire pour une nouvelle dépense (reprend une saisie en cours si présente). */
@@ -179,8 +176,8 @@ export class TripState {
 	}
 	async newParticipant(params: { person_name: string; household_id?: string | null }) {
 		await backend.addParticipant({ trip_id: this.tripId, ...params });
-		// un nouveau foyer ajoute une ligne (solde 0) à la vue balances
-		await this.load(['participants', 'balances']);
+		// un nouveau foyer ajoute une ligne (solde 0) — les soldes sont dérivés des participants
+		await this.load(['participants']);
 	}
 	/**
 	 * Met à jour un participant depuis l'écran d'édition : renomme la personne
@@ -210,8 +207,8 @@ export class TripState {
 				household_name: params.new_household_name
 			});
 		}
-		// le déplacement de foyer est rétroactif (soldes joints par foyer courant)
-		await this.load(['participants', 'balances']);
+		// le déplacement de foyer est rétroactif (soldes dérivés par foyer courant)
+		await this.load(['participants']);
 	}
 	/** Renomme un foyer (partagé → visible pour tous ses membres). */
 	async renameHousehold(householdId: string, name: string) {
