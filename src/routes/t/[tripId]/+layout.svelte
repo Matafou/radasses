@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { beforeNavigate } from '$app/navigation';
 	import { TripState, setTripState } from '$lib/trip.svelte';
+	import { pullToRefresh } from '$lib/actions/pullToRefresh';
 	import ExpenseForm from '$lib/components/ExpenseForm.svelte';
 	import ReimbursementForm from '$lib/components/ReimbursementForm.svelte';
 	import { Alert, BottomSheet, LoadingText, TripBottomNav, TripHeader } from '$lib/components/ui';
@@ -58,12 +59,20 @@
 		<Alert class="mx-4 mt-3 flex-none">{state.error}</Alert>
 	{/if}
 
-	<div class="min-h-0 flex-1 overflow-y-auto p-4">
-		{#if state.loading && !state.trip}
-			<LoadingText />
-		{:else}
-			{@render children()}
-		{/if}
+	<!-- Pull-to-refresh sur le scroller principal (Dépenses/Participants/Journal/…).
+	     Désactivé sur Soldes, qui a ses propres scrollers internes (le PTR y est posé
+	     sur la liste des soldes elle-même). -->
+	<div
+		class="min-h-0 flex-1 overflow-y-auto"
+		use:pullToRefresh={{ onRefresh: () => state.load(), disabled: path.endsWith('/soldes') }}
+	>
+		<div class="p-4" data-ptr-content>
+			{#if state.loading && !state.trip}
+				<LoadingText />
+			{:else}
+				{@render children()}
+			{/if}
+		</div>
 	</div>
 
 	<TripBottomNav
