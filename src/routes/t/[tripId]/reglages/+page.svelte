@@ -5,6 +5,7 @@
 	import { getTripState } from '$lib/trip.svelte';
 	import { online } from '$lib/online.svelte';
 	import { toast } from '$lib/toast.svelte';
+	import { createFlash } from '$lib/flash.svelte';
 	import { foyerLabel } from '$lib/format';
 	import { prefs } from '$lib/prefs.svelte';
 	import { autofocusWithin } from '$lib/actions/autofocus';
@@ -29,7 +30,7 @@
 	let name = $state(tripState.trip?.name ?? '');
 	let currency = $state(tripState.trip?.currency ?? 'EUR');
 	let saving = $state(false);
-	let saved = $state(false);
+	const saved = createFlash();
 	let error = $state<string | null>(null);
 
 	const base = ['EUR', 'USD', 'GBP', 'CHF', 'CAD', 'JPY', 'SEK', 'AUD'];
@@ -38,14 +39,12 @@
 	async function onSave(e: SubmitEvent) {
 		e.preventDefault();
 		error = null;
-		saved = false;
 		if (!online.current) return void toast.show('Réglages du séjour indisponibles hors-ligne.');
 		if (!name.trim()) return void (error = 'Nom requis.');
 		saving = true;
 		try {
 			await tripState.updateSettings({ name: name.trim(), currency });
-			saved = true;
-			setTimeout(() => (saved = false), 1500);
+			saved.trigger();
 		} catch (err) {
 			error = err instanceof Error ? err.message : String(err);
 		} finally {
@@ -93,7 +92,7 @@
 				<FieldError>{error}</FieldError>
 			{/if}
 			<Button type="submit" class="w-full" disabled={saving} muted={!online.current}>
-				{saving ? 'Enregistrement…' : saved ? 'Enregistré ✓' : 'Enregistrer'}
+				{saving ? 'Enregistrement…' : saved.on ? 'Enregistré ✓' : 'Enregistrer'}
 			</Button>
 		</form>
 	</Card>
