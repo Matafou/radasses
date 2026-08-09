@@ -21,6 +21,7 @@
 	--z-fab: 20;
 	--z-backdrop: 30;
 	--z-sheet: 40;
+	--z-toast: 50;
 
 	/* FAB : position horizontale (au-dessus du 1er des 3 onglets → centre du 1er tiers). */
 	--fab-x: 16.6667%;

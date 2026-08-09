@@ -10,6 +10,7 @@
 		size = 20,
 		class: className = '',
 		type = 'button',
+		muted = false,
 		...rest
 	}: {
 		icon: Component;
@@ -18,6 +19,8 @@
 		size?: number;
 		class?: string;
 		type?: 'button' | 'submit' | 'reset';
+		/** grisé mais TOUJOURS cliquable (action indisponible hors-ligne qui signale au tap) */
+		muted?: boolean;
 		[key: string]: unknown;
 	} = $props();
 
@@ -32,9 +35,9 @@
 	{type}
 	aria-label={label}
 	title={label}
-	class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white shadow-lg disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none {variants[
-		variant
-	]} {className}"
+	class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white shadow-lg disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none {muted
+		? 'cursor-not-allowed bg-slate-300 shadow-none'
+		: variants[variant]} {className}"
 	{...rest}
 >
 	<!-- Icône en `em` (suit le bouton quand le texte est agrandi ; `size/16` =

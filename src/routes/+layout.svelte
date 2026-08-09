@@ -5,6 +5,7 @@
 	import { backend } from '$lib/backend';
 	import { online } from '$lib/online.svelte';
 	import { outbox } from '$lib/outbox.svelte';
+	import { toast } from '$lib/toast.svelte';
 	import { Alert, AppShell, LoadingText } from '$lib/components/ui';
 
 	let { children } = $props();
@@ -75,3 +76,11 @@
 		{@render children()}
 	{/if}
 </AppShell>
+
+{#if toast.message}
+	<div class="pointer-events-none fixed inset-x-0 bottom-6 z-(--z-toast) flex justify-center px-4">
+		<p role="status" class="rounded-full bg-slate-900/90 px-4 py-2 text-sm text-white shadow-lg">
+			{toast.message}
+		</p>
+	</div>
+{/if}

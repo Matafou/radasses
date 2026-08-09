@@ -5,7 +5,8 @@
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
 	import { ArrowRight, Lock, Pencil, Trash2 } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
-	import { online } from '$lib/online.svelte';
+	import { offlineWrite } from '$lib/offline-guard';
+	import { toast } from '$lib/toast.svelte';
 	import { money } from '$lib/format';
 	import { scrollShadow } from '$lib/actions/scrollShadow';
 	import { fitText } from '$lib/actions/fitText';
@@ -127,8 +128,10 @@
 					icon={Pencil}
 					label="Modifier"
 					variant="warning"
-					disabled={!online.current || expense.id.startsWith('local-')}
-					onclick={() => tripState.openEditExpense(expense)}
+					{...offlineWrite(() => {
+						if (expense.id.startsWith('local-')) toast.show('Dépense pas encore synchronisée.');
+						else tripState.openEditExpense(expense);
+					}, 'Modification indisponible hors-ligne.')}
 				/>
 				<IconButton icon={Trash2} label="Supprimer" variant="danger" onclick={onDelete} />
 			</div>

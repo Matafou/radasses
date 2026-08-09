@@ -3,11 +3,14 @@
 		checked = $bindable(false),
 		label,
 		class: className = '',
+		muted = false,
 		...rest
 	}: {
 		checked?: boolean;
 		label: string;
 		class?: string;
+		/** grisé mais TOUJOURS cliquable (action indisponible hors-ligne qui signale au tap) */
+		muted?: boolean;
 		[key: string]: unknown;
 	} = $props();
 </script>
@@ -17,9 +20,11 @@
 	role="switch"
 	aria-checked={checked}
 	aria-label={label}
-	class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 disabled:pointer-events-none {checked
-		? 'bg-emerald-600'
-		: 'bg-slate-300'} {className}"
+	class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 disabled:pointer-events-none {muted
+		? 'cursor-not-allowed bg-slate-200'
+		: checked
+			? 'bg-emerald-600'
+			: 'bg-slate-300'} {className}"
 	{...rest}
 >
 	<span

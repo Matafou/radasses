@@ -3,7 +3,7 @@
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
 	import { Check, Link, Mail, MessageSquare, Pencil, Plus, Share2, X } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
-	import { online } from '$lib/online.svelte';
+	import { offlineWrite } from '$lib/offline-guard';
 	import { foyerLabel } from '$lib/format';
 	import { autofocusWithin } from '$lib/actions/autofocus';
 	import type { Participant } from '$lib/backend';
@@ -241,8 +241,10 @@
 		icon={showAdd ? X : Plus}
 		label={showAdd ? 'Annuler l’ajout' : 'Ajouter un participant'}
 		class="h-9 w-9 shadow"
-		disabled={!online.current}
-		onclick={() => (showAdd = !showAdd)}
+		{...offlineWrite(
+			() => (showAdd = !showAdd),
+			'Ajout de participant indisponible hors-ligne.'
+		)}
 	/>
 {/snippet}
 
@@ -271,7 +273,7 @@
 				<FieldError>{editError}</FieldError>
 			{/if}
 			<div class="flex gap-2">
-				<Button size="sm" disabled={saving || !online.current} onclick={() => onSaveEdit(p)}>
+				<Button size="sm" disabled={saving} onclick={() => onSaveEdit(p)}>
 					{saving ? '…' : 'Enregistrer'}
 				</Button>
 				<Button size="sm" variant="secondary" onclick={() => (editingId = null)}>Annuler</Button>
@@ -299,16 +301,14 @@
 					<Switch
 						checked={p.active}
 						label={p.active ? 'Présent (basculer sur parti)' : 'Parti (basculer sur présent)'}
-						disabled={!online.current}
-						onclick={() => onToggleActive(p)}
+						{...offlineWrite(() => onToggleActive(p), 'Modification indisponible hors-ligne.')}
 					/>
 				</span>
 				<IconButton
 					icon={Pencil}
 					label="Modifier"
 					variant="warning"
-					disabled={!online.current}
-					onclick={() => startEdit(p)}
+					{...offlineWrite(() => startEdit(p), 'Modification indisponible hors-ligne.')}
 				/>
 				<IconButton
 					icon={Share2}
@@ -348,7 +348,7 @@
 				{#if addError}
 					<FieldError>{addError}</FieldError>
 				{/if}
-				<Button type="submit" class="w-full" disabled={adding || !online.current}>
+				<Button type="submit" class="w-full" disabled={adding}>
 					{adding ? 'Ajout…' : 'Ajouter'}
 				</Button>
 			</form>
@@ -375,7 +375,7 @@
 							/>
 							<Button
 								size="sm"
-								disabled={householdSaving || !online.current}
+								disabled={householdSaving}
 								onclick={() => onSaveHouseholdName(g)}
 							>
 								{householdSaving ? '…' : 'Enregistrer'}
@@ -398,8 +398,7 @@
 							icon={Pencil}
 							label="Renommer le foyer"
 							variant="warning"
-							disabled={!online.current}
-							onclick={() => startRenameHousehold(g)}
+							{...offlineWrite(() => startRenameHousehold(g), 'Modification indisponible hors-ligne.')}
 						/>
 					{/if}
 				</div>

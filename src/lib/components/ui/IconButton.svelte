@@ -11,6 +11,7 @@
 		type = 'button',
 		title = label,
 		class: className = '',
+		muted = false,
 		...rest
 	}: {
 		icon: Component;
@@ -20,6 +21,8 @@
 		type?: 'button' | 'submit' | 'reset';
 		title?: string;
 		class?: string;
+		/** grisé mais TOUJOURS cliquable (action indisponible hors-ligne qui signale au tap) */
+		muted?: boolean;
 		[key: string]: unknown;
 	} = $props();
 
@@ -37,9 +40,9 @@
 	{type}
 	aria-label={label}
 	{title}
-	class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md disabled:opacity-40 disabled:pointer-events-none {variants[
-		variant
-	]} {className}"
+	class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md disabled:opacity-40 disabled:pointer-events-none {muted
+		? 'cursor-not-allowed bg-slate-100 text-slate-300'
+		: variants[variant]} {className}"
 	{...rest}
 >
 	<!-- Taille d'icône en `em` (relative à la police du bouton) → elle suit le

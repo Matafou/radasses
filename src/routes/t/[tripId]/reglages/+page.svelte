@@ -4,6 +4,7 @@
 	import { ChevronRight, History, UserRound } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
 	import { online } from '$lib/online.svelte';
+	import { toast } from '$lib/toast.svelte';
 	import { foyerLabel } from '$lib/format';
 	import { prefs } from '$lib/prefs.svelte';
 	import { autofocusWithin } from '$lib/actions/autofocus';
@@ -38,6 +39,7 @@
 		e.preventDefault();
 		error = null;
 		saved = false;
+		if (!online.current) return void toast.show('Réglages du séjour indisponibles hors-ligne.');
 		if (!name.trim()) return void (error = 'Nom requis.');
 		saving = true;
 		try {
@@ -90,7 +92,7 @@
 			{#if error}
 				<FieldError>{error}</FieldError>
 			{/if}
-			<Button type="submit" class="w-full" disabled={saving || !online.current}>
+			<Button type="submit" class="w-full" disabled={saving} muted={!online.current}>
 				{saving ? 'Enregistrement…' : saved ? 'Enregistré ✓' : 'Enregistrer'}
 			</Button>
 		</form>

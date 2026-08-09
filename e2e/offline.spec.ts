@@ -32,8 +32,9 @@ test('hors-ligne : données du cache affichées, modifications désactivées', a
 	await expect(page.getByText(/Hors-ligne/)).toBeVisible();
 	// ajouts/suppressions restent possibles hors-ligne (étape 3b) → FAB actif…
 	await expect(page.getByRole('button', { name: 'Ajouter une dépense' })).toBeEnabled();
-	// …mais les MODIFICATIONS sont désactivées → « Modifier » d'une dépense grisé
-	await expect(page.getByRole('button', { name: 'Modifier' }).first()).toBeDisabled();
+	// …mais les MODIFICATIONS sont grisées : le bouton reste cliquable et signale l'indispo (toast)
+	await page.getByRole('button', { name: 'Modifier' }).first().click();
+	await expect(page.getByText('Modification indisponible hors-ligne.')).toBeVisible();
 
 	// soldes recalculés LOCALEMENT hors-ligne (Alice +30, Bob −30) ; remboursement (= création) possible
 	await page.getByRole('link', { name: 'Soldes' }).click();

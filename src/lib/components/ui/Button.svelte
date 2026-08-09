@@ -11,6 +11,7 @@
 		type = 'button',
 		class: className = '',
 		disabled = false,
+		muted = false,
 		...rest
 	}: {
 		children: Snippet;
@@ -19,6 +20,8 @@
 		type?: 'button' | 'submit' | 'reset';
 		class?: string;
 		disabled?: boolean;
+		/** grisé mais TOUJOURS cliquable (ex. action indisponible hors-ligne qui signale au tap) */
+		muted?: boolean;
 		[key: string]: unknown;
 	} = $props();
 
@@ -40,9 +43,9 @@
 <button
 	{type}
 	{disabled}
-	class="inline-flex items-center justify-center gap-1.5 disabled:opacity-50 {sizes[
-		size
-	]} {variants[variant]} {className}"
+	class="inline-flex items-center justify-center gap-1.5 disabled:opacity-50 {sizes[size]} {muted
+		? 'cursor-not-allowed bg-slate-200 text-slate-400'
+		: variants[variant]} {className}"
 	{...rest}
 >
 	{@render children()}
