@@ -4,7 +4,8 @@
 	import { Pencil, Plus, Share2, X } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
 	import { offlineWrite } from '$lib/offline-guard';
-	import { foyerLabel } from '$lib/format';
+	import { errMessage } from '$lib/util';
+	import { foyerLabel, parseDecimalFr } from '$lib/format';
 	import { autofocusWithin } from '$lib/actions/autofocus';
 	import type { Participant } from '$lib/backend';
 	import HouseholdSelect from '$lib/components/HouseholdSelect.svelte';
@@ -104,7 +105,7 @@
 				? `Attention : les dépenses déjà enregistrées ne concernent pas ${name}.`
 				: null;
 		} catch (err) {
-			addError = err instanceof Error ? err.message : String(err);
+			addError = errMessage(err);
 		} finally {
 			adding = false;
 		}
@@ -114,7 +115,7 @@
 		try {
 			await tripState.setActive(p.participant_id, !p.active);
 		} catch (err) {
-			tripState.error = err instanceof Error ? err.message : String(err);
+			tripState.error = errMessage(err);
 		}
 	}
 
@@ -132,7 +133,7 @@
 			await tripState.renameHousehold(g.id, name);
 			editingHouseholdId = null;
 		} catch (err) {
-			householdError = err instanceof Error ? err.message : String(err);
+			householdError = errMessage(err);
 		} finally {
 			householdSaving = false;
 		}
@@ -149,7 +150,7 @@
 		editError = null;
 		const name = editName.trim();
 		if (!name) return void (editError = 'Nom requis.');
-		const weight = Number(editWeight.replace(',', '.'));
+		const weight = parseDecimalFr(editWeight);
 		if (!Number.isFinite(weight) || weight <= 0)
 			return void (editError = 'Poids par défaut invalide (nombre > 0).');
 		const moved = editHouseholdId !== p.household_id;
@@ -165,7 +166,7 @@
 			});
 			editingId = null;
 		} catch (err) {
-			editError = err instanceof Error ? err.message : String(err);
+			editError = errMessage(err);
 		} finally {
 			saving = false;
 		}

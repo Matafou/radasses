@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { errMessage } from '$lib/util';
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
 	import { ChevronDown, ChevronRight, Lock } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
@@ -31,7 +32,7 @@
 		try {
 			[ops, actors] = await Promise.all([backend.listOperations(id), backend.listActors(id)]);
 		} catch (e) {
-			error = e instanceof Error ? e.message : String(e);
+			error = errMessage(e);
 		} finally {
 			loading = false;
 		}

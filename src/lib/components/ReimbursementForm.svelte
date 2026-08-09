@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { errMessage } from '$lib/util';
 	import { untrack } from 'svelte';
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
 	import { ArrowRight, Check } from '@lucide/svelte';
@@ -65,7 +66,7 @@
 			});
 			onDone();
 		} catch (err) {
-			formError = err instanceof Error ? err.message : String(err);
+			formError = errMessage(err);
 		} finally {
 			saving = false;
 		}

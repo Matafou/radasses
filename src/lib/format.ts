@@ -27,9 +27,14 @@ export function foyerLabel(name: string): string {
 	return `le foyer ${name}`;
 }
 
+/** "12,34" ou "12.34" -> 12.34 (nombre). NaN si invalide. Tolère la virgule décimale FR. */
+export function parseDecimalFr(input: string): number {
+	return Number(String(input).replace(',', '.').trim());
+}
+
 /** "12,34" ou "12.34" -> 1234 centimes. NaN si invalide. */
 export function centsFromEuros(input: string): number {
-	const n = Number(String(input).replace(',', '.').trim());
+	const n = parseDecimalFr(input);
 	if (!Number.isFinite(n)) return NaN;
 	return Math.round(n * 100);
 }

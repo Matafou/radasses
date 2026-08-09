@@ -5,7 +5,8 @@
 	import { previewSplit } from '$lib/split';
 	import ParticipantSelect from '$lib/components/ParticipantSelect.svelte';
 	import AmountInput from '$lib/components/AmountInput.svelte';
-	import { centsFromEuros, money } from '$lib/format';
+	import { centsFromEuros, money, parseDecimalFr } from '$lib/format';
+	import { errMessage } from '$lib/util';
 	import { todayISO } from '$lib/date';
 	import {
 		Button,
@@ -167,7 +168,7 @@
 					amount_cents: Number.isFinite(c) && c >= 0 ? c : 0
 				});
 			} else {
-				const wv = Number(String(benefValue[p.person_id] ?? '1').replace(',', '.'));
+				const wv = parseDecimalFr(benefValue[p.person_id] ?? '1');
 				out.push({
 					person_id: p.person_id,
 					is_locked: false,
@@ -244,7 +245,7 @@
 			});
 			onDone();
 		} catch (err) {
-			formError = err instanceof Error ? err.message : String(err);
+			formError = errMessage(err);
 		} finally {
 			saving = false;
 		}

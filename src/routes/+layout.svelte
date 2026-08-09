@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { backend } from '$lib/backend';
+	import { errMessage } from '$lib/util';
 	import { online } from '$lib/online.svelte';
 	import { outbox } from '$lib/outbox.svelte';
 	import { toast } from '$lib/toast.svelte';
@@ -27,7 +28,7 @@
 		} catch (e) {
 			// Hors-ligne + jamais venu → message dédié ; sinon vraie erreur.
 			if (!navigator.onLine) offline = true;
-			else error = e instanceof Error ? e.message : String(e);
+			else error = errMessage(e);
 		}
 	}
 

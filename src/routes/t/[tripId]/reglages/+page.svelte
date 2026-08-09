@@ -6,6 +6,7 @@
 	import { online } from '$lib/online.svelte';
 	import { toast } from '$lib/toast.svelte';
 	import { createFlash } from '$lib/flash.svelte';
+	import { errMessage } from '$lib/util';
 	import { foyerLabel } from '$lib/format';
 	import { prefs } from '$lib/prefs.svelte';
 	import { autofocusWithin } from '$lib/actions/autofocus';
@@ -46,7 +47,7 @@
 			await tripState.updateSettings({ name: name.trim(), currency });
 			saved.trigger();
 		} catch (err) {
-			error = err instanceof Error ? err.message : String(err);
+			error = errMessage(err);
 		} finally {
 			saving = false;
 		}

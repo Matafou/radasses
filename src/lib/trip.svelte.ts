@@ -16,6 +16,7 @@ import { todayISO } from './date';
 import { online } from './online.svelte';
 import { outbox } from './outbox.svelte';
 import { loadTripSnapshot, saveTripSnapshot, type TripSnapshot } from './offline-cache';
+import { errMessage } from './util';
 
 /** Sections rechargeables indépendamment (voir `load`). */
 type LoadSection = 'trip' | 'participants' | 'expenses' | 'beneficiaries' | 'me';
@@ -139,7 +140,7 @@ export class TripState {
 					return;
 				}
 			}
-			this.error = e instanceof Error ? e.message : String(e);
+			this.error = errMessage(e);
 		} finally {
 			if (full) this.loading = false;
 		}

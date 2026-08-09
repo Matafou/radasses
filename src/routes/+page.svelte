@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { errMessage } from '$lib/util';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
@@ -46,7 +47,7 @@
 			try {
 				candidates = await backend.listJoinCandidates(join);
 			} catch (e) {
-				error = e instanceof Error ? e.message : String(e);
+				error = errMessage(e);
 			} finally {
 				loadingCandidates = false;
 			}
@@ -62,7 +63,7 @@
 				rememberTrip({ id: tripId, name: trip?.name ?? 'Séjour' });
 				await goto(resolve('/t/[tripId]', { tripId }));
 			} catch (e) {
-				error = e instanceof Error ? e.message : String(e);
+				error = errMessage(e);
 				joining = false;
 			}
 		}
@@ -78,7 +79,7 @@
 			rememberTrip({ id: tripId, name: trip?.name ?? 'Séjour' });
 			await goto(resolve('/t/[tripId]', { tripId }));
 		} catch (e) {
-			error = e instanceof Error ? e.message : String(e);
+			error = errMessage(e);
 			claiming = false;
 		}
 	}
@@ -96,7 +97,7 @@
 			rememberTrip({ id: res.trip_id, name: tripName.trim() });
 			await goto(resolve('/t/[tripId]', { tripId: res.trip_id }));
 		} catch (e) {
-			error = e instanceof Error ? e.message : String(e);
+			error = errMessage(e);
 		} finally {
 			busy = false;
 		}

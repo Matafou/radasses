@@ -5,6 +5,7 @@
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
 	import { ArrowRight, Lock, Pencil, Trash2 } from '@lucide/svelte';
 	import { getTripState } from '$lib/trip.svelte';
+	import { errMessage } from '$lib/util';
 	import { offlineWrite } from '$lib/offline-guard';
 	import { toast } from '$lib/toast.svelte';
 	import { money } from '$lib/format';
@@ -52,7 +53,7 @@
 			await tripState.removeExpense(expense);
 			if (tripState.editingExpense?.id === expense.id) tripState.closeExpenseForm();
 		} catch (err) {
-			tripState.error = err instanceof Error ? err.message : String(err);
+			tripState.error = errMessage(err);
 		}
 	}
 

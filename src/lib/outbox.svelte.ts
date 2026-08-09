@@ -1,5 +1,6 @@
 import { backend, BackendError, type SaveExpenseInput } from '$lib/backend';
 import { loadOutbox, saveOutbox } from './offline-cache';
+import { errMessage } from './util';
 
 // File d'écritures faites HORS-LIGNE (étape 3b), rejouées à la reconnexion. Ne contient
 // que des opérations SANS CONFLIT possible (ajouts/suppressions) → concaténation FIFO,
@@ -88,7 +89,7 @@ class Outbox {
 				if (e instanceof BackendError && e.code === 'network') return;
 				// Erreur non-réseau sur une création (validation/permission…) : on abandonne
 				// l'op fautive pour ne pas bloquer la file, et on signale.
-				this.lastError = e instanceof Error ? e.message : String(e);
+				this.lastError = errMessage(e);
 				this.ops.shift();
 				await this.persist();
 			}
