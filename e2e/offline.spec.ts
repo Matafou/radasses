@@ -8,7 +8,7 @@ import { addParticipant, addSimpleExpense, createTrip, uniqueTripName } from './
 // hors-ligne que s'ils ont déjà été chargés. On visite donc Dépenses ET Soldes EN LIGNE
 // avant de couper le réseau, puis on teste par NAVIGATION SPA (pas de reload complet).
 // En prod, le SW (étape 1) précache tous les chunks → offline complet.
-test('hors-ligne : données du cache affichées, écritures désactivées', async ({ page }) => {
+test('hors-ligne : données du cache affichées, modifications désactivées', async ({ page }) => {
 	const name = uniqueTripName();
 	await createTrip(page, name, 'Alice');
 	await addParticipant(page, 'Bob');
@@ -27,15 +27,18 @@ test('hors-ligne : données du cache affichées, écritures désactivées', asyn
 	await page.getByRole('link', { name }).click();
 	await expect(page).toHaveURL(/\/t\/[0-9a-f-]+/);
 
-	// données servies depuis le cache + bannière + écriture désactivée
+	// données servies depuis le cache + bannière
 	await expect(page.getByText('Courses')).toBeVisible();
 	await expect(page.getByText(/Hors-ligne/)).toBeVisible();
-	await expect(page.getByRole('button', { name: 'Ajouter une dépense' })).toBeDisabled();
+	// ajouts/suppressions restent possibles hors-ligne (étape 3b) → FAB actif…
+	await expect(page.getByRole('button', { name: 'Ajouter une dépense' })).toBeEnabled();
+	// …mais les MODIFICATIONS sont désactivées → « Modifier » d'une dépense grisé
+	await expect(page.getByRole('button', { name: 'Modifier' }).first()).toBeDisabled();
 
-	// soldes recalculés LOCALEMENT hors-ligne (Alice +30, Bob −30) + remboursement désactivé
+	// soldes recalculés LOCALEMENT hors-ligne (Alice +30, Bob −30) ; remboursement (= création) possible
 	await page.getByRole('link', { name: 'Soldes' }).click();
 	await expect(page.getByText('on lui doit')).toBeVisible();
-	await expect(page.getByRole('button', { name: /signaler un remboursement/i })).toBeDisabled();
+	await expect(page.getByRole('button', { name: /signaler un remboursement/i })).toBeEnabled();
 
 	await page.context().setOffline(false);
 });

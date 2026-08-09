@@ -77,6 +77,14 @@
 				{expense.description || 'Dépense'}
 			</h3>
 			<MetaText class="shrink-0">{expense.spent_on}</MetaText>
+			{#if expense.id.startsWith('local-')}
+				<span
+					class="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[0.65rem] font-medium text-amber-700"
+					title="Enregistrée hors-ligne, sera synchronisée au retour de connexion"
+				>
+					à synchroniser
+				</span>
+			{/if}
 			{#if shareCents != null}
 				<!-- Vues de détail : même modèle que le bandeau — total en bout de ligne,
 				     « dont {libellé} : {part} » dessous (part à la même graisse que le total). -->
@@ -119,16 +127,10 @@
 					icon={Pencil}
 					label="Modifier"
 					variant="warning"
-					disabled={!online.current}
+					disabled={!online.current || expense.id.startsWith('local-')}
 					onclick={() => tripState.openEditExpense(expense)}
 				/>
-				<IconButton
-					icon={Trash2}
-					label="Supprimer"
-					variant="danger"
-					disabled={!online.current}
-					onclick={onDelete}
-				/>
+				<IconButton icon={Trash2} label="Supprimer" variant="danger" onclick={onDelete} />
 			</div>
 		</div>
 	</div>

@@ -4,6 +4,7 @@
 	import { page } from '$app/stores';
 	import { backend } from '$lib/backend';
 	import { online } from '$lib/online.svelte';
+	import { outbox } from '$lib/outbox.svelte';
 	import { Alert, AppShell, LoadingText } from '$lib/components/ui';
 
 	let { children } = $props();
@@ -29,7 +30,14 @@
 		}
 	}
 
-	onMount(bootstrap);
+	onMount(async () => {
+		await bootstrap();
+		// L'outbox reste HORS du chemin critique : si IndexedDB est lent/bloqué, le démarrage
+		// n'est pas figé. Une fois la file chargée, on rejoue d'éventuelles écritures laissées.
+		void outbox.init().then(() => {
+			if (online.current) void outbox.flush();
+		});
+	});
 
 	// Retente le démarrage à la reconnexion si on n'a pas encore de session (cas
 	// « jamais venu hors-ligne »). On saute la 1re exécution (déjà couverte par onMount).
@@ -46,7 +54,13 @@
 
 <AppShell showHeader={!tripId}>
 	{#if !online.current && ready}
-		<Alert tone="warning" class="m-2">Hors-ligne — les modifications sont désactivées.</Alert>
+		<Alert tone="warning" class="m-2">
+			Hors-ligne — ajouts et suppressions enregistrés{outbox.count > 0
+				? ` (${outbox.count} en attente)`
+				: ''}, synchronisés au retour. Les modifications sont désactivées.
+		</Alert>
+	{:else if online.current && outbox.count > 0 && ready}
+		<Alert tone="warning" class="m-2">Synchronisation de {outbox.count} modification(s)…</Alert>
 	{/if}
 	{#if error}
 		<Alert class="m-4">Erreur : {error}</Alert>

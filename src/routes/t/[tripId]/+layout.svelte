@@ -16,6 +16,11 @@
 	$effect(() => {
 		state.setTrip(tripId);
 	});
+	// Au retour en ligne (et à l'ouverture si des écritures offline restent en attente),
+	// on rejoue la file puis on recharge.
+	$effect(() => {
+		if (online.current) void state.syncPending();
+	});
 
 	let path = $derived($page.url.pathname);
 	// « Revenir en arrière » n'apparaît que sur les sous-pages (foyer / personne /
@@ -80,7 +85,6 @@
 		{tripId}
 		{path}
 		showFab={Boolean(state.trip) && !state.formOpen}
-		fabDisabled={!online.current}
 		hasDraft={state.hasCreateDraft}
 		onAdd={() => state.openNewExpense()}
 	/>

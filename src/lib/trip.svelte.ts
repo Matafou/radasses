@@ -11,7 +11,10 @@ import {
 } from '$lib/backend';
 import { simplifyDebts } from './settlements';
 import { computeBalances } from './balances';
+import { previewSplit } from './split';
+import { todayISO } from './date';
 import { online } from './online.svelte';
+import { outbox } from './outbox.svelte';
 import { loadTripSnapshot, saveTripSnapshot, type TripSnapshot } from './offline-cache';
 
 /** Sections rechargeables indépendamment (voir `load`). */
@@ -124,19 +127,7 @@ export class TripState {
 			if (beneficiaries !== undefined) this.beneficiaries = beneficiaries;
 			if (myPersonId !== undefined) this.myPersonId = myPersonId;
 			this.fromCache = false;
-			// write-through : on garde en cache le dernier état connu (pour l'offline).
-			// `$state.snapshot` = copie simple (les proxies runes ne sont pas clonables par
-			// IndexedDB → sinon le `put` échoue silencieusement).
-			void saveTripSnapshot(
-				id,
-				$state.snapshot({
-					trip: this.trip,
-					participants: this.participants,
-					expenses: this.expenses,
-					beneficiaries: this.beneficiaries,
-					myPersonId: this.myPersonId
-				})
-			);
+			this.persistSnapshot(); // write-through : dernier état connu en cache (offline)
 		} catch (e) {
 			// Réseau tombé alors qu'on se croyait en ligne : on hydrate depuis le cache
 			// plutôt que d'afficher une erreur.
@@ -164,11 +155,33 @@ export class TripState {
 		this.fromCache = true;
 	}
 
-	/** Bloque une écriture hors-ligne (étape 3a = lecture seule offline). */
+	/** Écrit l'état courant dans le cache local (`$state.snapshot` : les proxies runes
+	 *  ne sont pas clonables par IndexedDB → sinon le `put` échoue silencieusement). */
+	private persistSnapshot() {
+		void saveTripSnapshot(
+			this.tripId,
+			$state.snapshot({
+				trip: this.trip,
+				participants: this.participants,
+				expenses: this.expenses,
+				beneficiaries: this.beneficiaries,
+				myPersonId: this.myPersonId
+			})
+		);
+	}
+
+	/** Bloque une écriture hors-ligne (updates = online seulement). */
 	private assertOnline() {
 		if (!online.current) {
 			throw new BackendError('network', 'Action indisponible hors-ligne.');
 		}
+	}
+
+	/** Rejoue les écritures offline en attente puis recharge (au retour en ligne). */
+	async syncPending() {
+		if (!online.current || outbox.count === 0) return;
+		await outbox.flush();
+		await this.load();
 	}
 
 	/**
@@ -187,12 +200,27 @@ export class TripState {
 
 	/** Crée (sans expense_id) ou met à jour (avec expense_id + expected_version). */
 	async upsertExpense(input: Omit<SaveExpenseInput, 'trip_id'>) {
-		this.assertOnline();
+		// Hors-ligne : la CRÉATION est appliquée en local + mise en file (étape 3b) ;
+		// l'ÉDITION reste réservée au online (verrou de version).
+		if (!online.current) {
+			if (input.expense_id != null) this.assertOnline(); // édition → lève
+			this.applyOptimisticCreate({ trip_id: this.tripId, ...input });
+			return;
+		}
 		await this.withConflictReload(() => backend.saveExpense({ trip_id: this.tripId, ...input }));
 		await this.load(['expenses', 'beneficiaries']); // soldes = dérivés
 	}
 	async removeExpense(exp: Expense) {
-		this.assertOnline();
+		// Hors-ligne : suppression appliquée en local + mise en file (ou annulation d'une
+		// création encore en attente si la dépense a été créée hors-ligne).
+		if (!online.current) {
+			if (exp.id.startsWith('local-')) await outbox.cancelPendingCreate(exp.id);
+			else await outbox.enqueueDelete(this.tripId, exp.id);
+			this.expenses = this.expenses.filter((e) => e.id !== exp.id);
+			this.beneficiaries = this.beneficiaries.filter((b) => b.expense_id !== exp.id);
+			this.persistSnapshot();
+			return;
+		}
 		await this.withConflictReload(() =>
 			backend.deleteExpense({
 				trip_id: this.tripId,
@@ -201,6 +229,36 @@ export class TripState {
 			})
 		);
 		await this.load(['expenses', 'beneficiaries']); // soldes = dérivés
+	}
+
+	/**
+	 * Ajoute une dépense LOCALEMENT (hors-ligne) : split calculé en TS (`previewSplit`,
+	 * miroir de `compute_split`), id temporaire `local-…`, état + cache mis à jour, et op
+	 * empilée pour la synchro. Les soldes se re-dérivent automatiquement.
+	 */
+	private applyOptimisticCreate(input: SaveExpenseInput) {
+		const tempId = `local-${crypto.randomUUID()}`;
+		const pv = previewSplit(input.amount_cents, input.beneficiaries);
+		const benefs: Beneficiary[] = input.beneficiaries.map((b) => ({
+			expense_id: tempId,
+			person_id: b.person_id,
+			is_locked: b.is_locked ?? false,
+			weight: b.weight ?? null,
+			amount_cents: pv.amounts?.[b.person_id] ?? 0
+		}));
+		const expense: Expense = {
+			id: tempId,
+			description: input.description?.trim() ?? '',
+			category: input.category ?? null,
+			amount_cents: input.amount_cents,
+			spent_on: input.spent_on || todayISO(),
+			paid_by_person_id: input.paid_by_person_id,
+			version: 0
+		};
+		this.expenses = [expense, ...this.expenses];
+		this.beneficiaries = [...this.beneficiaries, ...benefs];
+		this.persistSnapshot();
+		void outbox.enqueueCreate(this.tripId, tempId, input);
 	}
 
 	/** Déploie le formulaire pour une nouvelle dépense (reprend une saisie en cours si présente). */
