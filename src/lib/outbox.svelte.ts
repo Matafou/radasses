@@ -1,6 +1,7 @@
 import { backend, BackendError, type SaveExpenseInput } from '$lib/backend';
 import { loadOutbox, saveOutbox } from './offline-cache';
 import { errMessage } from './util';
+import { toast } from './toast.svelte';
 
 // File d'écritures faites HORS-LIGNE (étape 3b), rejouées à la reconnexion. Ne contient
 // que des opérations SANS CONFLIT possible (ajouts/suppressions) → concaténation FIFO,
@@ -88,8 +89,9 @@ class Outbox {
 				// Réseau retombé : on s'arrête, on retentera à la prochaine reconnexion.
 				if (e instanceof BackendError && e.code === 'network') return;
 				// Erreur non-réseau sur une création (validation/permission…) : on abandonne
-				// l'op fautive pour ne pas bloquer la file, et on signale.
+				// l'op fautive pour ne pas bloquer la file, et on SIGNALE à l'utilisateur.
 				this.lastError = errMessage(e);
+				toast.show(`Une modification n'a pas pu être synchronisée : ${this.lastError}`, 5000);
 				this.ops.shift();
 				await this.persist();
 			}

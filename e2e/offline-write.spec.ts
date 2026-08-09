@@ -54,9 +54,11 @@ test('suppression hors-ligne synchronisée + collapse création/suppression', as
 	await page.getByRole('button', { name: 'Supprimer' }).first().click();
 	await expect(page.getByText('Bidon')).toHaveCount(0);
 
-	// (b) supprimer « Courses » (déjà synchronisée) hors-ligne
+	// (b) supprimer « Courses » (déjà synchronisée) hors-ligne → reste AFFICHÉE avec le
+	// médaillon « supprimé · à synchroniser » jusqu'à la synchro.
 	await page.getByRole('button', { name: 'Supprimer' }).first().click();
-	await expect(page.getByText('Courses')).toHaveCount(0);
+	await expect(page.getByText('supprimé · à synchroniser')).toBeVisible();
+	await expect(page.getByText('Courses')).toBeVisible();
 
 	// retour en ligne + réouverture (charge l'état serveur) → tout est vide côté serveur :
 	// la suppression a été rejouée, « Bidon » n'a jamais été créée (collapse).

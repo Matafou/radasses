@@ -59,9 +59,16 @@
 
 	const groups = $derived(benefGroups(expense.id));
 	const payer = $derived(tripState.personName.get(expense.paid_by_person_id) ?? '?');
+	// Supprimée hors-ligne, en attente de synchro : affichée grisée avec médaillon,
+	// disparaît vraiment une fois la suppression synchronisée.
+	const pendingDelete = $derived(tripState.pendingDeleteIds.has(expense.id));
 </script>
 
-<Card class={tripState.editingExpense?.id === expense.id ? 'border-slate-900' : ''}>
+<Card
+	class="{tripState.editingExpense?.id === expense.id ? 'border-slate-900' : ''} {pendingDelete
+		? 'opacity-60'
+		: ''}"
+>
 	<!--
 		Conteneur de requête partagé par toutes les lignes → réaction commune au
 		« mode agrandi » (container query en `em`, seuil 17em calibré). Réagit au
@@ -79,7 +86,14 @@
 				{expense.description || 'Dépense'}
 			</h3>
 			<MetaText class="shrink-0">{expense.spent_on}</MetaText>
-			{#if expense.id.startsWith('local-')}
+			{#if pendingDelete}
+				<span
+					class="shrink-0 rounded bg-rose-100 px-1.5 py-0.5 text-[0.65rem] font-medium text-rose-700"
+					title="Supprimée hors-ligne, retirée à la synchronisation"
+				>
+					supprimé · à synchroniser
+				</span>
+			{:else if expense.id.startsWith('local-')}
 				<span
 					class="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[0.65rem] font-medium text-amber-700"
 					title="Enregistrée hors-ligne, sera synchronisée au retour de connexion"
@@ -124,18 +138,20 @@
 					{/each}
 				</div>
 			</div>
-			<div class="flex shrink-0 items-center gap-2 @max-[17em]:ml-auto">
-				<IconButton
-					icon={Pencil}
-					label="Modifier"
-					variant="warning"
-					{...offlineWrite(() => {
-						if (expense.id.startsWith('local-')) toast.show('Dépense pas encore synchronisée.');
-						else tripState.openEditExpense(expense);
-					}, 'Modification indisponible hors-ligne.')}
-				/>
-				<IconButton icon={Trash2} label="Supprimer" variant="danger" onclick={onDelete} />
-			</div>
+			{#if !pendingDelete}
+				<div class="flex shrink-0 items-center gap-2 @max-[17em]:ml-auto">
+					<IconButton
+						icon={Pencil}
+						label="Modifier"
+						variant="warning"
+						{...offlineWrite(() => {
+							if (expense.id.startsWith('local-')) toast.show('Dépense pas encore synchronisée.');
+							else tripState.openEditExpense(expense);
+						}, 'Modification indisponible hors-ligne.')}
+					/>
+					<IconButton icon={Trash2} label="Supprimer" variant="danger" onclick={onDelete} />
+				</div>
+			{/if}
 		</div>
 	</div>
 </Card>

@@ -1,5 +1,5 @@
 import { getContext, setContext } from 'svelte';
-import { SvelteMap } from 'svelte/reactivity';
+import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import {
 	backend,
 	BackendError,
@@ -68,9 +68,21 @@ export class TripState {
 		new SvelteMap(this.participants.map((p) => [p.household_id, p.household_name]))
 	);
 	households = $derived(Array.from(this.householdName, ([id, name]) => ({ id, name })));
+	// Dépenses « en attente de suppression » hors-ligne : dérivé de l'outbox (persistée).
+	// Elles restent AFFICHÉES (médaillon « supprimé · à synchroniser ») mais sortent des
+	// soldes ; elles disparaissent vraiment à la synchro (le serveur ne les renvoie plus).
+	pendingDeleteIds = $derived(
+		new SvelteSet(
+			outbox.ops.flatMap((o) =>
+				o.kind === 'deleteExpense' && o.tripId === this.tripId ? [o.expenseId] : []
+			)
+		)
+	);
+	/** Dépenses réellement vivantes (hors suppressions offline en attente) → soldes/détails. */
+	liveExpenses = $derived(this.expenses.filter((e) => !this.pendingDeleteIds.has(e.id)));
 	// Soldes recalculés LOCALEMENT depuis les données chargées (réplique de la vue SQL
 	// `balances`) → toujours cohérents avec les dépenses, sans requête réseau dédiée.
-	balances = $derived(computeBalances(this.participants, this.expenses, this.beneficiaries));
+	balances = $derived(computeBalances(this.participants, this.liveExpenses, this.beneficiaries));
 	transfers = $derived(simplifyDebts(this.balances));
 	benefByExpense = $derived.by(() => {
 		const m = new SvelteMap<string, Beneficiary[]>();
@@ -215,10 +227,17 @@ export class TripState {
 		// Hors-ligne : suppression appliquée en local + mise en file (ou annulation d'une
 		// création encore en attente si la dépense a été créée hors-ligne).
 		if (!online.current) {
-			if (exp.id.startsWith('local-')) await outbox.cancelPendingCreate(exp.id);
-			else await outbox.enqueueDelete(this.tripId, exp.id);
-			this.expenses = this.expenses.filter((e) => e.id !== exp.id);
-			this.beneficiaries = this.beneficiaries.filter((b) => b.expense_id !== exp.id);
+			if (exp.id.startsWith('local-')) {
+				// création jamais synchronisée → collapse : on retire vraiment (rien à envoyer)
+				await outbox.cancelPendingCreate(exp.id);
+				this.expenses = this.expenses.filter((e) => e.id !== exp.id);
+				this.beneficiaries = this.beneficiaries.filter((b) => b.expense_id !== exp.id);
+			} else {
+				// dépense synchronisée : on la GARDE affichée (médaillon « supprimé · à
+				// synchroniser », via pendingDeleteIds) ; elle sort des soldes et disparaîtra
+				// vraiment à la synchro.
+				await outbox.enqueueDelete(this.tripId, exp.id);
+			}
 			this.persistSnapshot();
 			return;
 		}

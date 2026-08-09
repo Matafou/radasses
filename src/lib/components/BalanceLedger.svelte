@@ -19,9 +19,9 @@
 	const tripState = getTripState();
 	const fmt = (c: number) => money(c, tripState.currency);
 	const detail = $derived(
-		computeBalanceDetail(personIds, tripState.expenses, tripState.beneficiaries)
+		computeBalanceDetail(personIds, tripState.liveExpenses, tripState.beneficiaries)
 	);
-	const byId = $derived(new Map(tripState.expenses.map((e) => [e.id, e])));
+	const byId = $derived(new Map(tripState.liveExpenses.map((e) => [e.id, e])));
 	const paidLines = $derived(detail.lines.filter((l) => l.paid_cents > 0));
 	// Part payée POUR LES AUTRES sur chaque dépense = payé − sa propre part. Sa
 	// somme est ce qui pèse réellement au crédit : Net = Σ(pour les autres) −
