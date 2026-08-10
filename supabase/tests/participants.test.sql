@@ -7,9 +7,9 @@ select plan(4);
 \set HD 'cccc0000-0000-0000-0000-0000000000f1'
 \set TR 'cccc0000-0000-0000-0000-0000000000e1'
 
-insert into households (id, name) values (:'HD', 'Alice');
-insert into persons (id, name) values (:'AL', 'Alice');
 insert into trips (id, name) values (:'TR', 'Séjour');
+insert into households (id, name, trip_id) values (:'HD', 'Alice', :'TR');
+insert into persons (id, name, trip_id) values (:'AL', 'Alice', :'TR');
 insert into trip_participants (trip_id, person_id, household_id) values (:'TR', :'AL', :'HD');
 
 -- 1) ajout de Bob (nouveau foyer) -> jeton renvoyé

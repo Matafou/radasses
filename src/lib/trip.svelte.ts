@@ -341,6 +341,7 @@ export class TripState {
 		}
 		if (params.move_household_id !== undefined) {
 			await backend.setParticipantHousehold({
+				trip_id: this.tripId,
 				participant_id: params.participant_id,
 				household_id: params.move_household_id,
 				household_name: params.new_household_name

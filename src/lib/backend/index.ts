@@ -73,6 +73,7 @@ export interface Backend {
 	setParticipantDefaultWeight(participantId: string, weight: number): Promise<void>;
 	/** Déplace un participant vers un foyer existant (`household_id`) ou un nouveau (null). */
 	setParticipantHousehold(params: {
+		trip_id: string;
 		participant_id: string;
 		household_id?: string | null;
 		household_name?: string | null;

@@ -22,9 +22,9 @@ select plan(8);
 \set HZ 'aaaa0000-0000-0000-0000-0000000000f2'
 \set TR 'aaaa0000-0000-0000-0000-0000000000e1'
 
-insert into households (id, name) values (:'HD', 'Dupont'), (:'HZ', 'Zoé');
-insert into persons (id, name) values (:'AL','Alice'),(:'BO','Bob'),(:'CH','Chloé'),(:'ZO','Zoé');
 insert into trips (id, name) values (:'TR', 'Été test');
+insert into households (id, name, trip_id) values (:'HD', 'Dupont', :'TR'), (:'HZ', 'Zoé', :'TR');
+insert into persons (id, name, trip_id) values (:'AL','Alice',:'TR'),(:'BO','Bob',:'TR'),(:'CH','Chloé',:'TR'),(:'ZO','Zoé',:'TR');
 insert into trip_participants (trip_id, person_id, household_id, default_weight) values
 	(:'TR', :'AL', :'HD', 1), (:'TR', :'BO', :'HD', 1),
 	(:'TR', :'CH', :'HD', 1), (:'TR', :'ZO', :'HZ', 1);

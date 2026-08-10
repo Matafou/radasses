@@ -148,6 +148,7 @@ export async function setParticipantDefaultWeight(
  * Un ancien foyer laissé vide n'est PAS nettoyé (décision produit).
  */
 export async function setParticipantHousehold(params: {
+	trip_id: string;
 	participant_id: string;
 	household_id?: string | null;
 	household_name?: string | null;
@@ -157,7 +158,7 @@ export async function setParticipantHousehold(params: {
 		const name = (params.household_name ?? '').trim() || 'Sans nom';
 		const { data, error } = await supabase
 			.from('households')
-			.insert({ name })
+			.insert({ name, trip_id: params.trip_id })
 			.select('id')
 			.single();
 		if (error) throw toBackendError(error);

@@ -16,9 +16,9 @@ select plan(7);
 insert into auth.users (id, aud, role, email) values
 	(:'USER', 'authenticated', 'authenticated', 'joiner@test.local');
 
-insert into households (id, name) values (:'HA', 'Alice'), (:'HB', 'Bob');
-insert into persons (id, name) values (:'AL', 'Alice'), (:'BO', 'Bob');
 insert into trips (id, name, join_token) values (:'TR', 'Séjour', :'JT');
+insert into households (id, name, trip_id) values (:'HA', 'Alice', :'TR'), (:'HB', 'Bob', :'TR');
+insert into persons (id, name, trip_id) values (:'AL', 'Alice', :'TR'), (:'BO', 'Bob', :'TR');
 insert into trip_participants (trip_id, person_id, household_id) values
 	(:'TR', :'AL', :'HA'), (:'TR', :'BO', :'HB');
 
