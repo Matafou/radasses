@@ -6,7 +6,7 @@
 
 begin;
 create extension if not exists pgtap;
-select plan(8);
+select plan(9);
 
 -- Deux utilisateurs d'auth (uuids hex valides)
 \set MEMBER   '11111111-1111-1111-1111-111111111111'
@@ -48,22 +48,29 @@ select isnt(
 	null, 'membre : save_expense crée une dépense'
 );
 
+-- 5) DELETE direct sur trip_participants refusé même à un membre (0010 : plus
+--    de grant/policy DELETE — seul setParticipantActive, un UPDATE, existe côté produit)
+select throws_ok(
+	format($$ delete from trip_participants where trip_id = '%s' and person_id = '%s' $$, :'TR', :'AL'),
+	'42501'
+);
+
 -- ============ En tant que NON-MEMBRE ============
 select set_config('request.jwt.claims', format('{"sub":"%s","role":"authenticated"}', :'OUTSIDER'), true);
 
--- 5) is_trip_member faux
+-- 6) is_trip_member faux
 select is(is_trip_member(:'TR'), false, 'non-membre : is_trip_member = false');
 
--- 6) le non-membre ne voit pas le séjour (RLS)
+-- 7) le non-membre ne voit pas le séjour (RLS)
 select is((select count(*) from trips where id = :'TR')::int, 0, 'non-membre : ne voit rien');
 
--- 7) save_expense refuse le non-membre (errcode 42501)
+-- 8) save_expense refuse le non-membre (errcode 42501)
 select throws_ok(
 	format($$ select save_expense('%s', 1000, '%s', '[{"person_id":"%s"}]'::jsonb) $$, :'TR', :'AL', :'AL'),
 	'42501'
 );
 
--- 8) delete_expense refuse aussi le non-membre (contrôle avant existence)
+-- 9) delete_expense refuse aussi le non-membre (contrôle avant existence)
 select throws_ok(
 	format($$ select delete_expense('%s', '%s') $$, :'TR', :'TR'),
 	'42501'
