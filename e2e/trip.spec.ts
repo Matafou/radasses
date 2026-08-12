@@ -5,6 +5,7 @@ import {
 	createTrip,
 	disableAmountRounding,
 	listRow,
+	showAllBalances,
 	uniqueTripName
 } from './helpers';
 
@@ -35,6 +36,7 @@ test('une dépense partagée met à jour la liste ET les soldes', async ({ page 
 });
 
 test('ajouter un participant dans un nouveau foyer ajoute une ligne de solde', async ({ page }) => {
+	await showAllBalances(page); // soldes nets à 0 affichés (sinon masqués sous le seuil)
 	await createTrip(page, uniqueTripName(), 'Alice');
 
 	await page.getByRole('link', { name: 'Soldes' }).click();

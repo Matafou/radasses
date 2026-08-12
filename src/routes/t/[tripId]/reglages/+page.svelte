@@ -7,7 +7,7 @@
 	import { toast } from '$lib/toast.svelte';
 	import { createFlash } from '$lib/flash.svelte';
 	import { errMessage } from '$lib/util';
-	import { foyerLabel } from '$lib/format';
+	import { centsFromEuros, foyerLabel } from '$lib/format';
 	import { prefs } from '$lib/prefs.svelte';
 	import { autofocusWithin } from '$lib/actions/autofocus';
 	import {
@@ -36,6 +36,18 @@
 
 	const base = ['EUR', 'USD', 'GBP', 'CHF', 'CAD', 'JPY', 'SEK', 'AUD'];
 	const currencies = $derived(base.includes(currency) ? base : [currency, ...base]);
+
+	// Seuil de masquage des petits soldes (préférence appareil), édité en euros.
+	// Vide → 0 (tout afficher). On persiste à chaque saisie valide.
+	let hideStr = $state(
+		prefs.hideBelowCents ? String(prefs.hideBelowCents / 100).replace('.', ',') : ''
+	);
+	$effect(() => {
+		const s = hideStr.trim();
+		if (s === '') return void prefs.setHideBelowCents(0);
+		const c = centsFromEuros(s);
+		if (Number.isFinite(c) && c >= 0) prefs.setHideBelowCents(c);
+	});
 
 	async function onSave(e: SubmitEvent) {
 		e.preventDefault();
@@ -113,6 +125,28 @@
 				label="Arrondir les montants"
 				onclick={() => prefs.setRoundAmounts(!prefs.roundAmounts)}
 			/>
+		</div>
+	</Card>
+
+	<!-- Préférence d'AFFICHAGE, propre à cet appareil. -->
+	<Card>
+		<div class="flex items-center justify-between gap-3">
+			<div class="text-sm">
+				<p>Masquer les petits soldes</p>
+				<p class="meta-text">
+					Les soldes et remboursements sous ce seuil sont masqués dans l'onglet Soldes (révélables
+					par un lien). Vide = tout afficher. Réglage de cet appareil.
+				</p>
+			</div>
+			<label class="flex shrink-0 items-center gap-1">
+				<TextInput
+					inputmode="decimal"
+					class="w-16 text-right text-sm"
+					aria-label="Seuil de masquage des petits soldes (€)"
+					bind:value={hideStr}
+				/>
+				<span class="meta-text">€</span>
+			</label>
 		</div>
 	</Card>
 

@@ -58,3 +58,14 @@ export async function disableAmountRounding(page: Page) {
 		localStorage.setItem('radasses.prefs', JSON.stringify({ roundAmounts: false }))
 	);
 }
+
+/**
+ * Désactive le masquage des petits soldes (préférence appareil, défaut 1 €) AVANT le
+ * 1er chargement → même les soldes nets à 0 / négligeables restent affichés. À appeler
+ * en tête des tests qui vérifient la présence d'une ligne de solde à 0.
+ */
+export async function showAllBalances(page: Page) {
+	await page.addInitScript(() =>
+		localStorage.setItem('radasses.prefs', JSON.stringify({ hideBelowCents: 0 }))
+	);
+}

@@ -6,7 +6,7 @@
 	import { pullToRefresh } from '$lib/actions/pullToRefresh';
 	import { prefs } from '$lib/prefs.svelte';
 	import type { Transfer } from '$lib/settlements';
-	import { foyerLabel } from '$lib/format';
+	import { foyerLabel, money } from '$lib/format';
 	import RoundableAmount from '$lib/components/RoundableAmount.svelte';
 	import {
 		Button,
@@ -18,6 +18,26 @@
 	} from '$lib/components/ui';
 
 	const tripState = getTripState();
+
+	// Masquage des soldes/remboursements négligeables (< seuil appareil, défaut 1 €).
+	// Un lien permet de les révéler ponctuellement (état local, non persisté).
+	let revealSmall = $state(false);
+	const threshold = $derived(prefs.hideBelowCents);
+	const shownBalances = $derived(
+		revealSmall || threshold === 0
+			? tripState.balances
+			: tripState.balances.filter((b) => Math.abs(b.net_cents) >= threshold)
+	);
+	const shownTransfers = $derived(
+		revealSmall || threshold === 0
+			? tripState.transfers
+			: tripState.transfers.filter((t) => t.amount_cents >= threshold)
+	);
+	const hiddenCount = $derived(
+		tripState.balances.length -
+			shownBalances.length +
+			(tripState.transfers.length - shownTransfers.length)
+	);
 
 	// État « déplié » (montant exact révélé) de chaque suggestion, indexé par foyers.
 	// Permet de préremplir le remboursement avec l'exact quand l'utilisateur a cliqué
@@ -55,7 +75,7 @@
 		<div class="min-h-0 flex-1 overflow-y-auto" use:pullToRefresh={{ onRefresh: () => tripState.load() }}>
 			<div data-ptr-content>
 			<PanelList>
-				{#each tripState.balances as b (b.household_id)}
+				{#each shownBalances as b (b.household_id)}
 					<ListRow class="relative p-0">
 						<!-- Lien plein-row (navigation) en dessous ; le contenu au-dessus laisse
 						     passer les taps vers ce lien SAUF le montant (dépliable). -->
@@ -92,7 +112,9 @@
 						</div>
 					</ListRow>
 				{:else}
-					<ListRow class="text-sm text-slate-400">Aucun solde.</ListRow>
+					<ListRow class="text-sm text-slate-400">
+						{tripState.balances.length ? 'Tous les soldes sont négligeables.' : 'Aucun solde.'}
+					</ListRow>
 				{/each}
 			</PanelList>
 			</div>
@@ -117,9 +139,9 @@
 		</Button>
 		<div class="min-h-0 flex-1 space-y-2 overflow-y-auto">
 			<MetaText class="block font-medium">Suggestions</MetaText>
-			{#if tripState.transfers.length}
+			{#if shownTransfers.length}
 				<PanelList>
-					{#each tripState.transfers as t (t.from_household_id + t.to_household_id)}
+					{#each shownTransfers as t (t.from_household_id + t.to_household_id)}
 						{@const key = transferKey(t)}
 						<ListRow class="flex items-center justify-between gap-2 text-sm">
 							<span class="inline-flex min-w-0 flex-wrap items-center gap-1">
@@ -152,4 +174,20 @@
 			{/if}
 		</div>
 	</section>
+
+	{#if hiddenCount > 0 || revealSmall}
+		<button
+			type="button"
+			class="link-inline meta-text flex-none self-center"
+			onclick={() => (revealSmall = !revealSmall)}
+		>
+			{#if revealSmall}
+				Masquer les soldes négligeables
+			{:else}
+				Afficher {hiddenCount} solde{hiddenCount > 1 ? 's' : ''} négligeable{hiddenCount > 1
+					? 's'
+					: ''} (&lt; {money(threshold, tripState.currency)})
+			{/if}
+		</button>
+	{/if}
 </div>
