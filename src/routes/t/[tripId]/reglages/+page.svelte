@@ -62,7 +62,7 @@
 		<div class="flex items-center gap-3">
 			<UserRound size={20} class="shrink-0 text-slate-400" aria-hidden="true" />
 			<div class="min-w-0 text-sm">
-				<p class="text-xs text-slate-500">Qui suis-je ?</p>
+				<p class="meta-text">Qui suis-je ?</p>
 				{#if me}
 					<p class="truncate">
 						<span class="font-medium">{me.person_name}</span>
@@ -103,7 +103,7 @@
 		<div class="flex items-center justify-between gap-3">
 			<div class="text-sm">
 				<p>Arrondir les montants</p>
-				<p class="text-xs text-slate-500">
+				<p class="meta-text">
 					Soldes et remboursements à l'euro près (montant exact au survol / à l'appui). Réglage de
 					cet appareil.
 				</p>

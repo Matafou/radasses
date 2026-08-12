@@ -188,15 +188,15 @@
 {#snippet memberRow(p: Participant)}
 	{#if editingId === p.participant_id}
 		<div class="space-y-2" use:autofocusWithin>
-			<label class="block text-xs text-slate-500">
+			<label class="meta-text block">
 				Prénom
 				<TextInput class="mt-1 w-full text-sm" bind:value={editName} data-autofocus />
 			</label>
-			<label class="block text-xs text-slate-500">
+			<label class="meta-text block">
 				Foyer <span class="text-slate-400">(déplace ce participant ; l'historique suit)</span>
 				<HouseholdSelect class="mt-1 w-full text-sm" bind:value={editHouseholdId} />
 			</label>
-			<label class="block text-xs text-slate-500">
+			<label class="meta-text block">
 				Poids par défaut
 				<span class="text-slate-400">(1 = part normale ; ex. 0,5 pour un enfant)</span>
 				<TextInput

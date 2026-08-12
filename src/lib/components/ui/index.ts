@@ -10,7 +10,6 @@ export { default as IconButton } from './IconButton.svelte';
 export { default as ListRow } from './ListRow.svelte';
 export { default as LoadingText } from './LoadingText.svelte';
 export { default as MetaText } from './MetaText.svelte';
-export { default as MutedText } from './MutedText.svelte';
 export { default as PanelList } from './PanelList.svelte';
 export { default as SectionHeader } from './SectionHeader.svelte';
 export { default as Select } from './Select.svelte';

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
+	import { base, resolve } from '$app/paths';
 	// Lucide icons: ISC license, see THIRD_PARTY_NOTICES.md.
 	import { Pencil, Plus, Receipt, Scale, Users } from '@lucide/svelte';
 	import Fab from './Fab.svelte';
@@ -20,21 +20,19 @@
 		onAdd: () => void;
 	} = $props();
 
-	function isActive(suffix: string): boolean {
-		if (suffix === '') return path === `/t/${tripId}` || path === `/t/${tripId}/`;
-		return path.endsWith(`/${suffix}`);
-	}
-
-	function tabClass(active: boolean): string {
-		return `flex flex-col items-center justify-center gap-0.5 text-[0.8rem] leading-none ${active ? 'font-semibold text-slate-900' : 'text-slate-400'}`;
-	}
+	// « Actif » calculé de façon UNIFORME pour tous les onglets : on compare le chemin
+	// courant (base retirée, slash final normalisé) à `/t/{tripId}{sub}`. Aucun cas
+	// particulier pour l'index — c'était la source du bug (l'index comparait sans le base,
+	// les sous-onglets s'en sortaient par chance avec un `endsWith`).
+	const rel = $derived(path.replace(/\/+$/, '').slice(base.length));
+	const isActive = (sub: string) => rel === `/t/${tripId}${sub}`;
 </script>
 
 <nav class="flex-none border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
 	<div class="relative mx-auto grid h-(--bar-h) max-w-app grid-cols-3">
 		<a
 			href={resolve('/t/[tripId]', { tripId })}
-			class={tabClass(isActive(''))}
+			class="trip-tab"
 			title="Dépenses"
 			aria-current={isActive('') ? 'page' : undefined}
 		>
@@ -43,18 +41,18 @@
 		</a>
 		<a
 			href={resolve('/t/[tripId]/soldes', { tripId })}
-			class="{tabClass(isActive('soldes'))} border-l border-slate-200"
+			class="trip-tab"
 			title="Soldes"
-			aria-current={isActive('soldes') ? 'page' : undefined}
+			aria-current={isActive('/soldes') ? 'page' : undefined}
 		>
 			<Scale size={20} aria-hidden="true" />
 			<span>Soldes</span>
 		</a>
 		<a
 			href={resolve('/t/[tripId]/participants', { tripId })}
-			class="{tabClass(isActive('participants'))} border-l border-slate-200"
+			class="trip-tab"
 			title="Participants"
-			aria-current={isActive('participants') ? 'page' : undefined}
+			aria-current={isActive('/participants') ? 'page' : undefined}
 		>
 			<Users size={20} aria-hidden="true" />
 			<span>Participants</span>

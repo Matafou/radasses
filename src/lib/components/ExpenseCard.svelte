@@ -88,14 +88,14 @@
 			<MetaText class="shrink-0">{expense.spent_on}</MetaText>
 			{#if pendingDelete}
 				<span
-					class="shrink-0 rounded bg-rose-100 px-1.5 py-0.5 text-[0.65rem] font-medium text-rose-700"
+					class="tag bg-rose-100 text-rose-700"
 					title="Supprimée hors-ligne, retirée à la synchronisation"
 				>
 					supprimé · à synchroniser
 				</span>
 			{:else if expense.id.startsWith('local-')}
 				<span
-					class="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[0.65rem] font-medium text-amber-700"
+					class="tag bg-amber-100 text-amber-700"
 					title="Enregistrée hors-ligne, sera synchronisée au retour de connexion"
 				>
 					à synchroniser
@@ -125,7 +125,7 @@
 				<ArrowRight size={16} class="shrink-0 text-slate-400" aria-label="a payé pour" />
 				<div
 					use:scrollShadow={groups}
-					class="hide-scrollbar flex min-w-0 flex-1 gap-1 overflow-x-auto text-xs text-slate-500"
+					class="hide-scrollbar meta-text flex min-w-0 flex-1 gap-1 overflow-x-auto"
 				>
 					{#each groups as g, i (i)}
 						<span class="benef-item shrink-0 whitespace-nowrap"

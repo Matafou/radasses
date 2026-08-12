@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { base } from '$app/paths';
 	import { beforeNavigate } from '$app/navigation';
 	import { TripState, setTripState } from '$lib/trip.svelte';
 	import { pullToRefresh } from '$lib/actions/pullToRefresh';
@@ -33,7 +34,8 @@
 	// Seul un départ du séjour démonte le composant et perd la saisie → on prévient.
 	beforeNavigate((nav) => {
 		if (!(state.formOpen || state.hasCreateDraft)) return;
-		const to = nav.to?.url.pathname ?? '';
+		// on retire le base (comme les onglets) avant de comparer à un chemin sans base
+		const to = (nav.to?.url.pathname ?? '').slice(base.length);
 		if (to.startsWith(`/t/${tripId}`)) return; // navigation interne : rien à perdre
 		if (confirm('Une dépense est en cours de saisie. Quitter le séjour sans l’enregistrer ?')) {
 			state.closeExpenseForm();

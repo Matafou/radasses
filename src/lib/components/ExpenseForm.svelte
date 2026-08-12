@@ -278,7 +278,7 @@
 		{#if selected[p.person_id]}
 			<span class="ml-auto flex items-center gap-1 text-xs whitespace-nowrap">
 				{#if p.person_id === forcedId}<span class="font-medium text-red-600">forcé</span>{/if}
-				<MetaText class="text-slate-500 tabular-nums">{amountOf(p.person_id)}</MetaText>
+				<MetaText class="tabular-nums">{amountOf(p.person_id)}</MetaText>
 			</span>
 		{/if}
 	</div>
@@ -314,7 +314,7 @@
 				/>
 				Tout le monde
 			</label>
-			<label class="flex items-center gap-2 text-xs text-slate-500">
+			<label class="meta-text flex items-center gap-2">
 				<Switch
 					bind:checked={detailed}
 					label="Répartition détaillée"

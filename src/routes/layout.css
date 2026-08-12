@@ -100,6 +100,26 @@
 	.link-inline {
 		@apply underline decoration-slate-300 underline-offset-2 hover:decoration-slate-500;
 	}
+
+	/* Onglet de la barre du bas d'un séjour. L'état ACTIF est piloté par
+	   `aria-current="page"` (source unique de vérité, posée sur le lien) plutôt que
+	   par une classe calculée. Les séparateurs verticaux via le sélecteur de
+	   voisinage → pas de bordure à répéter sur chaque onglet. */
+	.trip-tab {
+		@apply flex flex-col items-center justify-center gap-0.5 text-[0.8rem] leading-none text-slate-400;
+	}
+	.trip-tab[aria-current='page'] {
+		@apply font-semibold text-slate-900;
+	}
+	.trip-tab + .trip-tab {
+		@apply border-l border-slate-200;
+	}
+
+	/* Petit médaillon / étiquette (ex. « à synchroniser »). Structure et taille
+	   centralisées ici (la couleur sémantique reste posée en ligne : bg-…-100 text-…-700). */
+	.tag {
+		@apply shrink-0 rounded px-1.5 py-0.5 text-[0.65rem] font-medium;
+	}
 }
 
 /* Respecte la préférence système « réduire les animations » (troubles
