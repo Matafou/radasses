@@ -9,9 +9,7 @@
 	const tripState = getTripState();
 	const householdId = $derived($page.params.householdId!);
 	const name = $derived(tripState.householdName.get(householdId));
-	const members = $derived(
-		tripState.participants.filter((p) => p.household_id === householdId)
-	);
+	const members = $derived(tripState.participants.filter((p) => p.household_id === householdId));
 	const memberIds = $derived(members.map((p) => p.person_id));
 </script>
 

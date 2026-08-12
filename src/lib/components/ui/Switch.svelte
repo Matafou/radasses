@@ -20,7 +20,7 @@
 	role="switch"
 	aria-checked={checked}
 	aria-label={label}
-	class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 disabled:pointer-events-none {muted
+	class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:pointer-events-none disabled:opacity-50 {muted
 		? 'cursor-not-allowed bg-slate-200'
 		: checked
 			? 'bg-emerald-600'

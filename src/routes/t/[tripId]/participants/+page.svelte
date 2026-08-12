@@ -161,7 +161,11 @@
 				participant_id: p.participant_id,
 				person_name: name !== p.person_name ? name : undefined,
 				default_weight: weight !== p.default_weight ? weight : undefined,
-				move_household_id: !moved ? undefined : editHouseholdId === '__new__' ? null : editHouseholdId,
+				move_household_id: !moved
+					? undefined
+					: editHouseholdId === '__new__'
+						? null
+						: editHouseholdId,
 				new_household_name: editHouseholdId === '__new__' ? name : undefined
 			});
 			editingId = null;
@@ -178,10 +182,7 @@
 		icon={showAdd ? X : Plus}
 		label={showAdd ? 'Annuler l’ajout' : 'Ajouter un participant'}
 		class="h-9 w-9 shadow"
-		{...offlineWrite(
-			() => (showAdd = !showAdd),
-			'Ajout de participant indisponible hors-ligne.'
-		)}
+		{...offlineWrite(() => (showAdd = !showAdd), 'Ajout de participant indisponible hors-ligne.')}
 	/>
 {/snippet}
 
@@ -310,11 +311,7 @@
 								bind:value={householdNameDraft}
 								data-autofocus
 							/>
-							<Button
-								size="sm"
-								disabled={householdSaving}
-								onclick={() => onSaveHouseholdName(g)}
-							>
+							<Button size="sm" disabled={householdSaving} onclick={() => onSaveHouseholdName(g)}>
 								{householdSaving ? '…' : 'Enregistrer'}
 							</Button>
 							<Button size="sm" variant="secondary" onclick={() => (editingHouseholdId = null)}>
@@ -335,7 +332,10 @@
 							icon={Pencil}
 							label="Renommer le foyer"
 							variant="warning"
-							{...offlineWrite(() => startRenameHousehold(g), 'Modification indisponible hors-ligne.')}
+							{...offlineWrite(
+								() => startRenameHousehold(g),
+								'Modification indisponible hors-ligne.'
+							)}
 						/>
 					{/if}
 				</div>

@@ -112,5 +112,10 @@ export function foldTrip(ops: Operation[]): FoldedTrip {
 		}))
 	);
 
-	return { trip, participants: participantList, expenses: expenseList, beneficiaries: beneficiaryList };
+	return {
+		trip,
+		participants: participantList,
+		expenses: expenseList,
+		beneficiaries: beneficiaryList
+	};
 }

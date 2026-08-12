@@ -31,9 +31,7 @@
 	);
 	// « payé pour lui » = dépenses payées par d'AUTRES (pas par le sujet), sinon
 	// doublon avec « payé par lui ». Le total de la section suit ce qui est affiché.
-	const owedLines = $derived(
-		detail.lines.filter((l) => l.owed_cents > 0 && l.paid_cents === 0)
-	);
+	const owedLines = $derived(detail.lines.filter((l) => l.owed_cents > 0 && l.paid_cents === 0));
 	const owedShownCents = $derived(owedLines.reduce((s, l) => s + l.owed_cents, 0));
 	const netClass = $derived(
 		detail.net_cents > 0
@@ -108,7 +106,13 @@
 				{#each owedLines as l (l.expense_id)}
 					{@const e = byId.get(l.expense_id)}
 					{#if e}
-						<li><ExpenseCard expense={e} shareCents={l.owed_cents} shareLabel={`pour ${subjectName}`} /></li>
+						<li>
+							<ExpenseCard
+								expense={e}
+								shareCents={l.owed_cents}
+								shareLabel={`pour ${subjectName}`}
+							/>
+						</li>
 					{/if}
 				{/each}
 			</ul>

@@ -40,7 +40,7 @@
 	{type}
 	aria-label={label}
 	{title}
-	class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md disabled:opacity-40 disabled:pointer-events-none {muted
+	class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md disabled:pointer-events-none disabled:opacity-40 {muted
 		? 'cursor-not-allowed bg-slate-100 text-slate-300'
 		: variants[variant]} {className}"
 	{...rest}

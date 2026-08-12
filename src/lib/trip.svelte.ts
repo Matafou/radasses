@@ -271,7 +271,9 @@ export class TripState {
 				})
 			);
 		} else {
-			await this.withConflictReload(() => backend.saveExpense({ trip_id: this.tripId, ...inv.input }));
+			await this.withConflictReload(() =>
+				backend.saveExpense({ trip_id: this.tripId, ...inv.input })
+			);
 		}
 		await this.load(['expenses', 'beneficiaries']);
 	}

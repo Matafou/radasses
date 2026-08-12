@@ -28,8 +28,8 @@
 			e.stopPropagation();
 			e.preventDefault();
 			revealed = !revealed;
-		}}
-	>{revealed ? exact : rounded}</button>
+		}}>{revealed ? exact : rounded}</button
+	>
 {:else}
 	<span class="tabular-nums {className}">{exact}</span>
 {/if}

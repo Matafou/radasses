@@ -127,10 +127,10 @@ export const pullToRefresh: Action<HTMLElement, PullToRefreshParam> = (node, par
 		}
 		const anim = reduceMotion
 			? undefined
-			: spinner.animate(
-					[{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }],
-					{ duration: 700, iterations: Infinity }
-				);
+			: spinner.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], {
+					duration: 700,
+					iterations: Infinity
+				});
 		try {
 			await onRefresh();
 		} catch {

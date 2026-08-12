@@ -90,7 +90,13 @@ describe('foldTrip', () => {
 
 		const s = foldTrip(ops);
 
-		expect(s.trip).toEqual({ id: 'T', name: 'Été', currency: 'EUR', created_at: 'c', join_token: 'jt' });
+		expect(s.trip).toEqual({
+			id: 'T',
+			name: 'Été',
+			currency: 'EUR',
+			created_at: 'c',
+			join_token: 'jt'
+		});
 
 		expect(s.participants).toHaveLength(2);
 		const bob = s.participants.find((p) => p.person_id === 'pB');

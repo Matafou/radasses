@@ -42,7 +42,9 @@ test('la feuille de partage propose les canaux avec un message pré-rédigé', a
 	// --- Partage natif : capture la charge utile ---
 	await sheet.getByRole('button', { name: 'Partager…', exact: true }).click();
 	const shared = await page.evaluate(
-		() => (window as unknown as { __lastShare: { title: string; text: string; url: string } }).__lastShare
+		() =>
+			(window as unknown as { __lastShare: { title: string; text: string; url: string } })
+				.__lastShare
 	);
 	expect(shared.url).toContain('?token=');
 	expect(shared.text).toContain('Bob');

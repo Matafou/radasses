@@ -119,7 +119,9 @@
 						<p class="text-sm">
 							C'est bien toi, <strong>{chosen.person_name}</strong> ?
 							{#if chosen.claimed}
-								<span class="text-slate-500">(cette identité a déjà été prise au moins une fois)</span>
+								<span class="text-slate-500"
+									>(cette identité a déjà été prise au moins une fois)</span
+								>
 							{/if}
 						</p>
 						{#if error}

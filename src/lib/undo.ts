@@ -50,7 +50,10 @@ function toInputs(benefs: BeneficiaryRow[]): BeneficiaryInput[] {
 
 // `sameId` : restaure la MÊME dépense (update) avec le verrou de version ; sinon
 // (suppression) on RE-CRÉE (nouvel id en v1).
-function buildSave(snap: ExpenseSnap, expectedVersion: number | null): Omit<SaveExpenseInput, 'trip_id'> {
+function buildSave(
+	snap: ExpenseSnap,
+	expectedVersion: number | null
+): Omit<SaveExpenseInput, 'trip_id'> {
 	return {
 		expense_id: expectedVersion == null ? null : snap.expense.id,
 		expected_version: expectedVersion ?? undefined,
@@ -71,7 +74,11 @@ export function inverseExpenseOp(op: Operation): UndoAction | null {
 
 	// ajout → suppression ; le verrou = la version courante (= after, car c'est la dernière op)
 	if (op.action === 'create' && after) {
-		return { kind: 'delete', expense_id: after.expense.id, expected_version: after.expense.version };
+		return {
+			kind: 'delete',
+			expense_id: after.expense.id,
+			expected_version: after.expense.version
+		};
 	}
 	// modification → restaurer l'état AVANT (même id, verrou = version courante)
 	if (op.action === 'update' && before && after) {

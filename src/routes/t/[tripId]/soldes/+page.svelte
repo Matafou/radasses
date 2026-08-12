@@ -72,51 +72,54 @@
 			<SectionHeader title="Soldes par foyer" />
 		</div>
 		<!-- Le scroller du haut porte le pull-to-refresh (désactivé au niveau du layout). -->
-		<div class="min-h-0 flex-1 overflow-y-auto" use:pullToRefresh={{ onRefresh: () => tripState.load() }}>
+		<div
+			class="min-h-0 flex-1 overflow-y-auto"
+			use:pullToRefresh={{ onRefresh: () => tripState.load() }}
+		>
 			<div data-ptr-content>
-			<PanelList>
-				{#each shownBalances as b (b.household_id)}
-					<ListRow class="relative p-0">
-						<!-- Lien plein-row (navigation) en dessous ; le contenu au-dessus laisse
+				<PanelList>
+					{#each shownBalances as b (b.household_id)}
+						<ListRow class="relative p-0">
+							<!-- Lien plein-row (navigation) en dessous ; le contenu au-dessus laisse
 						     passer les taps vers ce lien SAUF le montant (dépliable). -->
-						<a
-							class="absolute inset-0 hover:bg-slate-50"
-							href={resolve('/t/[tripId]/foyer/[householdId]', {
-								tripId: tripState.tripId,
-								householdId: b.household_id
-							})}
-							aria-label={`Voir le détail de ${foyerLabel(
-								tripState.householdName.get(b.household_id) ?? '?'
-							)}`}
-						></a>
-						<div class="pointer-events-none relative flex items-center gap-2 px-4 py-3">
-							<span class="min-w-0 flex-1 truncate first-letter:uppercase"
-								>{foyerLabel(tripState.householdName.get(b.household_id) ?? '?')}</span
-							>
-							<span
-								class="shrink-0 {b.net_cents > 0
-									? 'font-medium text-emerald-600'
-									: b.net_cents < 0
-										? 'font-medium text-red-600'
-										: 'text-slate-400'}"
-							>
-								{b.net_cents > 0 ? '+' : ''}<RoundableAmount
-									cents={b.net_cents}
-									currency={tripState.currency}
-								/>
-								<MetaText class="ml-1">
-									{b.net_cents > 0 ? 'on lui doit' : b.net_cents < 0 ? 'doit' : ''}
-								</MetaText>
-							</span>
-							<ChevronRight size={16} class="shrink-0 text-slate-400" aria-hidden="true" />
-						</div>
-					</ListRow>
-				{:else}
-					<ListRow class="text-sm text-slate-400">
-						{tripState.balances.length ? 'Tous les soldes sont négligeables.' : 'Aucun solde.'}
-					</ListRow>
-				{/each}
-			</PanelList>
+							<a
+								class="absolute inset-0 hover:bg-slate-50"
+								href={resolve('/t/[tripId]/foyer/[householdId]', {
+									tripId: tripState.tripId,
+									householdId: b.household_id
+								})}
+								aria-label={`Voir le détail de ${foyerLabel(
+									tripState.householdName.get(b.household_id) ?? '?'
+								)}`}
+							></a>
+							<div class="pointer-events-none relative flex items-center gap-2 px-4 py-3">
+								<span class="min-w-0 flex-1 truncate first-letter:uppercase"
+									>{foyerLabel(tripState.householdName.get(b.household_id) ?? '?')}</span
+								>
+								<span
+									class="shrink-0 {b.net_cents > 0
+										? 'font-medium text-emerald-600'
+										: b.net_cents < 0
+											? 'font-medium text-red-600'
+											: 'text-slate-400'}"
+								>
+									{b.net_cents > 0 ? '+' : ''}<RoundableAmount
+										cents={b.net_cents}
+										currency={tripState.currency}
+									/>
+									<MetaText class="ml-1">
+										{b.net_cents > 0 ? 'on lui doit' : b.net_cents < 0 ? 'doit' : ''}
+									</MetaText>
+								</span>
+								<ChevronRight size={16} class="shrink-0 text-slate-400" aria-hidden="true" />
+							</div>
+						</ListRow>
+					{:else}
+						<ListRow class="text-sm text-slate-400">
+							{tripState.balances.length ? 'Tous les soldes sont négligeables.' : 'Aucun solde.'}
+						</ListRow>
+					{/each}
+				</PanelList>
 			</div>
 		</div>
 	</section>
