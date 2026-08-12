@@ -7,8 +7,10 @@ import {
 	type Participant,
 	type Expense,
 	type Beneficiary,
+	type Operation,
 	type SaveExpenseInput
 } from '$lib/backend';
+import { inverseExpenseOp } from './undo';
 import { simplifyDebts } from './settlements';
 import { computeBalances } from './balances';
 import { previewSplit } from './split';
@@ -249,6 +251,29 @@ export class TripState {
 			})
 		);
 		await this.load(['expenses', 'beneficiaries']); // soldes = dérivés
+	}
+
+	/**
+	 * « Défaire » une opération de dépense = appliquer son inverse via les RPC existants
+	 * (re-journalisé). Online uniquement en v1. La règle « dernière op de l'entité » est
+	 * appliquée côté UI (page Journal) avant d'arriver ici.
+	 */
+	async undoOperation(op: Operation) {
+		this.assertOnline();
+		const inv = inverseExpenseOp(op);
+		if (!inv) return;
+		if (inv.kind === 'delete') {
+			await this.withConflictReload(() =>
+				backend.deleteExpense({
+					trip_id: this.tripId,
+					expense_id: inv.expense_id,
+					expected_version: inv.expected_version
+				})
+			);
+		} else {
+			await this.withConflictReload(() => backend.saveExpense({ trip_id: this.tripId, ...inv.input }));
+		}
+		await this.load(['expenses', 'beneficiaries']);
 	}
 
 	/**

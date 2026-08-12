@@ -5,8 +5,11 @@
 	import { getTripState } from '$lib/trip.svelte';
 	import { backend, type Operation } from '$lib/backend';
 	import { money } from '$lib/format';
+	import { isUndoable } from '$lib/undo';
+	import { offlineWrite } from '$lib/offline-guard';
 	import {
 		Alert,
+		Button,
 		ListRow,
 		LoadingText,
 		MetaText,
@@ -51,6 +54,23 @@
 	}
 	function toggle(id: number) {
 		expandedId = expandedId === id ? null : id;
+	}
+
+	// « Défaire » : dispo sur la DERNIÈRE opération de dépense de son entité (cf. undo.ts).
+	let undoing = $state(false);
+	const canUndo = (op: Operation) => isUndoable(op, ops);
+	async function doUndo(op: Operation) {
+		if (!confirm('Défaire cette opération ?')) return;
+		undoing = true;
+		error = null;
+		try {
+			await tripState.undoOperation(op);
+			await load(tripState.tripId); // recharge le journal (op de compensation)
+		} catch (e) {
+			error = errMessage(e);
+		} finally {
+			undoing = false;
+		}
 	}
 
 	type JsonRecord = Record<string, unknown>;
@@ -196,6 +216,16 @@
 							{@render snap('Après', op.after)}
 							{#if !op.before && !op.after}
 								<p class="text-slate-400">Pas de détail.</p>
+							{/if}
+							{#if canUndo(op)}
+								<Button
+									size="sm"
+									variant="secondary"
+									disabled={undoing}
+									{...offlineWrite(() => doUndo(op), 'Défaire indisponible hors-ligne.')}
+								>
+									Défaire
+								</Button>
 							{/if}
 						</div>
 					{/if}
