@@ -47,6 +47,13 @@ describe('toBackendError', () => {
 		expect(toBackendError({ message: 'TypeError: Failed to fetch' }).code).toBe('network');
 	});
 
+	it('détecte « JWT issued at future » (désynchro d’horloge) sur clock-skew', () => {
+		expect(toBackendError({ message: 'JWT issued at future time' }).code).toBe('clock-skew');
+		expect(toBackendError({ code: 'bad_jwt', message: 'token used before issued' }).code).toBe(
+			'clock-skew'
+		);
+	});
+
 	it('renvoie tel quel un BackendError déjà normalisé', () => {
 		const original = new BackendError('forbidden', 'nope');
 		expect(toBackendError(original)).toBe(original);

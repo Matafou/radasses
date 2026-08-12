@@ -20,6 +20,12 @@ export type BackendErrorCode =
 	| 'not-found'
 	/** problème réseau (requête non aboutie) */
 	| 'network'
+	/**
+	 * « JWT issued at future » : micro-désynchro d'horloge (GoTrue ↔ PostgREST) → un
+	 * jeton fraîchement émis a un `iat` que le validateur n'a pas encore dépassé. Erreur
+	 * TRANSITOIRE : le filet réessaie après un court délai (voir `withSessionRepair`).
+	 */
+	| 'clock-skew'
 	/** cas non classé */
 	| 'unknown';
 

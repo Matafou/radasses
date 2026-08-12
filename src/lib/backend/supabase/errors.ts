@@ -29,6 +29,14 @@ function isOrphanedSession(err: RawError, sqlstate: string | undefined): boolean
 	return /auth_user_id_fkey|created_by_fkey|actor_auth_user_id|table "users"/.test(text);
 }
 
+// « JWT issued at future » : jeton fraîchement émis dont l'`iat` n'est pas encore
+// atteint par l'horloge du validateur (micro-désynchro GoTrue ↔ PostgREST). Transitoire
+// → on réessaie (voir `withSessionRepair`). Message côté PostgREST/GoTrue.
+function isClockSkew(err: RawError, message: string): boolean {
+	const text = `${message} ${err.details ?? ''} ${err.code ?? ''}`;
+	return /issued at future|used before issued|jwtissuedatfuture/i.test(text);
+}
+
 export function toBackendError(err: unknown): BackendError {
 	if (err instanceof BackendError) return err;
 
@@ -48,6 +56,10 @@ export function toBackendError(err: unknown): BackendError {
 			'Session à réinitialiser. Recharge la page pour repartir sur une session valide.',
 			{ cause: err }
 		);
+	}
+
+	if (isClockSkew(e, message)) {
+		return new BackendError('clock-skew', 'Horloge en cours de synchronisation…', { cause: err });
 	}
 
 	switch (sqlstate) {

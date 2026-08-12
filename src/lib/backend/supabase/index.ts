@@ -29,24 +29,34 @@ import {
 } from './db';
 import { saveExpense, deleteExpense } from './expenses';
 
-// Filet « session orpheline » : si une opération échoue parce que la session
-// locale désigne un utilisateur d'auth disparu (après un `db reset` du cloud),
-// on répare et on recharge la page (voir `repairOrphanedSession`). Appliqué
-// uniformément à TOUTES les méthodes ci-dessous — un seul point de branchement.
-// Le rechargement interrompt l'exécution ; le `throw e` ne compte que si la
-// réparation est refusée (déjà tentée sur ce chargement) → l'erreur remonte à
-// l'UI avec un message clair.
+// Filet de résilience appliqué uniformément à TOUTES les méthodes (un seul point) :
+//  - « session orpheline » (utilisateur d'auth disparu après un `db reset` du cloud) →
+//    on répare + recharge la page (voir `repairOrphanedSession`) ; le `throw e` ne compte
+//    que si la réparation est refusée (déjà tentée sur ce chargement).
+//  - « JWT issued at future » (micro-désynchro d'horloge GoTrue↔PostgREST, code
+//    `clock-skew`) → transitoire : on attend un court instant que l'horloge du validateur
+//    dépasse l'`iat`, puis on RÉESSAIE (borné à 2 fois). Indépendant de l'horloge locale,
+//    et couvre aussi bien le démarrage que le rafraîchissement silencieux du jeton.
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 function withSessionRepair<A extends unknown[], R>(
 	fn: (...args: A) => Promise<R>
 ): (...args: A) => Promise<R> {
 	return async (...args: A) => {
-		try {
-			return await fn(...args);
-		} catch (e) {
-			if (e instanceof BackendError && e.code === 'orphaned-session') {
-				await repairOrphanedSession();
+		for (let attempt = 0; ; attempt++) {
+			try {
+				return await fn(...args);
+			} catch (e) {
+				if (e instanceof BackendError && e.code === 'orphaned-session') {
+					await repairOrphanedSession();
+					throw e;
+				}
+				if (e instanceof BackendError && e.code === 'clock-skew' && attempt < 2) {
+					await sleep(1500);
+					continue;
+				}
+				throw e;
 			}
-			throw e;
 		}
 	};
 }
