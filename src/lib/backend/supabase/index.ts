@@ -90,9 +90,22 @@ const raw: Backend = {
 	deleteExpense
 };
 
-export const supabaseBackend: Backend = Object.fromEntries(
-	Object.entries(raw).map(([name, fn]) => [
-		name,
-		withSessionRepair(fn as (...args: unknown[]) => Promise<unknown>)
-	])
-) as unknown as Backend;
+// Enveloppe chaque méthode de `obj` avec `wrap`, en préservant sa signature EXACTE
+// (contrairement à un aller-retour Object.entries/fromEntries, qui unifie toutes les
+// valeurs sous un seul type générique et perd la correspondance clé → signature :
+// il faudrait alors un cast final `as unknown as Backend` non vérifié). Ici, le
+// type de retour est `T` (celui de `obj`) : si une méthode dérive de l'interface
+// `Backend`, l'erreur remonte sur l'affectation `supabaseBackend: Backend = …`
+// ci-dessous, même si l'annotation `raw: Backend` venait à disparaître.
+function wrapAll<T extends object>(
+	obj: T,
+	wrap: <A extends unknown[], R>(fn: (...args: A) => Promise<R>) => (...args: A) => Promise<R>
+): T {
+	const out = {} as T;
+	for (const k of Object.keys(obj) as (keyof T)[]) {
+		out[k] = wrap(obj[k] as (...args: unknown[]) => Promise<unknown>) as T[keyof T];
+	}
+	return out;
+}
+
+export const supabaseBackend: Backend = wrapAll(raw, withSessionRepair);
