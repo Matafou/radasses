@@ -1,49 +1,71 @@
-# Radasse
+# radasses
 
-Application web de partage de dépenses entre amis (SvelteKit + Supabase).
+Split trip expenses without the hassle. An **offline-first** web app (SvelteKit + Supabase):
+record who paid what and for whom, and the app computes **per-household** balances and
+suggests reimbursements.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- **Per-household expenses**: beneficiaries per person, equal / weighted / fixed-amount
+  splits, reimbursements (a reimbursement is just an expense).
+- **Balances & suggestions**: reimbursement suggestions that minimise the number of
+  transfers; hide small balances below a configurable threshold.
+- **No account**: anonymous sessions; join a trip via a **link** (per participant, or a
+  trip-wide "Who are you?" link).
+- **Offline-first**: installable PWA that starts and works offline (cached data); adds and
+  deletes made offline **sync** when the network is back.
+- **Journal & Undo**: every action is journaled (event log); expense operations can be undone.
 
-```sh
-# create a new project
-npx sv create my-app
-```
+## Stack (overview)
 
-To recreate this project with the same configuration:
+Static SvelteKit SPA (Svelte 5 runes, Tailwind v4, `adapter-static`); Supabase backend
+(Postgres + PostgREST + anonymous auth) isolated behind a **ports & adapters** layer.
+Architecture and conventions: **[`CLAUDE.md`](./CLAUDE.md)**. Roadmap:
+**[`docs/BACKLOG.md`](./docs/BACKLOG.md)**.
 
-```sh
-# recreate this project
-npx sv@0.16.6 create --template minimal --types ts --add prettier eslint tailwindcss="plugins:none" sveltekit-adapter="adapter:static" --no-download-check --install npm .
-```
+## Prerequisites
 
-## Developing
+- **Node 22** (see `.nvmrc`: `nvm use`).
+- **Docker** + **Supabase CLI** (`npx supabase …`) for the local backend.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
+## Getting started (local)
 
 ```sh
-npm run build
+npm install
+cp .env.example .env             # set PUBLIC_SUPABASE_URL / _ANON_KEY (public keys)
+npx supabase start               # local Postgres + PostgREST + auth (Docker)
+npm run dev                      # http://localhost:5173
 ```
 
-You can preview the production build with `npm run preview`.
+Local keys are printed by `supabase start` (or `npx supabase status`). After a
+`supabase db reset` in dev, see the gotchas in [`CLAUDE.md`](./CLAUDE.md).
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## Commands
 
-## Licence
+| Command                                 | Purpose                          |
+| --------------------------------------- | -------------------------------- |
+| `npm run dev` / `build` / `preview`     | Develop / build / preview        |
+| `npm run check`                         | `svelte-check` (types)           |
+| `npm run lint` / `npm run format`       | Prettier + ESLint / format       |
+| `npm run test`                          | Unit tests (Vitest)              |
+| `npm run test:e2e`                      | End-to-end tests (Playwright)    |
+| `npx supabase test db`                  | SQL tests (pgTAP)                |
+| `npx supabase migration up` / `db push` | Apply migrations (local / cloud) |
 
-Ce projet est distribué sous licence [MIT](./LICENSE) © 2026 Pierre Courtieu.
+## Deployment
 
-Les dépendances tierces conservent leurs propres licences (permissives : MIT,
-ISC, Apache-2.0) ; voir [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
+Deployed to **GitHub Pages** from the `production` branch (workflow under
+`.github/workflows/`, `BASE_PATH=/radasses`, `PUBLIC_SUPABASE_*` secrets). Flow:
+
+```sh
+git push origin main             # trunk
+# if the branch contains a migration, apply it BEFORE deploying:
+npx supabase db push
+git push origin main:production  # deploy the frontend
+```
+
+## License
+
+Distributed under the [MIT](./LICENSE) license © 2026 Pierre Courtieu. Third-party
+dependencies keep their own permissive licenses (MIT, ISC, Apache-2.0) — see
+[THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).

@@ -70,6 +70,10 @@ l'essentiel pour travailler sur le repo. **Feuille de route détaillée : `docs/
 - Helpers utiles : `errMessage` (`$lib/util`), `parseDecimalFr`/`centsFromEuros` (`$lib/format`),
   `createFlash` (`$lib/flash.svelte`), `ShareSheet` (canaux de partage mutualisés).
 
+- **Langue** : le **README et les fichiers de licence** (`LICENSE`, `THIRD_PARTY_NOTICES.md`)
+  sont en **anglais** ; le reste (ce guide, `docs/BACKLOG.md`, l'UI, les commentaires) en
+  **français**.
+
 ## Gotchas dev
 
 - **Après `supabase db reset`** : dans la console sur `localhost:5173`,
