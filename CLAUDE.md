@@ -4,6 +4,11 @@ Partage des dépenses d'un séjour, sans prise de tête. SPA SvelteKit (statique
 Ce fichier est chargé automatiquement par les assistants (Claude Code) ; il rassemble
 l'essentiel pour travailler sur le repo. **Feuille de route détaillée : `docs/BACKLOG.md`.**
 
+> **Source de vérité.** Ce guide (`CLAUDE.md`) et `docs/BACKLOG.md` sont **canoniques** et
+> maintenus **ICI, dans le dépôt** — pas dans une mémoire externe. Toute évolution du backlog
+> ou des conventions se fait dans ces fichiers (elle est ainsi versionnée et voyage avec le
+> dossier). Ne pas dupliquer/diverger ailleurs.
+
 ## Stack
 
 - **Frontend** : SvelteKit en **SPA statique** (`ssr = false`, `prerender = false`),
