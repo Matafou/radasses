@@ -12,12 +12,14 @@ export async function saveExpense(input: SaveExpenseInput): Promise<SaveExpenseR
 		p_paid_by_person_id: input.paid_by_person_id,
 		p_beneficiaries: input.beneficiaries,
 		p_description: input.description ?? '',
-		p_category: input.category ?? null,
-		p_spent_on: input.spent_on ?? null,
-		p_expense_id: input.expense_id ?? null,
-		p_expected_version: input.expected_version ?? null
+		p_category: input.category ?? undefined,
+		p_spent_on: input.spent_on ?? undefined,
+		p_expense_id: input.expense_id ?? undefined,
+		p_expected_version: input.expected_version ?? undefined
 	});
 	if (error) throw toBackendError(error);
+	// `save_expense` renvoie `jsonb` côté SQL → typé `Json` (non structuré) ; cast
+	// vers la forme réellement construite par `jsonb_build_object(...)` (0007).
 	return data as SaveExpenseResult;
 }
 
@@ -34,8 +36,10 @@ export async function deleteExpense(params: {
 	const { data, error } = await supabase.rpc('delete_expense', {
 		p_trip_id: params.trip_id,
 		p_expense_id: params.expense_id,
-		p_expected_version: params.expected_version ?? null
+		p_expected_version: params.expected_version ?? undefined
 	});
 	if (error) throw toBackendError(error);
+	// `delete_expense` renvoie `jsonb` côté SQL → typé `Json` (non structuré) ; cast
+	// vers la forme réellement construite par `jsonb_build_object(...)` (0007).
 	return data as { expense_id: string; deleted: boolean };
 }

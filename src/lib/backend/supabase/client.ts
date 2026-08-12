@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import type { Database } from './database.types';
 
 if (!PUBLIC_SUPABASE_URL || !PUBLIC_SUPABASE_ANON_KEY) {
 	// Échec bruyant : sans ces variables, TOUTE requête échouerait de toute
@@ -16,6 +17,6 @@ if (!PUBLIC_SUPABASE_URL || !PUBLIC_SUPABASE_ANON_KEY) {
 // Client unique côté navigateur. `persistSession` garde la session (anonyme
 // ou non) dans le localStorage → l'utilisateur reste identifié sur cet appareil.
 // Interne à l'adaptateur : le reste de l'app passe par `$lib/backend`.
-export const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+export const supabase = createClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 	auth: { persistSession: true, autoRefreshToken: true }
 });

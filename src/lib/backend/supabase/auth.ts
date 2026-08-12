@@ -77,7 +77,7 @@ export async function redeemToken(token: string): Promise<string> {
 	await ensureSession();
 	const { data, error } = await supabase.rpc('redeem_token', { p_token: token });
 	if (error) throw toBackendError(error);
-	return data as string;
+	return data;
 }
 
 /**
@@ -89,7 +89,7 @@ export async function listJoinCandidates(joinToken: string): Promise<JoinCandida
 	await ensureSession();
 	const { data, error } = await supabase.rpc('list_join_candidates', { p_join_token: joinToken });
 	if (error) throw toBackendError(error);
-	return (data ?? []) as JoinCandidate[];
+	return data ?? [];
 }
 
 /**
@@ -103,7 +103,7 @@ export async function claimParticipant(joinToken: string, participantId: string)
 		p_participant_id: participantId
 	});
 	if (error) throw toBackendError(error);
-	return data as string;
+	return data;
 }
 
 /**
@@ -122,9 +122,15 @@ export async function createTrip(params: {
 		p_name: params.name,
 		p_currency: params.currency ?? 'EUR',
 		p_my_name: params.myName,
-		p_my_household_name: params.myHouseholdName ?? null
+		// `create_trip` n'a pas de DEFAULT SQL sur ce paramètre (contrairement aux
+		// autres RPC) : le type généré l'exige donc en `string`, alors que la fonction
+		// accepte bien NULL (PL/pgSQL : un paramètre sans DEFAULT reste nullable, il est
+		// juste obligatoire dans l'appel). Cast local, ciblé sur ce seul champ.
+		p_my_household_name: (params.myHouseholdName ?? null) as string
 	});
 	if (error) throw toBackendError(error);
+	// `create_trip` renvoie `jsonb` côté SQL → typé `Json` (non structuré) ; cast
+	// vers la forme réellement construite par `jsonb_build_object(...)` (0002).
 	return data as { trip_id: string; participant_id: string; token: string };
 }
 
@@ -143,10 +149,12 @@ export async function addParticipant(params: {
 	const { data, error } = await supabase.rpc('add_participant', {
 		p_trip_id: params.trip_id,
 		p_person_name: params.person_name,
-		p_household_name: params.household_name ?? null,
-		p_household_id: params.household_id ?? null,
+		p_household_name: params.household_name ?? undefined,
+		p_household_id: params.household_id ?? undefined,
 		p_default_weight: params.default_weight ?? 1
 	});
 	if (error) throw toBackendError(error);
+	// `add_participant` renvoie `jsonb` côté SQL → typé `Json` (non structuré) ; cast
+	// vers la forme réellement construite par `jsonb_build_object(...)` (0007).
 	return data as { participant_id: string; person_id: string; household_id: string; token: string };
 }

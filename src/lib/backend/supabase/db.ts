@@ -2,36 +2,6 @@ import { supabase } from './client';
 import { toBackendError } from './errors';
 import type { Balance, Beneficiary, Expense, Operation, Participant, Trip } from '../types';
 
-// Lignes brutes renvoyées par PostgREST (embeds, numeric en string…) —
-// spécifiques à Supabase, mappées ci-dessous vers les types de domaine.
-type ParticipantRow = {
-	id: string;
-	person_id: string;
-	household_id: string;
-	default_weight: number | string;
-	active: boolean;
-	invite_token: string;
-	persons?: { name?: string | null } | null;
-	households?: { name?: string | null } | null;
-};
-
-type BeneficiaryRow = {
-	expense_id: string;
-	person_id: string;
-	is_locked: boolean;
-	weight: number | string | null;
-	amount_cents: number;
-};
-
-type MyPersonRow = {
-	trip_participants?: { person_id?: string | null } | null;
-};
-
-type ActorRow = {
-	auth_user_id: string;
-	trip_participants?: { persons?: { name?: string | null } | null } | null;
-};
-
 export async function getTrip(tripId: string): Promise<Trip | null> {
 	const { data, error } = await supabase
 		.from('trips')
@@ -39,7 +9,7 @@ export async function getTrip(tripId: string): Promise<Trip | null> {
 		.eq('id', tripId)
 		.maybeSingle();
 	if (error) throw toBackendError(error);
-	return data as Trip | null;
+	return data;
 }
 
 export async function listParticipants(tripId: string): Promise<Participant[]> {
@@ -51,7 +21,7 @@ export async function listParticipants(tripId: string): Promise<Participant[]> {
 		.eq('trip_id', tripId);
 	if (error) throw toBackendError(error);
 	// persons/households sont des embeds (FK directes) ; numeric revient en string.
-	return ((data ?? []) as ParticipantRow[]).map((r) => ({
+	return (data ?? []).map((r) => ({
 		participant_id: r.id,
 		person_id: r.person_id,
 		person_name: r.persons?.name ?? '?',
@@ -71,7 +41,7 @@ export async function listExpenses(tripId: string): Promise<Expense[]> {
 		.is('deleted_at', null)
 		.order('spent_on', { ascending: false });
 	if (error) throw toBackendError(error);
-	return (data ?? []) as Expense[];
+	return data ?? [];
 }
 
 export async function listBeneficiaries(tripId: string): Promise<Beneficiary[]> {
@@ -80,7 +50,10 @@ export async function listBeneficiaries(tripId: string): Promise<Beneficiary[]> 
 		.select('expense_id, person_id, is_locked, weight, amount_cents')
 		.eq('trip_id', tripId);
 	if (error) throw toBackendError(error);
-	return ((data ?? []) as BeneficiaryRow[]).map((r) => ({
+	// `Number(r.weight)` : PostgREST sérialise `numeric` en STRING pour préserver la
+	// précision — le type généré dit `number` (type Postgres réel), le runtime peut
+	// renvoyer une string ; conversion défensive conservée malgré le typage.
+	return (data ?? []).map((r) => ({
 		expense_id: r.expense_id,
 		person_id: r.person_id,
 		is_locked: r.is_locked,
@@ -95,6 +68,10 @@ export async function getBalances(tripId: string): Promise<Balance[]> {
 		.select('household_id, net_cents')
 		.eq('trip_id', tripId);
 	if (error) throw toBackendError(error);
+	// Le générateur de types marque toute colonne de VUE comme nullable par défaut
+	// (limitation connue, indépendante du schéma réel) : `balances` groupe par
+	// `household_id`, colonne NOT NULL sur `trip_participants` → jamais null en
+	// pratique. Cast ciblé, pas un `data as Balance[]` générique.
 	return (data ?? []) as Balance[];
 }
 
@@ -162,7 +139,7 @@ export async function setParticipantHousehold(params: {
 			.select('id')
 			.single();
 		if (error) throw toBackendError(error);
-		householdId = (data as { id: string }).id;
+		householdId = data.id;
 	}
 	const { error } = await supabase
 		.from('trip_participants')
@@ -183,7 +160,7 @@ export async function getMyPersonId(tripId: string): Promise<string | null> {
 		.eq('trip_participants.trip_id', tripId)
 		.limit(1);
 	if (error) throw toBackendError(error);
-	const row = ((data ?? []) as MyPersonRow[])[0];
+	const row = (data ?? [])[0];
 	return row?.trip_participants?.person_id ?? null;
 }
 
@@ -194,7 +171,7 @@ export async function listOperations(tripId: string): Promise<Operation[]> {
 		.eq('trip_id', tripId)
 		.order('id', { ascending: false });
 	if (error) throw toBackendError(error);
-	return (data ?? []) as Operation[];
+	return data ?? [];
 }
 
 /** Table auth_user_id -> nom de la personne (pour afficher « qui » a agi). */
@@ -205,7 +182,7 @@ export async function listActors(tripId: string): Promise<Record<string, string>
 		.eq('trip_participants.trip_id', tripId);
 	if (error) throw toBackendError(error);
 	const map: Record<string, string> = {};
-	for (const r of (data ?? []) as ActorRow[]) {
+	for (const r of data ?? []) {
 		const name = r.trip_participants?.persons?.name;
 		if (name) map[r.auth_user_id] = name;
 	}

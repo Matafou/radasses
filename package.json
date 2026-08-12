@@ -33,6 +33,7 @@
 		"test:watch": "vitest",
 		"test:e2e": "playwright test",
 		"gen:split-sql": "node scripts/gen-split-sql.ts",
+		"gen:db-types": "bash scripts/gen-db-types.sh",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write ."
 	},
