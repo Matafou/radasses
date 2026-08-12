@@ -9,6 +9,12 @@
 	import { toast } from '$lib/toast.svelte';
 	import { Alert, AppShell, LoadingText } from '$lib/components/ui';
 
+	// Support de test (DEV uniquement — éliminé du build de prod par `import.meta.env.DEV`) :
+	// expose le backend pour la vérif de parité du fold (e2e/fold-parity.spec.ts).
+	if (import.meta.env.DEV && typeof window !== 'undefined') {
+		(window as unknown as Record<string, unknown>).__backend = backend;
+	}
+
 	let { children } = $props();
 	let ready = $state(false);
 	let error = $state<string | null>(null);
