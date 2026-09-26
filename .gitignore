@@ -33,3 +33,9 @@ vite.config.ts.timestamp-*
 !supabase/migrations/*.sql
 !supabase/tests/*.sql
 !supabase/seed.sql
+
+# Firebase (émulateurs)
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

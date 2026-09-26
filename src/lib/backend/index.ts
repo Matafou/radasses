@@ -1,7 +1,7 @@
 // Point d'entrée unique de la couche « backend » (ports & adapters).
 //
-// L'application n'importe QUE ce module (`$lib/backend`) : jamais Supabase
-// directement. Pour changer de fournisseur, il suffit d'écrire un nouvel
+// L'application n'importe QUE ce module (`$lib/backend`) : jamais le SDK du
+// fournisseur directement. Pour changer de fournisseur, il suffit d'écrire un nouvel
 // adaptateur dans `./<provider>/` qui satisfait l'interface `Backend`, puis
 // de changer la seule ligne `export const backend` ci-dessous.
 
@@ -16,7 +16,7 @@ import type {
 	SaveExpenseResult,
 	Trip
 } from './types';
-import { supabaseBackend } from './supabase';
+import { firebaseBackend } from './firebase';
 
 export * from './types';
 export { BackendError, type BackendErrorCode } from './errors';
@@ -66,11 +66,11 @@ export interface Backend {
 
 	// --- Mutations directes ---
 	updateTrip(tripId: string, patch: { name?: string; currency?: string }): Promise<void>;
-	updatePersonName(personId: string, name: string): Promise<void>;
-	updateHouseholdName(householdId: string, name: string): Promise<void>;
-	setParticipantActive(participantId: string, active: boolean): Promise<void>;
+	updatePersonName(tripId: string, personId: string, name: string): Promise<void>;
+	updateHouseholdName(tripId: string, householdId: string, name: string): Promise<void>;
+	setParticipantActive(tripId: string, participantId: string, active: boolean): Promise<void>;
 	/** Poids par défaut du participant (parts relatives, > 0). */
-	setParticipantDefaultWeight(participantId: string, weight: number): Promise<void>;
+	setParticipantDefaultWeight(tripId: string, participantId: string, weight: number): Promise<void>;
 	/** Déplace un participant vers un foyer existant (`household_id`) ou un nouveau (null). */
 	setParticipantHousehold(params: {
 		trip_id: string;
@@ -89,4 +89,4 @@ export interface Backend {
 }
 
 /** Fournisseur actif. Changer cette ligne suffit à basculer d'adaptateur. */
-export const backend: Backend = supabaseBackend;
+export const backend: Backend = firebaseBackend;

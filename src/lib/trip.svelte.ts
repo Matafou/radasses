@@ -305,7 +305,11 @@ export class TripState {
 		this.expenses = [expense, ...this.expenses];
 		this.beneficiaries = [...this.beneficiaries, ...benefs];
 		this.persistSnapshot();
-		void outbox.enqueueCreate(this.tripId, tempId, input);
+		// id client = id définitif de la dépense → rejeu idempotent (pas de doublon).
+		void outbox.enqueueCreate(this.tripId, tempId, {
+			...input,
+			client_id: tempId.slice('local-'.length)
+		});
 	}
 
 	/** Déploie le formulaire pour une nouvelle dépense (reprend une saisie en cours si présente). */
@@ -361,10 +365,14 @@ export class TripState {
 	}) {
 		this.assertOnline();
 		if (params.person_name != null) {
-			await backend.updatePersonName(params.person_id, params.person_name);
+			await backend.updatePersonName(this.tripId, params.person_id, params.person_name);
 		}
 		if (params.default_weight != null) {
-			await backend.setParticipantDefaultWeight(params.participant_id, params.default_weight);
+			await backend.setParticipantDefaultWeight(
+				this.tripId,
+				params.participant_id,
+				params.default_weight
+			);
 		}
 		if (params.move_household_id !== undefined) {
 			await backend.setParticipantHousehold({
@@ -380,13 +388,13 @@ export class TripState {
 	/** Renomme un foyer (partagé → visible pour tous ses membres). */
 	async renameHousehold(householdId: string, name: string) {
 		this.assertOnline();
-		await backend.updateHouseholdName(householdId, name);
+		await backend.updateHouseholdName(this.tripId, householdId, name);
 		await this.load(['participants']);
 	}
 	/** Marque un participant présent (active=true) ou parti (false). */
 	async setActive(participantId: string, active: boolean) {
 		this.assertOnline();
-		await backend.setParticipantActive(participantId, active);
+		await backend.setParticipantActive(this.tripId, participantId, active);
 		// `active` n'entre pas dans le calcul des soldes existants
 		await this.load(['participants']);
 	}

@@ -1,0 +1,188 @@
+rules_version = '2';
+
+// Règles de sécurité Firestore de radasses (remplacent les RLS Postgres).
+//
+// Modèle d'accès : un utilisateur (anonyme) est MEMBRE d'un séjour dès qu'il possède
+// le document `trips/{t}/members/{uid}`. Tout membre lit et écrit tout le séjour
+// (même modèle de confiance qu'avant) ; un non-membre ne voit rien, sauf les
+// annuaires de jetons, lisibles un par un (le jeton EST le secret, pas de `list`).
+//
+// Journal : toute écriture d'entité doit faire avancer `trips/{t}.op_seq` dans la
+// même requête, et chaque entrée `ops/{n}` est créée une seule fois avec
+// n ∈ ]op_seq avant, op_seq après] → append-only et ordre total par séjour.
+// La logique métier (répartition, verrou de version) est dans l'adaptateur TS
+// (`src/lib/backend/firebase/`) ; les règles ne recalculent pas la répartition.
+
+service cloud.firestore {
+	match /databases/{database}/documents {
+		function signedIn() {
+			return request.auth != null;
+		}
+		function uid() {
+			return request.auth.uid;
+		}
+		function tripPath(t) {
+			return /databases/$(database)/documents/trips/$(t);
+		}
+		function inTrip(t, coll, id) {
+			return /databases/$(database)/documents/trips/$(t)/$(coll)/$(id);
+		}
+		function isMember(t) {
+			return signedIn() && exists(inTrip(t, 'members', uid()));
+		}
+		// Membre à l'issue de la requête : couvre la création du séjour (le document
+		// membre est écrit dans le même lot) ; l'adhésion elle-même est gardée plus bas.
+		function isMemberAfter(t) {
+			return signedIn() && existsAfter(inTrip(t, 'members', uid()));
+		}
+		function seqBefore(t) {
+			return exists(tripPath(t)) ? get(tripPath(t)).data.op_seq : 0;
+		}
+		function seqAfter(t) {
+			return getAfter(tripPath(t)).data.op_seq;
+		}
+		// Écriture d'entité : par un membre, et journalisée dans la même requête.
+		function writable(t) {
+			return isMemberAfter(t) && seqAfter(t) > seqBefore(t);
+		}
+		function data() {
+			return request.resource.data;
+		}
+		function unchanged(keys) {
+			return !data().diff(resource.data).affectedKeys().hasAny(keys);
+		}
+
+		match /trips/{t} {
+			allow get: if isMember(t);
+			allow create: if signedIn()
+				&& data().created_by == uid()
+				&& data().name is string
+				&& data().currency is string
+				&& data().join_token is string
+				&& data().op_seq is int
+				&& existsAfter(inTrip(t, 'ops', string(data().op_seq)))
+				&& isMemberAfter(t);
+			allow update: if isMember(t)
+				&& data().diff(resource.data).affectedKeys().hasOnly(['name', 'currency', 'op_seq'])
+				&& data().name is string
+				&& data().currency is string
+				&& data().op_seq is int
+				&& data().op_seq > resource.data.op_seq
+				&& existsAfter(inTrip(t, 'ops', string(data().op_seq)));
+
+			// Adhésion : uniquement pour soi-même, et seulement si l'un de :
+			//  - fondateur : le séjour est créé dans ce même lot, par moi ;
+			//  - jeton d'invitation (par participant) désignant ce séjour et ce participant ;
+			//  - jeton de séjour partageable (« Qui es-tu ? ») + participant de ce séjour.
+			match /members/{m} {
+				allow get: if signedIn() && (m == uid() || isMember(t));
+				allow list: if isMember(t);
+				allow create, update: if signedIn() && m == uid()
+					&& data().uid == m
+					&& data().trip_id == t
+					&& data().participant_id is string
+					&& (isFounder() || viaInvite() || viaJoin());
+
+				function isFounder() {
+					return !exists(tripPath(t))
+						&& getAfter(tripPath(t)).data.created_by == uid()
+						&& existsAfter(inTrip(t, 'participants', data().participant_id));
+				}
+				function viaInvite() {
+					return data().get('via_invite', null) is string
+						&& get(/databases/$(database)/documents/inviteTokens/$(data().via_invite)).data
+							== { 'trip_id': t, 'participant_id': data().participant_id };
+				}
+				function viaJoin() {
+					return data().get('via_join', null) is string
+						&& get(/databases/$(database)/documents/joinTokens/$(data().via_join)).data.trip_id == t
+						&& exists(inTrip(t, 'participants', data().participant_id));
+				}
+			}
+
+			match /households/{h} {
+				allow read: if isMember(t);
+				allow create, update: if writable(t) && data().trip_id == t && data().name is string;
+			}
+
+			match /persons/{p} {
+				allow read: if isMember(t);
+				allow create, update: if writable(t) && data().trip_id == t && data().name is string;
+			}
+
+			match /participants/{p} {
+				allow read: if isMember(t);
+				allow create, update: if writable(t)
+					&& data().trip_id == t
+					// personne et foyer du MÊME séjour
+					&& existsAfter(inTrip(t, 'persons', data().person_id))
+					&& existsAfter(inTrip(t, 'households', data().household_id))
+					&& data().default_weight is number
+					&& data().default_weight >= 0
+					&& data().active is bool
+					&& data().invite_token is string
+					&& (resource == null || unchanged(['person_id', 'invite_token', 'created_at']));
+			}
+
+			match /expenses/{e} {
+				allow read: if isMember(t);
+				allow create: if writable(t)
+					&& data().trip_id == t
+					&& data().version == 1
+					&& data().amount_cents is int
+					&& data().amount_cents >= 0
+					&& data().beneficiaries is list
+					&& data().beneficiaries.size() > 0
+					&& existsAfter(inTrip(t, 'persons', data().paid_by_person_id));
+				// Verrou optimiste : chaque écriture incrémente la version de 1. Pas de
+				// suppression physique (suppression logique via `deleted_at`).
+				allow update: if writable(t)
+					&& data().trip_id == t
+					&& data().version == resource.data.version + 1
+					&& data().amount_cents is int
+					&& data().amount_cents >= 0
+					&& data().beneficiaries is list
+					&& data().beneficiaries.size() > 0
+					&& unchanged(['created_by', 'created_at'])
+					&& existsAfter(inTrip(t, 'persons', data().paid_by_person_id));
+			}
+
+			match /ops/{o} {
+				allow read: if isMember(t);
+				allow create: if isMemberAfter(t)
+					&& data().actor_auth_user_id == uid()
+					&& data().id is int
+					&& o == string(data().id)
+					&& data().id > seqBefore(t)
+					&& data().id <= seqAfter(t)
+					&& data().action in ['create', 'update', 'delete']
+					&& data().entity_type is string;
+			}
+		}
+
+		// Jeton d'invitation (un par participant) → { trip_id, participant_id }.
+		match /inviteTokens/{tok} {
+			allow get: if signedIn();
+			allow create: if isMemberAfter(data().trip_id)
+				&& getAfter(inTrip(data().trip_id, 'participants', data().participant_id)).data.invite_token == tok
+				&& data().keys().hasOnly(['trip_id', 'participant_id']);
+		}
+
+		// Jeton de séjour partageable → { trip_id, candidates } : annuaire des participants
+		// pour l'écran « Qui es-tu ? » (lisible par un non-membre qui connaît le jeton).
+		match /joinTokens/{tok} {
+			allow get: if signedIn();
+			allow create: if isMemberAfter(data().trip_id)
+				&& getAfter(tripPath(data().trip_id)).data.join_token == tok;
+			allow update: if isMember(resource.data.trip_id) && data().trip_id == resource.data.trip_id;
+
+			// Identités déjà réclamées (information seulement, ne bloque rien).
+			match /claims/{pid} {
+				allow read: if signedIn();
+				allow create, update: if signedIn()
+					&& data().uid == uid()
+					&& isMemberAfter(getAfter(/databases/$(database)/documents/joinTokens/$(tok)).data.trip_id);
+			}
+		}
+	}
+}

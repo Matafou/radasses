@@ -31,9 +31,9 @@ jobs:
         env:
           # Sert l'app sous /radasses (nom du dépôt).
           BASE_PATH: /radasses
-          # Valeurs publiques du projet Supabase cloud (Settings → Secrets → Actions).
-          PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
-          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+          # Valeurs publiques du projet Firebase (Settings → Secrets → Actions).
+          PUBLIC_FIREBASE_API_KEY: ${{ secrets.PUBLIC_FIREBASE_API_KEY }}
+          PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.PUBLIC_FIREBASE_PROJECT_ID }}
       # SPA pure (ssr=false) : pas d'index.html généré. On copie le shell 404.html
       # en index.html pour que la racine réponde 200 (les liens profonds passent
       # toujours par 404.html, servi par GitHub Pages sur les chemins inconnus).

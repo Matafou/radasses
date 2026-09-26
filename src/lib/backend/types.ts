@@ -86,6 +86,11 @@ export type SaveExpenseInput = {
 	expense_id?: string | null;
 	/** version attendue (verrou optimiste) — requise pour une édition sûre */
 	expected_version?: number | null;
+	/**
+	 * Création seulement : id choisi par le client (dépense saisie hors-ligne). Rend le
+	 * rejeu de l'outbox IDEMPOTENT : si la dépense existe déjà, rien n'est recréé.
+	 */
+	client_id?: string;
 };
 
 export type ResolvedBeneficiary = {

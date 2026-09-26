@@ -1,6 +1,6 @@
 # radasses
 
-Split trip expenses without the hassle. An **offline-first** web app (SvelteKit + Supabase):
+Split trip expenses without the hassle. An **offline-first** web app (SvelteKit + Firebase):
 record who paid what and for whom, and the app computes **per-household** balances and
 suggests reimbursements.
 
@@ -18,49 +18,52 @@ suggests reimbursements.
 
 ## Stack (overview)
 
-Static SvelteKit SPA (Svelte 5 runes, Tailwind v4, `adapter-static`); Supabase backend
-(Postgres + PostgREST + anonymous auth) isolated behind a **ports & adapters** layer.
+Static SvelteKit SPA (Svelte 5 runes, Tailwind v4, `adapter-static`); Firebase backend
+(Firestore + anonymous auth, free Spark plan, no server code) isolated behind a
+**ports & adapters** layer; access is enforced by Firestore security rules
+(`firestore.rules`).
 Architecture and conventions: **[`CLAUDE.md`](./CLAUDE.md)**. Roadmap:
 **[`docs/BACKLOG.md`](./docs/BACKLOG.md)**.
 
 ## Prerequisites
 
 - **Node 22** (see `.nvmrc`: `nvm use`).
-- **Docker** + **Supabase CLI** (`npx supabase …`) for the local backend.
+- **Java 11+** for the Firebase emulators (local backend; the CLI is a dev dependency).
 
 ## Getting started (local)
 
 ```sh
 npm install
-cp .env.example .env             # set PUBLIC_SUPABASE_URL / _ANON_KEY (public keys)
-npx supabase start               # local Postgres + PostgREST + auth (Docker)
+cp .env.example .env             # `demo-…` project = local emulators (fake key)
+npm run emulators                # Firestore + Auth emulators (UI: http://localhost:4000)
 npm run dev                      # http://localhost:5173
 ```
 
-Local keys are printed by `supabase start` (or `npx supabase status`). After a
-`supabase db reset` in dev, see the gotchas in [`CLAUDE.md`](./CLAUDE.md).
+Emulator data is not persisted between runs. To load demo data (`?token=demo-ete`,
+`?token=demo-we`), see `scripts/migrate-supabase-to-firestore.ts`.
 
 ## Commands
 
-| Command                                 | Purpose                          |
-| --------------------------------------- | -------------------------------- |
-| `npm run dev` / `build` / `preview`     | Develop / build / preview        |
-| `npm run check`                         | `svelte-check` (types)           |
-| `npm run lint` / `npm run format`       | Prettier + ESLint / format       |
-| `npm run test`                          | Unit tests (Vitest)              |
-| `npm run test:e2e`                      | End-to-end tests (Playwright)    |
-| `npx supabase test db`                  | SQL tests (pgTAP)                |
-| `npx supabase migration up` / `db push` | Apply migrations (local / cloud) |
+| Command                                | Purpose                           |
+| -------------------------------------- | --------------------------------- |
+| `npm run dev` / `build` / `preview`    | Develop / build / preview         |
+| `npm run check`                        | `svelte-check` (types)            |
+| `npm run lint` / `npm run format`      | Prettier + ESLint / format        |
+| `npm run test`                         | Unit tests (Vitest)               |
+| `npm run test:e2e`                     | End-to-end tests (Playwright)     |
+| `npm run test:firebase`                | Adapter + rules tests (emulators) |
+| `npm run emulators`                    | Start the Firebase emulators      |
+| `npx firebase deploy --only firestore` | Deploy rules + indexes (cloud)    |
 
 ## Deployment
 
 Deployed to **GitHub Pages** from the `production` branch (workflow under
-`.github/workflows/`, `BASE_PATH=/radasses`, `PUBLIC_SUPABASE_*` secrets). Flow:
+`.github/workflows/`, `BASE_PATH=/radasses`, `PUBLIC_FIREBASE_*` secrets). Flow:
 
 ```sh
 git push origin main             # trunk
-# if the branch contains a migration, apply it BEFORE deploying:
-npx supabase db push
+# if firestore.rules / firestore.indexes.json changed, deploy them BEFORE the frontend:
+npx firebase deploy --only firestore --project <project-id>
 git push origin main:production  # deploy the frontend
 ```
 

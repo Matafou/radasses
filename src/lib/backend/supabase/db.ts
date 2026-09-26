@@ -83,17 +83,29 @@ export async function updateTrip(
 	if (error) throw toBackendError(error);
 }
 
-export async function updatePersonName(personId: string, name: string): Promise<void> {
+export async function updatePersonName(
+	_tripId: string,
+	personId: string,
+	name: string
+): Promise<void> {
 	const { error } = await supabase.from('persons').update({ name }).eq('id', personId);
 	if (error) throw toBackendError(error);
 }
 
-export async function updateHouseholdName(householdId: string, name: string): Promise<void> {
+export async function updateHouseholdName(
+	_tripId: string,
+	householdId: string,
+	name: string
+): Promise<void> {
 	const { error } = await supabase.from('households').update({ name }).eq('id', householdId);
 	if (error) throw toBackendError(error);
 }
 
-export async function setParticipantActive(participantId: string, active: boolean): Promise<void> {
+export async function setParticipantActive(
+	_tripId: string,
+	participantId: string,
+	active: boolean
+): Promise<void> {
 	const { error } = await supabase
 		.from('trip_participants')
 		.update({ active })
@@ -105,6 +117,7 @@ export async function setParticipantActive(participantId: string, active: boolea
  *  dans une dépense en mode détaillé. N'affecte PAS les dépenses déjà saisies
  *  (chacune stocke ses propres poids/montants). */
 export async function setParticipantDefaultWeight(
+	_tripId: string,
 	participantId: string,
 	weight: number
 ): Promise<void> {
