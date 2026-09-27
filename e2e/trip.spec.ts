@@ -56,6 +56,9 @@ test('renommer un participant se reflète comme payeur dans les dépenses', asyn
 
 	// renommer Alice -> Alicia (un seul participant → un seul bouton « Modifier »)
 	await page.getByRole('link', { name: 'Participants' }).click();
+	// Attendre d'être SUR l'onglet : sinon « Modifier » peut encore désigner le crayon
+	// de la dépense (page Dépenses pas encore remplacée) → mauvais formulaire ouvert.
+	await expect(page).toHaveURL(/\/participants$/);
 	await page.getByRole('button', { name: 'Modifier' }).click();
 	await page.getByLabel('Prénom').fill('Alicia');
 	await page.getByRole('button', { name: 'Enregistrer' }).click();

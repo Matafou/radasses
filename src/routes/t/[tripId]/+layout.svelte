@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { base } from '$app/paths';
+	import { base, resolve } from '$app/paths';
 	import { beforeNavigate } from '$app/navigation';
 	import { TripState, setTripState } from '$lib/trip.svelte';
 	import { pullToRefresh } from '$lib/actions/pullToRefresh';
@@ -75,6 +75,16 @@
 		<div class="p-4" data-ptr-content>
 			{#if state.loading && !state.trip}
 				<LoadingText />
+			{:else if !state.trip && !state.error}
+				<!-- Séjour illisible (non trouvé ou session non membre) : les règles
+				     refusent la lecture, le backend renvoie null. Cas typique : autre
+				     appareil, navigateur réinitialisé, ou session d'avant la bascule
+				     Firebase → il suffit de rouvrir son lien. -->
+				<Alert tone="warning">
+					Cet appareil n’a pas (ou plus) accès à ce séjour. Rouvre ton lien d’invitation, ou
+					demande-le à un participant.
+					<a href={resolve('/')} class="link-inline">Retour à l’accueil</a>
+				</Alert>
 			{:else}
 				{@render children()}
 			{/if}

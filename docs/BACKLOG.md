@@ -17,7 +17,7 @@ migration** : (2) durcir la garde `auth.uid() is null` des RPC ; (5) étendre le
 verrou optimiste aux participants/réglages. Commandes tests : `npm run test`
 (Vitest) + `npx supabase test db` (pgTAP, nécessite Docker/stack locale).
 
-**Migration Supabase → Firebase (branche `migration-firebase`, 2026-09-27)** — motif :
+**Migration Supabase → Firebase (EN PROD depuis le 2026-09-27)** — motif :
 le plan gratuit Supabase met le projet en pause après 7 j d'inactivité (keep-alive
 bancal) ; Firebase Spark ne met rien en pause, a l'auth anonyme native et permettra de
 convertir une session anonyme en compte (`linkWithCredential`, même uid).
@@ -28,17 +28,24 @@ convertir une session anonyme en compte (`linkWithCredential`, même uid).
   mutualisée (quota 50 000 lectures/j), tests `test:firebase` (remplacent pgTAP), E2E
   contre émulateurs, script de reprise `scripts/migrate-supabase-to-firestore.ts`
   (validé : soldes des séjours démo identiques), `keep-alive.yml` supprimé, docs.
-- **Bascule (à faire)** : créer le projet Firebase (`eur3`, auth anonyme) ; secrets
-  GitHub `PUBLIC_FIREBASE_API_KEY` / `_PROJECT_ID` ; `npx firebase deploy --only
-firestore` ; réveiller Supabase prod puis lancer la reprise (`--dry-run` d'abord) ;
-  test manuel contre le vrai projet ; fusion dans `main` + déploiement ; prévenir que
-  chacun rouvre son lien une fois (uid anonymes non transférables).
-- **Après bascule** : supprimer `backend/supabase/`, `supabase/`, deps `@supabase/*` et
+- **Bascule (faite)** : projet Firebase `radasses` (`eur3`, auth anonyme SANS nettoyage
+  automatique — l'uid anonyme EST l'identité de l'appareil), secrets GitHub, règles
+  déployées, reprise des 6 séjours de prod, déploiement. Chacun doit rouvrir son lien une
+  fois (uid anonymes non transférables) → message explicite « Cet appareil n'a pas (ou
+  plus) accès à ce séjour » au lieu d'un séjour vide. ⚠️ Ne PLUS relancer le script de
+  reprise sur la prod (il écraserait les saisies faites dans Firebase).
+- **Après bascule** : supprimer la clé de compte de service utilisée pour la reprise
+  (console Firebase → Comptes de service, et le fichier local) ; supprimer
+  `backend/supabase/`, `supabase/`, deps `@supabase/*` et
   `supabase`, `scripts/gen-db-types.sh`, `scripts/gen-split-sql.ts` (+ script npm), code
   `orphaned-session`/`clock-skew` de `BackendError` ; mettre à jour
   `THIRD_PARTY_NOTICES.md` (deps firebase). Les points de dette « migration SQL »
   ci-dessous (garde `auth.uid()`, verrou des participants) sont à repenser côté
-  règles/adaptateur.
+  règles/adaptateur. Retirer aussi les secrets GitHub `PUBLIC_SUPABASE_*`.
+- **CI : avertissements « Node.js 20 is deprecated »** sur `deploy.yml` (actions
+  `checkout@v4`, `setup-node@v4`, `upload-artifact@v4` via `upload-pages-artifact`) :
+  non bloquant (GitHub les force sous Node 24) ; passer aux versions majeures récentes
+  compatibles Node 24 (vérifier les numéros exacts sur les dépôts `actions/*`).
 
 **Chantiers « présentation » (prioritaires selon Pierre) :**
 
